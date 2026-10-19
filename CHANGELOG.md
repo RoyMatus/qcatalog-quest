@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.3.0-preview — 2026-10-19
+
+- Продолжение файлов по сохранённому байту, устойчивые checkpoints и автоматическое восстановление очереди после запуска приложения/шлема.
+- Ручная пауза сохраняется; установка данных больше не пропускается из-за уже обработанной загрузки того же релиза.
+- Durable byte-offset resume and automatic queue recovery after app/headset startup.
+- Manual pauses remain paused; data installation is no longer skipped for an already attempted download.
+
+- Проверка явно несовместимых подписей APK до установки с учётом истории ротации сертификатов.
+- Понятные причины отказа Android, включая конфликт подписи и нехватку места.
+- Отдельный статус «Ошибка установки» и повторная установка без повторного скачивания.
+- Conservative signing-certificate preflight, including rotation history.
+- Actionable Android installer errors, including signing conflicts and storage failures.
+- Separate installation-error status and retries without downloading again.
+
+Validation: 12 host checkpoint/resume checks and 13 installation checks pass. Real conflicting/matching APK certificates were checked on Quest. The final isolated Android run passed 18 checks, including native range resume, SHA-256 validation, production downloader integration on external storage, queue recovery and simulated boot handling. The headset itself was not rebooted during an active user download.
+
 ## 0.2.1-preview — 2026-10-19
 
 Первый опубликованный preview-релиз / First published preview release.

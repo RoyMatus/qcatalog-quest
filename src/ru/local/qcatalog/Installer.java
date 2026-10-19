@@ -13,6 +13,7 @@ import java.util.*;
 final class Installer {
     static final class Bundle {
         File apk;
+        PackageInfo apkInfo;
         String packageName, label, sha256;
         final LinkedHashMap<File,String> data = new LinkedHashMap<>();
         boolean needsApproval(JSONObject job) {
@@ -32,6 +33,7 @@ final class Installer {
         String pkg = job.getString("pkg"); if (!Catalog.safePackage(pkg)) throw new IOException("Некорректное имя пакета.");
         File dir = QueueStore.directory(c, job); Bundle result = new Bundle(); Set<String> destinations = new HashSet<>();
         for (File f : files(dir)) {
+            if (f.getName().endsWith(".qcatalog-part") || f.getName().endsWith(".qcatalog-resume") || f.getName().endsWith(".qcatalog-resume.tmp")) throw new IOException("В релизе остались незавершённые файлы. Продолжи загрузку перед установкой.");
             String relative = dir.toPath().relativize(f.toPath()).toString().replace('\\', '/');
             if (f.getName().equalsIgnoreCase("install.txt") && f.length() > 0) throw new IOException("Релиз содержит install.txt. Произвольные скрипты установки в этой версии не выполняются.");
             if (f.getName().toLowerCase(Locale.ROOT).endsWith(".apk")) {
@@ -47,10 +49,11 @@ final class Installer {
             } else if (f.getName().endsWith(".obb")) throw new IOException("Не удалось определить место установки OBB-файла.");
         }
         if (result.apk == null) throw new IOException("В загруженном релизе нет APK.");
-        PackageInfo apkInfo = c.getPackageManager().getPackageArchiveInfo(result.apk.getAbsolutePath(), 0);
+        PackageInfo apkInfo = c.getPackageManager().getPackageArchiveInfo(result.apk.getAbsolutePath(), PackageManager.GET_SIGNING_CERTIFICATES);
         if (apkInfo == null) throw new IOException("Не удалось прочитать APK. Файл повреждён или загрузка не завершена.");
         if (!Catalog.safePackage(apkInfo.packageName)) throw new IOException("APK содержит некорректное имя пакета.");
         result.packageName = apkInfo.packageName;
+        result.apkInfo = apkInfo;
         apkInfo.applicationInfo.sourceDir = result.apk.getAbsolutePath();
         apkInfo.applicationInfo.publicSourceDir = result.apk.getAbsolutePath();
         result.label = apkInfo.applicationInfo.loadLabel(c.getPackageManager()).toString();
@@ -66,8 +69,12 @@ final class Installer {
         }
         return result;
     }
+    static void checkUpdateSignature(Context c, Bundle bundle) throws IOException {
+        SigningPreflight.check(c,bundle.apkInfo);
+    }
     static void install(Context c, JSONObject job) throws Exception {
         Bundle bundle = inspect(c, job);
+        checkUpdateSignature(c,bundle);
         if (bundle.needsApproval(job)) throw new IOException("Перед установкой подтверди расхождение имени пакета с каталогом.");
         if (!c.getPackageManager().canRequestPackageInstalls()) throw new IOException("Разреши QCatalog устанавливать приложения в системных настройках.");
         if (!bundle.data.isEmpty() && Build.VERSION.SDK_INT >= 30 && !Environment.isExternalStorageManager())

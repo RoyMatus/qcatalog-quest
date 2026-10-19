@@ -40,7 +40,7 @@ public final class MainActivity extends Activity {
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state); getWindow().setStatusBarColor(BG); getWindow().setNavigationBarColor(BG);
-        if (!DownloadService.RUNNING.get()) QueueStore.interrupted(this);
+        if (!DownloadService.RUNNING.get()) QueueStore.recover(this);
         LinearLayout root = column(); root.setPadding(dp(24), dp(20), dp(24), dp(10)); root.setBackgroundColor(BG); setContentView(root);
         LinearLayout branding = column(); root.addView(branding);
         TextView title = text("QCatalog", 30, Color.WHITE); title.setTypeface(Typeface.DEFAULT, Typeface.BOLD); branding.addView(title);
@@ -81,7 +81,7 @@ public final class MainActivity extends Activity {
     @Override protected void onResume() {
         super.onResume(); resumed = true; handler.post(tick);
         refreshInstalled();
-        if (!DownloadService.RUNNING.get()) for (JSONObject job : QueueStore.all(this)) if (job.optString("state").equals("needsData")) { DownloadService.start(this); break; }
+        if (!DownloadService.RUNNING.get()) for (JSONObject job : QueueStore.all(this)) if (Arrays.asList("queued","needsData").contains(job.optString("state"))) { DownloadService.start(this); break; }
     }
     @Override protected void onPause() { resumed = false; handler.removeCallbacks(tick); super.onPause(); }
     @Override protected void onDestroy() { for (GameDetails details : openDetails) details.close(); openDetails.clear(); detailIo.shutdownNow(); io.shutdown(); super.onDestroy(); }
@@ -253,7 +253,7 @@ public final class MainActivity extends Activity {
         String state = job.optString("state"), id = job.optString("id");
         AlertDialog.Builder dialog = new AlertDialog.Builder(this).setTitle(job.optString("name")).setMessage(QueueStore.label(state) + "\n\n" + job.optString("message")).setNegativeButton("Закрыть",null);
         if (state.equals("queued") || state.equals("downloading")) dialog.setPositiveButton("Пауза",(d,w) -> { DownloadService.pause(this,id); updateQueue(); });
-        else if (state.equals("downloaded")) dialog.setPositiveButton("Установить",(d,w) -> install(job));
+        else if (state.equals("downloaded") || state.equals("installError")) dialog.setPositiveButton("Установить",(d,w) -> install(job));
         else if (state.equals("installed")) dialog.setPositiveButton("Открыть",(d,w) -> launch(QueueStore.installedPackage(job)));
         else if (state.equals("dataError")) {
             dialog.setPositiveButton("Повторить данные",(d,w) -> { QueueStore.update(this,id,"needsData","Повторная установка данных"); DownloadService.start(this); });
@@ -313,6 +313,7 @@ public final class MainActivity extends Activity {
         io.execute(() -> {
             try {
                 Installer.Bundle bundle = Installer.inspect(this,job);
+                Installer.checkUpdateSignature(this,bundle);
                 if (bundle.needsApproval(job)) {
                     runOnUiThread(() -> {
                         if (isDestroyed()) return;
@@ -327,7 +328,7 @@ public final class MainActivity extends Activity {
                 }
                 if (!bundle.data.isEmpty() && Build.VERSION.SDK_INT >= 30 && !Environment.isExternalStorageManager()) { runOnUiThread(this::permissions); return; }
                 Installer.install(this,job); showStatus("Подтверди установку в системном окне.");
-            } catch (Exception e) { showStatus(DownloadService.safeMessage(e)); }
+            } catch (Exception e) { QueueStore.update(this,job.optString("id"),"installError",DownloadService.safeMessage(e)); showStatus(DownloadService.safeMessage(e)); }
             finally { busy = false; }
         });
     }

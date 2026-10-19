@@ -12,10 +12,12 @@ public final class DownloadService extends Service {
     static final AtomicBoolean RUNNING = new AtomicBoolean();
     private volatile Engine active;
     private volatile String activeId;
+    private volatile boolean stopping;
     private PowerManager.WakeLock wakeLock;
     static void start(Context c) { c.startForegroundService(new Intent(c, DownloadService.class)); }
     static void pause(Context c, String id) { c.startService(new Intent(c, DownloadService.class).setAction("pause").putExtra("id", id)); }
     @Override public IBinder onBind(Intent intent) { return null; }
+    @Override public void onCreate() { super.onCreate(); if (!RUNNING.get()) QueueStore.recover(this); }
     @Override public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null && "pause".equals(intent.getAction())) {
             String id = intent.getStringExtra("id");
@@ -25,10 +27,10 @@ public final class DownloadService extends Service {
             return START_NOT_STICKY;
         }
         notification("Готовлю загрузку");
-        if (!RUNNING.compareAndSet(false, true)) return START_NOT_STICKY;
+        if (!RUNNING.compareAndSet(false, true)) return START_REDELIVER_INTENT;
         wakeLock = ((PowerManager)getSystemService(POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "QCatalog:download");
         wakeLock.acquire(6 * 60 * 60 * 1000L);
-        new Thread(this::work, "qcatalog-download").start(); return START_NOT_STICKY;
+        new Thread(this::work, "qcatalog-download").start(); return START_REDELIVER_INTENT;
     }
     private void notification(String text) {
         NotificationManager manager = getSystemService(NotificationManager.class);
@@ -38,15 +40,14 @@ public final class DownloadService extends Service {
             .setContentTitle("QCatalog").setContentText(text).setContentIntent(open).setOngoing(true).build());
     }
     private void work() {
-        Set<String> attempted = new HashSet<>();
         try {
-            while (true) {
+            while (!stopping) {
                 JSONObject job = null;
                 for (JSONObject candidate : QueueStore.all(this)) {
-                    if ((candidate.optString("state").equals("queued") || candidate.optString("state").equals("needsData")) && !attempted.contains(candidate.optString("id"))) { job = candidate; break; }
+                    if (candidate.optString("state").equals("queued") || candidate.optString("state").equals("needsData")) { job = candidate; break; }
                 }
                 if (job == null) break;
-                activeId = job.getString("id"); attempted.add(activeId);
+                activeId = job.getString("id");
                 final String id = activeId;
                 if (job.optString("state").equals("needsData")) {
                     notification("Устанавливаю файлы данных: " + job.getString("name"));
@@ -67,13 +68,8 @@ public final class DownloadService extends Service {
                         if (QueueStore.get(this, id).optString("state").equals("paused")) throw new InterruptedIOException("Пауза.");
                         try {
                             String remote = mirror + ":Quest Games/" + release;
-                            JSONObject size = new JSONObject(active.run(Arrays.asList("size", remote, "--json"), null));
-                            long total = size.getLong("bytes");
-                            if (total < 1) throw new IOException("Сервер вернул пустой релиз.");
-                            long reserve = Math.addExact(Math.multiplyExact(total, 2), 512L * 1024 * 1024);
-                            if (dir.getUsableSpace() < reserve) throw new IOException("Нужно около " + (reserve / 1024 / 1024) + " МБ свободного места для загрузки и установки.");
-                            active.run(Arrays.asList("copy", remote, dir.getAbsolutePath(), "--stats", "1s", "--stats-log-level", "NOTICE", "--log-level", "NOTICE", "--transfers", "2"),
-                                message -> { if (!active.cancelled.get()) QueueStore.update(this, id, "downloading", message); });
+                            active.downloadRelease(remote,dir,
+                                message -> { if (!active.cancelled.get()) QueueStore.progress(this, id, message); });
                             downloaded = true; break;
                         } catch (InterruptedIOException e) { throw e; }
                         catch (Exception e) { last = e; if (e.getMessage() != null && e.getMessage().startsWith("Нужно около")) throw e; }
@@ -81,7 +77,10 @@ public final class DownloadService extends Service {
                     if (!downloaded) throw last == null ? new IOException("Не удалось скачать релиз.") : last;
                     Installer.Bundle bundle = Installer.inspect(this, job);
                     QueueStore.update(this, id, "downloaded", bundle.needsApproval(job) ? "Скачано. Имя пакета отличается от каталога — при установке покажу подробности." : "Скачано. Нажми «Установить» и подтверди системный запрос.");
-                } catch (InterruptedIOException e) { QueueStore.update(this, id, "paused", "Загрузка приостановлена; скачанные файлы сохранены."); }
+                } catch (InterruptedIOException e) {
+                    JSONObject current=QueueStore.get(this,id); boolean manual=current != null && current.optString("state").equals("paused");
+                    QueueStore.update(this,id,manual ? "paused" : "queued",manual ? "Загрузка приостановлена; позиция сохранена." : "Загрузка прервалась; продолжу с сохранённой позиции.");
+                }
                 catch (Exception e) { QueueStore.update(this, id, "error", safeMessage(e)); }
                 finally { active = null; activeId = null; }
             }
@@ -89,12 +88,18 @@ public final class DownloadService extends Service {
             if (activeId != null) QueueStore.update(this, activeId, "error", "Не удалось завершить задачу. Можно повторить.");
         } finally {
             if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
-            RUNNING.set(false); stopForeground(STOP_FOREGROUND_REMOVE); stopSelf();
+            new Handler(Looper.getMainLooper()).post(() -> {
+                RUNNING.set(false);
+                if (!stopping) for (JSONObject pending : QueueStore.all(this)) if (Arrays.asList("queued","needsData").contains(pending.optString("state"))) {
+                    start(this); return;
+                }
+                stopForeground(STOP_FOREGROUND_REMOVE); stopSelf();
+            });
         }
     }
     static String safeMessage(Exception e) {
         String message = e.getMessage(); if (message == null) return "Ошибка: " + e.getClass().getSimpleName();
         return message.replaceAll("https?://\\S+", "[адрес скрыт]");
     }
-    @Override public void onDestroy() { if (active != null) active.cancel(); super.onDestroy(); }
+    @Override public void onDestroy() { stopping=true; if (active != null) active.cancel(); super.onDestroy(); }
 }

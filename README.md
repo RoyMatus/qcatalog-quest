@@ -2,9 +2,9 @@
 
 Каталог QLoader прямо на шлеме: поиск, скачивание, установка APK и проверка обновлений.
 
-**[Скачать APK / Download APK](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.2.1-preview)** · [Issues](https://github.com/RoyMatus/qcatalog-quest/issues) · [Русский](#русский) · [English](#english)
+**[Скачать APK / Download APK](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.3.0-preview)** · [Issues](https://github.com/RoyMatus/qcatalog-quest/issues) · [Русский](#русский) · [English](#english)
 
-Версия / Version: **0.2.1-preview**. Проверено / Tested: **Quest 3S, ARM64, Android API 34**, 19 October 2026.
+Версия / Version: **0.3.0-preview**. Проверено / Tested: **Quest 3S, ARM64, Android API 34**, 19 October 2026.
 
 ## Русский
 
@@ -20,6 +20,7 @@ QCatalog — отдельное Android-приложение с обычным �
 
 - Поиск по названию, релизу и идентификатору приложения.
 - Загрузка на сам шлем, очередь, пауза и повторная попытка.
+- Восстановление очереди после запуска приложения или шлема и продолжение частично скачанного файла с сохранённой позиции.
 - Установка поддерживаемых APK с подтверждением в системном окне Android.
 - Фильтры «Все игры», «Установленные», «Есть обновления».
 - Сравнение установленного `versionCode` с числовым кодом версии в каталоге; кнопка «Обновить» для более нового релиза.
@@ -53,7 +54,7 @@ QCatalog — отдельное Android-приложение с обычным �
 - В Meta Horizon на телефоне выбери значок шлема → свой Quest → Headset Settings → Developer Mode и включи режим разработчика.
 - Для Windows установи [Oculus ADB Drivers](https://developers.meta.com/vr/downloads/package/oculus-adb-drivers/), если нужный драйвер ещё не установлен. Подробности и актуальные требования смотри в инструкции Meta.
 
-1. Скачай `QCatalog-0.2.1-preview.apk` из [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.2.1-preview).
+1. Скачай `QCatalog-0.3.0-preview.apk` из [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.3.0-preview).
 2. Подключи Quest по USB и разреши USB-отладку **внутри шлема**. Отображение «Внутреннего общего накопителя» в Проводнике означает доступ к файлам, но ещё не подтверждает разрешение отладки.
 3. В PowerShell, открытом в папке Platform Tools, проверь устройства:
 
@@ -64,7 +65,7 @@ QCatalog — отдельное Android-приложение с обычным �
 4. Найди именно свой Quest со статусом `device`. Если указано `unauthorized`, подтверди запрос в шлеме. В следующих командах замени `QUEST_SERIAL` на серийный номер своего Quest, а путь к APK — на путь скачанного файла:
 
    ```powershell
-   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.2.1-preview.apk'
+   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.3.0-preview.apk'
    ```
 
 5. Открой библиотеку приложений Quest → «Неизвестные источники» → **QCatalog**. Расположение фильтра зависит от версии интерфейса Quest.
@@ -111,7 +112,11 @@ QCatalog — отдельное Android-приложение с обычным �
 
 Если идентификатор пакета APK отличается от каталога, QCatalog покажет оба значения и запросит отдельное подтверждение. Оно действует только для конкретного файла с проверенным SHA-256. Несовпадение числового кода версии блокирует установку.
 
-Для обновлений нажми «Обновить» вверху, чтобы получить свежий каталог, затем выбери фильтр «Есть обновления». Карточка показывает установленную версию и версию каталога. Кнопка «Обновить» скачивает новый релиз, а сама установка по-прежнему требует системного подтверждения. Приложение не удаляет установленную игру для обхода несовпадающей подписи.
+Для обновлений нажми «Обновить» вверху, чтобы получить свежий каталог, затем выбери фильтр «Есть обновления». Карточка показывает установленную версию и версию каталога. Кнопка «Обновить» скачивает новый релиз, а сама установка по-прежнему требует системного подтверждения.
+
+Перед установкой QCatalog проверяет доступные сведения о подписи. При явно разных ключах установленного приложения и APK он объясняет конфликт заранее. История ротации сертификатов учитывается; окончательную совместимость решает Android. Ошибки установщика показываются как «Ошибка установки» с причиной, а не как «Готово к установке, код 5». Повторная попытка использует уже скачанный APK.
+
+Приложение не удаляет установленную игру автоматически. Для замены на сборку с другой подписью потребуется отдельно удалить старую версию; это может стереть сохранения и моды. Простое повторение установки или скачивания конфликт подписи не устраняет.
 
 Проверка версий работает и для игр, установленных другими способами, если совпадает идентификатор пакета. Название игры и дата релиза не используются для определения новизны. Если Android-пакет отличается, автоматическое сопоставление возможно только для ранее подтверждённого расхождения. Удаление истории это сопоставление не сбрасывает.
 
@@ -141,7 +146,8 @@ QCatalog — отдельное Android-приложение с обычным �
 - Подтверждены получение каталога, скачивание на Quest 3S и установка одного обычного APK через Android. Запуск самой установленной игры в рамках проверки не проверялся.
 - Релизы с несколькими APK, split APK или непустым `install.txt` не поддерживаются. Команды из загруженных текстовых файлов не выполняются.
 - Копирование OBB реализовано, но успешная установка OBB на Quest 3S **не подтверждена**. По [документации Android](https://developer.android.com/training/data-storage/manage-all-files), доступ ко всем файлам не отменяет ограничения чужих каталогов `Android/obb`. При отказе записи QCatalog отдельно сообщает, что APK установлен, а данные не завершены.
-- При продолжении rclone проверяет уже имеющиеся файлы; продолжение частично скачанного файла с прежнего байта не обещается.
+- Для загрузок, начатых в 0.3.0, позиция внутри файла сохраняется на диск. После повторного открытия QCatalog или загрузки шлема очередь продолжается автоматически; ручная «Пауза» сохраняется и сама не отменяется. Полностью скачанные файлы повторно не загружаются. При обычной паузе сохраняется принятый байт; при аварийном выключении используется последний надёжный checkpoint, записываемый примерно каждые 4 МиБ. Если параметры исходного неполного файла изменились, он загружается заново. Частичные файлы старых версий не имеют этих checkpoints и могут потребовать нового скачивания.
+- Автозапуск после включения зависит от системного события загрузки и доступности сети/разблокировки. После «Принудительно остановить» в настройках Android нужно снова открыть QCatalog. Сам шлем в ходе проверки не перезагружался, чтобы не прерывать пользовательскую очередь; обработчик события проверяется в отдельном тесте.
 - Это ARM64 preview-сборка с `debuggable=true`, не магазинный production-релиз. Отладочный доступ нужен, в частности, для помощника переноса настроек. Не предоставляй доступ ADB постороннему компьютеру.
 - Форматы и доступность серверов поставщика могут измениться. Все релизы каталога и другие модели Quest не проверены.
 - Форматирование описаний проверено на синтетических данных. Массовая загрузка описаний, переводов и изображений для подготовки релиза не выполнялась; показ живой карточки на шлеме отдельно не подтверждён.
@@ -165,7 +171,7 @@ QCatalog — отдельное Android-приложение с обычным �
 
 Если проверенный архив уже есть, используй `fetch-engine.ps1 -ArchivePath 'C:\Path\To\linux-arm64.tar'`. Если поставщик изменит архив, проверка хэша остановит извлечение. Не отключай её без проверки нового файла.
 
-Результат: `build/QCatalog-0.2.1-preview.apk`. Сборка проверяет подпись APK и запускает тесты каталога, безопасного удаления файлов и форматирования описаний. Исходники модифицированного бинарного движка поставщика в репозиторий не входят; этот движок не пересобирается из исходников.
+Результат: `build/QCatalog-0.3.0-preview.apk`. Сборка проверяет подпись APK и запускает тесты каталога, безопасного удаления файлов и форматирования описаний. Исходники модифицированного бинарного движка поставщика в репозиторий не входят; этот движок не пересобирается из исходников.
 
 Для обновления поверх установленного APK нужен тот же ключ подписи. `build.ps1` создаёт локальный `build/debug.keystore`, если его ещё нет. Сохрани свой ключ отдельно; он исключён из Git. Самостоятельная сборка с новым ключом не установится как обновление готового APK из Releases.
 
@@ -178,7 +184,7 @@ QCatalog — отдельное Android-приложение с обычным �
 
 Сценарий временно устанавливает тестовый пакет с тем же ключом и удаляет его после проверки. Он читает настоящий список установленных приложений, но проверяет удаление на отдельной временной папке; пользовательские загрузки не удаляет. Не запускай во время работы с QCatalog: instrumentation перезапускает процесс приложения. Описания и изображения тестом не запрашиваются.
 
-`test-storage.ps1` принимает те же параметры и проверяет шифрование ссылки и пустую ссылку при импорте файла в отдельном тестовом приложении. Он не останавливает основной QCatalog и не обращается к его данным.
+`test-storage.ps1` принимает те же параметры и проверяет шифрование ссылки и пустую ссылку при импорте файла в отдельном тестовом приложении. Он не останавливает основной QCatalog и не обращается к его данным. Дополнительные параметры `-PreviousApk` и `-IncomingApk` позволяют проверить подписи двух локальных APK относительно установленного приложения: ожидается, что первый конфликтует, а второй имеет совместимую подпись. Тест не устанавливает эти APK и удаляет временные копии вместе со своим тестовым пакетом.
 
 ### Участие и доступ к репозиторию
 
@@ -196,7 +202,7 @@ Anyone can install the same APK and supply **their own** compatible QLoader conf
 
 This is an independent experimental client, not an official Meta, QLoader or dipVR product. Compatibility has been checked with the dipVR / VR Games RUS distribution of QLoader 1.2.0. Other providers have not been verified. The current app interface is in Russian; the instructions below include the corresponding button labels.
 
-Features include catalogue search, download queue and pause, Android-confirmed APK installation, installed/update filters, comparison of actual installed version codes, separate download-file and history cleanup, and Russian summaries with covers loaded when a card is opened.
+Features include catalogue search, download queue and pause, durable byte-offset resume with automatic app/headset startup recovery, Android-confirmed APK installation, installed/update filters, comparison of actual installed version codes, separate download-file and history cleanup, and Russian summaries with covers loaded when a card is opened.
 
 ### 1. Obtain your configuration using the Telegram instructions
 
@@ -225,7 +231,7 @@ You need a Quest with Developer Mode enabled, a USB data cable, and Android SDK 
 - In the phone's Meta Horizon app, select the headset icon → your Quest → Headset Settings → Developer Mode, and enable it.
 - On Windows, install [Oculus ADB Drivers](https://developers.meta.com/vr/downloads/package/oculus-adb-drivers/) if not already installed. Refer to Meta's guide for the current requirements and details.
 
-1. Download `QCatalog-0.2.1-preview.apk` from [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.2.1-preview).
+1. Download `QCatalog-0.3.0-preview.apk` from [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.3.0-preview).
 2. Connect the Quest over USB and allow USB debugging **inside the headset**. Seeing the headset's shared storage in Windows Explorer does not mean USB debugging has been authorized.
 3. Open PowerShell in the Platform Tools directory and run:
 
@@ -236,7 +242,7 @@ You need a Quest with Developer Mode enabled, a USB data cable, and Android SDK 
 4. Identify your Quest with the `device` status. For `unauthorized`, accept the debugging prompt inside the headset. Replace `QUEST_SERIAL` below with your Quest's serial, and adjust the APK path:
 
    ```powershell
-   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.2.1-preview.apk'
+   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.3.0-preview.apk'
    ```
 
 5. Open the Quest app library → **Unknown Sources** → **QCatalog**. The filter's location depends on the Quest software version.
@@ -277,7 +283,11 @@ Copy your `FFA_config` to the headset's shared `Download` folder via USB. Open *
 
 If the APK's package identifier differs from the catalogue, QCatalog shows both and requires explicit confirmation tied to the SHA-256 of that exact APK. A different version code blocks installation.
 
-For updates, press the top **«Обновить» (Refresh)** button to retrieve the latest catalogue, then select **«Есть обновления» (Updates available)**. The card shows installed and catalogue versions. Its **«Обновить» (Update)** button downloads the new release; installing it still requires Android confirmation. QCatalog does not uninstall existing apps to work around a signature mismatch.
+For updates, press the top **«Обновить» (Refresh)** button to retrieve the latest catalogue, then select **«Есть обновления» (Updates available)**. The card shows installed and catalogue versions. Its **«Обновить» (Update)** button downloads the new release; installing it still requires Android confirmation.
+
+Before installation QCatalog checks available signing information. Clearly unrelated signing keys produce an explanation before opening the installer. Certificate rotation histories are considered; Android remains the final authority. Installer failures appear as **«Ошибка установки» (Installation error)** with the reason, instead of a misleading ready-to-install status and code 5. A retry reuses the downloaded APK.
+
+QCatalog does not automatically uninstall existing apps. Replacing an app with a differently signed build requires separately removing the old version, which may delete saves and mods. Simply retrying or downloading again does not resolve a signature mismatch.
 
 Installed versions come from Android, including games installed by other tools, when package identifiers match. Updates compare numeric `versionCode`, not release dates or marketing version strings. Previously confirmed package aliases survive history cleanup.
 
@@ -307,7 +317,8 @@ This version has **covers**, not screenshot galleries or trailers. No verified s
 - Catalogue retrieval, direct downloading and installation of one ordinary APK were verified on Quest 3S. The installed game's own runtime behavior was not tested.
 - Multiple APKs, split APK releases and non-empty `install.txt` scripts are unsupported. Downloaded script commands are never executed.
 - OBB copying is implemented but successful OBB installation on Quest 3S is **unverified**. [Android's all-files access](https://developer.android.com/training/data-storage/manage-all-files) does not remove restrictions on other apps' `Android/obb` directories. A data-copy failure is reported separately from APK installation.
-- Resume rechecks existing files; byte-offset resume of a partially downloaded file is not guaranteed.
+- Downloads started with 0.3.0 persist a byte checkpoint. Reopening QCatalog or receiving the headset boot event restores pending work automatically; a manual pause remains paused. Completed files are reused. Normal pause saves the received byte position; abrupt power loss resumes from the last durable checkpoint, written roughly every 4 MiB. A changed partial-file identity restarts that file. Older versions' partial files lack these checkpoints and may need downloading again.
+- Boot restart depends on Android delivering the boot event and network/unlock availability. After Android's Force stop action, reopen QCatalog first. The headset was not rebooted during validation to preserve the user's active queue; boot handling is tested in isolation.
 - This is an ARM64 preview with `debuggable=true`, not a production store build. Debug access is used by the provisioning helper. Do not authorize ADB access for an untrusted computer.
 - Provider formats and server availability can change. Compatibility with every catalogue release or other Quest models has not been established.
 - Description formatting was tested with synthetic content. No catalogue-wide translations or image downloads were performed for release preparation; live card rendering on the headset has not been separately verified.
@@ -329,7 +340,7 @@ Requirements: **Windows, PowerShell 7, JDK 21, Android SDK Build Tools 36.1.0, S
 
 Use `fetch-engine.ps1 -ArchivePath 'C:\Path\To\linux-arm64.tar'` for an existing archive. A changed provider archive fails the pinned hash check; review it before changing the expected hash.
 
-Output: `build/QCatalog-0.2.1-preview.apk`. The build verifies the APK signature and runs catalogue, download-containment/deletion and description-formatting tests. The provider's modified native engine source is not included or rebuilt here.
+Output: `build/QCatalog-0.3.0-preview.apk`. The build verifies the APK signature and runs catalogue, download-containment/deletion and description-formatting tests. The provider's modified native engine source is not included or rebuilt here.
 
 The build creates a local `build/debug.keystore` when absent. Keep your signing key privately: it is excluded from Git, and updates require the same key. Your own rebuild with a new key cannot update the APK distributed in Releases.
 
@@ -342,7 +353,7 @@ After building and installing the APK, connecting a config and fetching the cata
 
 This temporarily installs a test package with the same signing key and removes it afterwards. It reads actual installed versions, but tests file deletion using isolated fixtures and preserves user downloads/history. Run it only while idle: instrumentation restarts the app process. Tests do not request descriptions, translations or images.
 
-`test-storage.ps1` takes the same parameters and checks URL encryption and the empty URL used by file imports in a separate test app. It neither stops the real QCatalog app nor accesses its data.
+`test-storage.ps1` takes the same parameters and checks URL encryption and the empty URL used by file imports in a separate test app. It neither stops the real QCatalog app nor accesses its data. Optional `-PreviousApk` and `-IncomingApk` parameters check two local APKs against the installed app: the first is expected to conflict, and the second to have a compatible certificate. These APKs are not installed; the test package and its temporary copies are removed afterwards.
 
 ### Repository access and issues
 

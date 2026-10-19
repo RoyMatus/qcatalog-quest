@@ -1,5 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="ru.local.qcatalog.storagechecks">
     <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="32" />
-    <application android:label="QCatalog storage checks" android:debuggable="true" />
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <application android:label="QCatalog storage checks" android:debuggable="true" android:extractNativeLibs="true" android:usesCleartextTraffic="false" />
     <instrumentation android:name="ru.local.qcatalog.StorageChecks" android:targetPackage="ru.local.qcatalog.storagechecks" />
 </manifest>

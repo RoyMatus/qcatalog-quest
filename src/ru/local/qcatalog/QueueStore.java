@@ -7,6 +7,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 final class QueueStore {
+    private static final java.util.concurrent.atomic.AtomicBoolean RECOVERED = new java.util.concurrent.atomic.AtomicBoolean();
+    static void recover(Context c) { if (RECOVERED.compareAndSet(false,true)) interrupted(c); }
     static synchronized List<JSONObject> all(Context c) {
         List<JSONObject> result = new ArrayList<>(); File file = new File(c.getFilesDir(), "queue.json");
         if (!file.exists()) return result;
@@ -27,7 +29,7 @@ final class QueueStore {
         List<JSONObject> rows = all(c);
         for (JSONObject row : rows) if (row.optString("id").equals(game.id)) {
             if (Arrays.asList("downloading", "installing", "needsData").contains(row.optString("state"))) return;
-            if (row.optString("state").equals("downloaded") && !row.optBoolean("filesRemoved")) return;
+            if (Arrays.asList("downloaded","installError").contains(row.optString("state")) && !row.optBoolean("filesRemoved")) return;
             row.put("state", "queued").put("message", "В очереди").remove("filesRemoved"); write(c, rows); return;
         }
         rows.add(new JSONObject().put("id", game.id).put("name", game.name).put("release", game.release).put("pkg", game.pkg)
@@ -38,6 +40,10 @@ final class QueueStore {
         try { List<JSONObject> rows = all(c); for (JSONObject row : rows) if (row.optString("id").equals(id)) {
             row.put("state", state).put("message", message); break;
         } write(c, rows); } catch (Exception e) { throw new IllegalStateException("Не удалось сохранить очередь."); }
+    }
+    static synchronized void progress(Context c, String id, String message) {
+        JSONObject current=get(c,id);
+        if (current != null && current.optString("state").equals("downloading")) update(c,id,"downloading",message);
     }
     static synchronized void approvePackage(Context c, String id, String pkg, String sha256) throws Exception {
         if (!Catalog.safePackage(pkg) || !sha256.matches("[a-f0-9]{64}")) throw new IOException("Некорректные сведения APK.");
@@ -82,7 +88,7 @@ final class QueueStore {
     static synchronized void interrupted(Context c) {
         for (JSONObject row : all(c)) {
             String state = row.optString("state");
-            if (state.equals("downloading")) update(c, row.optString("id"), "paused", "Загрузка прервалась. Можно продолжить.");
+            if (state.equals("downloading")) update(c, row.optString("id"), "queued", "Продолжу с сохранённой позиции.");
             if (state.equals("installing")) {
                 try { android.content.pm.PackageInfo p = c.getPackageManager().getPackageInfo(installedPackage(row), 0);
                     if (p.getLongVersionCode() == row.optLong("version")) { update(c, row.optString("id"), "dataError", "APK установлен. Проверь файлы данных."); continue; }
@@ -106,6 +112,7 @@ final class QueueStore {
             case "paused": return "Пауза";
             case "downloaded": return "Готово к установке";
             case "installing": return "Установка APK";
+            case "installError": return "Ошибка установки";
             case "needsData": return "Установка данных";
             case "dataError": return "APK установлен, данные не завершены";
             case "installed": return "Установлено";

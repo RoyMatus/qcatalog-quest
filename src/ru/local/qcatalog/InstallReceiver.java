@@ -17,7 +17,7 @@ public final class InstallReceiver extends BroadcastReceiver {
             QueueStore.update(context, id, "needsData", "APK установлен. Устанавливаю файлы данных.");
             try { DownloadService.start(context); } catch (Exception ignored) { }
         } else {
-            QueueStore.update(context, id, "downloaded", "Установка не завершена. Код Android: " + status + ". Можно повторить.");
+            QueueStore.update(context, id, "installError", InstallChecks.failure(status,intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)));
         }
     }
 }

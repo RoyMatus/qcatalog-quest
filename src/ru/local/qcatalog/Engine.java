@@ -3,6 +3,7 @@ package ru.local.qcatalog;
 import android.content.Context;
 import android.util.Base64;
 import org.json.JSONObject;
+import org.json.JSONArray;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
@@ -68,6 +69,10 @@ final class Engine {
         return new String(runBytes(args,progress,24 * 1024 * 1024), StandardCharsets.UTF_8);
     }
     byte[] runBytes(List<String> args, Progress progress, int maxBytes) throws Exception {
+        ByteArrayOutputStream result = new ByteArrayOutputStream();
+        runTo(args,progress,result,maxBytes); return result.toByteArray();
+    }
+    long runTo(List<String> args, Progress progress, OutputStream output, long maxBytes) throws Exception {
         if (cancelled.get()) throw new InterruptedIOException("Загрузка приостановлена.");
         File binary = new File(context.getApplicationInfo().nativeLibraryDir, "librclone.so");
         if (!binary.isFile()) throw new IOException("Загрузчик ARM64 недоступен на этом устройстве.");
@@ -80,7 +85,7 @@ final class Engine {
         DnsTunnel tunnel = new DnsTunnel();
         for (String name : Arrays.asList("HTTP_PROXY","HTTPS_PROXY","http_proxy","https_proxy")) builder.environment().put(name,tunnel.proxyUrl());
         builder.environment().remove("NO_PROXY"); builder.environment().remove("no_proxy");
-        ByteArrayOutputStream stdout = new ByteArrayOutputStream(); final String[] failure = {""};
+        long received = 0; final String[] failure = {""};
         try { process = builder.start(); } catch (IOException e) { tunnel.close(); throw new IOException("Android не запустил загрузчик ARM64 (" + e.getClass().getSimpleName() + "). Нужна проверка совместимости."); }
         final Process active = process;
         if (cancelled.get()) active.destroyForcibly();
@@ -108,16 +113,69 @@ final class Engine {
         try (InputStream in = active.getInputStream()) {
             byte[] buf = new byte[16384]; int n;
             while ((n = in.read(buf)) != -1) {
-                if (stdout.size() + n > maxBytes) { active.destroyForcibly(); throw new IOException("Ответ загрузчика слишком большой."); }
-                stdout.write(buf, 0, n);
+                if (received > maxBytes - n) { active.destroyForcibly(); throw new IOException("Ответ загрузчика слишком большой."); }
+                output.write(buf, 0, n); received += n;
             }
             int result = active.waitFor(); errors.join(3000);
             if (cancelled.get()) throw new InterruptedIOException("Загрузка приостановлена.");
             if (result != 0) throw new IOException(failure[0].isEmpty() ? "Загрузчик завершился с кодом " + result + ". Проверь конфигурацию и соединение." : failure[0]);
-            return stdout.toByteArray();
+            return received;
         } finally { if (active.isAlive()) active.destroyForcibly(); process = null; tunnel.close(); }
     }
     void cancel() { cancelled.set(true); Process p = process; if (p != null) p.destroyForcibly(); }
+    void downloadRelease(String remote, File directory, Progress progress) throws Exception {
+        JSONArray listing = fileListing(run(Arrays.asList("lsjson",remote,"--recursive","--files-only"),null));
+        long total=0, present=0; Set<String> paths=new HashSet<>();
+        for (int i=0;i<listing.length();i++) {
+            JSONObject row=listing.getJSONObject(i); String path=row.getString("Path");
+            if (!paths.add(path) || row.optBoolean("IsDir")) throw new IOException("Некорректный список файлов релиза.");
+            long size=row.getLong("Size"); total=Math.addExact(total,size);
+            try (ResumeFile file=new ResumeFile(ResumeFile.resolve(directory,path),size,downloadIdentity(row))) { present=Math.addExact(present,file.position()); }
+        }
+        if (total < 1) throw new IOException("Сервер вернул пустой релиз.");
+        long required=Math.addExact(total-present,Math.addExact(total,512L*1024*1024));
+        if (directory.getUsableSpace() < required) throw new IOException("Нужно около " + required/1024/1024 + " МБ свободного места для продолжения и установки.");
+        long transferred=0;
+        for (int i=0;i<listing.length();i++) {
+            if (cancelled.get()) throw new InterruptedIOException("Загрузка приостановлена.");
+            JSONObject row=listing.getJSONObject(i); String path=row.getString("Path"); long size=row.getLong("Size");
+            try (ResumeFile file=new ResumeFile(ResumeFile.resolve(directory,path),size,downloadIdentity(row))) {
+                final long preceding=present+transferred, start=file.position(), began=android.os.SystemClock.elapsedRealtime(); final long[] last={0};
+                if (progress != null) progress.update(String.format(Locale.ROOT,"%.1f / %.1f ГБ · продолжение",preceding/1e9,total/1e9));
+                if (!file.isComplete() && start < size) {
+                    final long all=total;
+                    OutputStream sink=new OutputStream() {
+                        public void write(int value) throws IOException { write(new byte[]{(byte)value},0,1); }
+                        public void write(byte[] data,int offset,int count) throws IOException {
+                            file.write(data,offset,count); long now=android.os.SystemClock.elapsedRealtime();
+                            if (progress != null && now-last[0] >= 1000) {
+                                last[0]=now; double speed=(file.position()-start)*1000.0/Math.max(1,now-began)/1e6;
+                                progress.update(String.format(Locale.ROOT,"%.1f / %.1f ГБ · %.1f МБ/с",(preceding+file.position()-start)/1e9,all/1e9,speed));
+                            }
+                        }
+                    };
+                    runTo(Arrays.asList("cat",remote+"/"+path,"--offset",Long.toString(start),"--count",Long.toString(size-start)),null,sink,size-start);
+                }
+                file.finish(); transferred=Math.addExact(transferred,size-start);
+            }
+        }
+    }
+    static String downloadIdentity(JSONObject row) throws Exception {
+        return Catalog.digest(row.getString("Path")+"\n"+row.getLong("Size")+"\n"+row.optString("ModTime"));
+    }
+    static JSONArray fileListing(String raw) throws Exception {
+        JSONArray input=new JSONArray(raw), result=new JSONArray();
+        for (int i=0;i<input.length();i++) {
+            JSONObject row=input.getJSONObject(i);
+            if (row.has("Path")) result.put(row);
+            else {
+                // Verified lsjson field names in the pinned provider v1.63.1-DEV binary.
+                result.put(new JSONObject().put("Path",row.getString("QnwIpaORP")).put("Size",row.getLong("Ak_hFvq2"))
+                    .put("ModTime",row.optString("MhwB5G")).put("IsDir",row.optBoolean("YE8ZVuib23C")));
+            }
+        }
+        return result;
+    }
     List<String> mirrors() throws Exception {
         String out = run(Arrays.asList("listremotes"), null); List<String> mirrors = new ArrayList<>();
         for (String line : out.split("\\R")) if (line.trim().matches("FFA-\\d+:")) mirrors.add(line.trim().replace(":", ""));

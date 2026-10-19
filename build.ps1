@@ -39,12 +39,12 @@ if (!(Test-Path -LiteralPath $key)) {
     & "$JavaHome\bin\keytool.exe" -genkeypair -keystore $key -storepass android -keypass android -alias qcatalog -keyalg RSA -keysize 2048 -validity 10000 -dname 'CN=QCatalog Local Development' 2>&1 | ForEach-Object { $_.ToString() }
     Assert-Exit 'Local development key'
 }
-$apk = "$buildDir\QCatalog-0.2.1-preview.apk"
+$apk = "$buildDir\QCatalog-0.3.0-preview.apk"
 & "$toolsDir\apksigner.bat" sign --ks $key --ks-key-alias qcatalog --ks-pass pass:android --key-pass pass:android --out $apk "$buildDir\aligned.apk"
 Assert-Exit 'APK signing'
 & "$toolsDir\apksigner.bat" verify --verbose $apk
 Assert-Exit 'APK signature verification'
-& "$JavaHome\bin\javac.exe" -encoding UTF-8 --release 8 -d "$buildDir\tests" "$PSScriptRoot\src\ru\local\qcatalog\Catalog.java" "$PSScriptRoot\src\ru\local\qcatalog\DownloadFiles.java" "$PSScriptRoot\src\ru\local\qcatalog\DescriptionText.java" "$PSScriptRoot\tests\CatalogTest.java" "$PSScriptRoot\tests\DownloadFilesTest.java" "$PSScriptRoot\tests\DescriptionTextTest.java"
+& "$JavaHome\bin\javac.exe" -encoding UTF-8 --release 8 -d "$buildDir\tests" "$PSScriptRoot\src\ru\local\qcatalog\Catalog.java" "$PSScriptRoot\src\ru\local\qcatalog\DownloadFiles.java" "$PSScriptRoot\src\ru\local\qcatalog\DescriptionText.java" "$PSScriptRoot\src\ru\local\qcatalog\InstallChecks.java" "$PSScriptRoot\src\ru\local\qcatalog\ResumeFile.java" "$PSScriptRoot\tests\CatalogTest.java" "$PSScriptRoot\tests\DownloadFilesTest.java" "$PSScriptRoot\tests\DescriptionTextTest.java" "$PSScriptRoot\tests\InstallChecksTest.java" "$PSScriptRoot\tests\ResumeFileTest.java"
 Assert-Exit 'Parser test compilation'
 & "$JavaHome\bin\java.exe" -cp "$buildDir\tests" ru.local.qcatalog.CatalogTest
 Assert-Exit 'Parser tests'
@@ -52,5 +52,8 @@ Assert-Exit 'Parser tests'
 Assert-Exit 'Download cleanup tests'
 & "$JavaHome\bin\java.exe" -cp "$buildDir\tests" ru.local.qcatalog.DescriptionTextTest
 Assert-Exit 'Description formatting tests'
-Get-Item -LiteralPath $apk | Select-Object FullName,Length
-Get-FileHash -LiteralPath $apk -Algorithm SHA256 | Select-Object Hash
+& "$JavaHome\bin\java.exe" -cp "$buildDir\tests" ru.local.qcatalog.InstallChecksTest
+Assert-Exit 'Installation conflict tests'
+& "$JavaHome\bin\java.exe" "-Djava.io.tmpdir=$buildDir\tmp" -cp "$buildDir\tests" ru.local.qcatalog.ResumeFileTest
+Assert-Exit 'Durable resume tests'
+[pscustomobject]@{Apk=$apk;Bytes=(Get-Item -LiteralPath $apk).Length;SHA256=(Get-FileHash -LiteralPath $apk -Algorithm SHA256).Hash} | ConvertTo-Json -Compress
