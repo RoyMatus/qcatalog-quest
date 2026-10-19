@@ -1,0 +1,67 @@
+QCatalog — сведения о стороннем компоненте
+
+Third-party notices / Сведения о сторонних компонентах
+QCatalog's Java application code and the bundled native provider engine
+are separate components. The upstream rclone license below applies to rclone.
+It does not declare a license for the QCatalog application itself.
+
+В APK файл lib/arm64-v8a/librclone.so является неизменённым исполняемым
+файлом linux-arm64/rclone из публичной сборки поставщика QLoader:
+https://cloud.dipvr.ru/onlineinstall/files/linux-arm64.tar
+Публичный установочный сценарий, указывающий этот архив:
+https://cloud.dipvr.ru/onlineinstall/
+
+Получен 19 октября 2026 года; версия, сообщённая бинарным файлом:
+rclone v1.63.1-DEV.
+SHA-256 этого файла:
+E63F1CA56C27794A5AB7C0211E26BFFDACE8BCAA5A07EDC190D4FB38BA09816B
+
+Это модифицированная сборка поставщика. Архив исходников QCatalog
+содержит код приложения, созданный в этой задаче, а не полный исходный код
+этого стороннего бинарного файла. Он не был пересобран из исходников.
+Доступ к серверу обеспечивается конфигурацией самого пользователя.
+
+Исходный проект rclone:
+https://github.com/rclone/rclone
+Лицензия rclone v1.63.1:
+https://github.com/rclone/rclone/blob/v1.63.1/COPYING
+
+Native component: the unmodified linux-arm64/rclone executable from the
+provider archive linked above, packaged as lib/arm64-v8a/librclone.so.
+Reported version: rclone v1.63.1-DEV. Retrieved on 2026-10-19.
+The complete source of this provider-modified binary was not obtained;
+it is not included in this repository and was not rebuilt from source.
+
+Archive SHA-256 / SHA-256 архива linux-arm64.tar:
+7357E1DE1A8CE17159E50D850F79028901A4A19AC75AC7BBC7A15A2DBBE9F731
+
+Online services / Онлайн-сервисы
+- QLoader provider metadata and covers: cloud.dipvr.ru and the user's
+  configured catalogue mirrors. These assets are not bundled with QCatalog.
+- On-demand machine translation: MyMemory by Translated.
+  API: https://mymemory.translated.net/doc/spec.php
+  Limits: https://mymemory.translated.net/doc/usagelimits.php
+  No translation library or offline language model is bundled.
+- QLoader protocol reference: https://github.com/skrimix/QLoader
+
+Upstream rclone license follows / Лицензия исходного rclone:
+
+Copyright (C) 2012 by Nick Craig-Wood http://www.craig-wood.com/nick/
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.

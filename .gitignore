@@ -1,0 +1,12 @@
+build/
+local.properties
+*.keystore
+bootstrap.json
+FFA_config
+native/
+overrides.conf
+access.bin
+*.apk
+*.apk.idsig
+*.log
+.idea/

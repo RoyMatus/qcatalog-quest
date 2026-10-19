@@ -1,0 +1,5 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="ru.local.qcatalog.tests">
+    <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="32" />
+    <application android:label="QCatalog checks" android:debuggable="true" />
+    <instrumentation android:name="ru.local.qcatalog.QuestChecks" android:targetPackage="ru.local.qcatalog" />
+</manifest>
