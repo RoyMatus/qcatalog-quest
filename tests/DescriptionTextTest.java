@@ -10,6 +10,10 @@ public final class DescriptionTextTest {
         require(DescriptionText.hasRussianText("Игра с управлением движениями рук и заданиями для одного игрока."),"Russian text bypasses translation");
         require(!DescriptionText.hasRussianText("A rhythm game with fast moving targets."),"English text needs translation");
         require(DescriptionText.brief("Short text.",450).equals("Short text."),"Short text retained");
-        System.out.println("Description formatting tests passed (5 checks; no network requests)");
+        require(DescriptionText.preferred("English source.","Русское описание.").equals("Русское описание."),"Available Russian wins over English");
+        require(DescriptionText.preferred("English source.","").equals("English source."),"Unavailable translation shows English directly");
+        require(DescriptionText.preferred("English source.","  ").equals("English source."),"Empty translation cannot hide the source");
+        require(DescriptionText.preferred("","").isEmpty(),"Absent description stays empty without service notices");
+        System.out.println("Description formatting tests passed (9 checks; no network requests)");
     }
 }

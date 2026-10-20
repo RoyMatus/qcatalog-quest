@@ -2,9 +2,9 @@
 
 Каталог QLoader прямо на шлеме: поиск, скачивание, установка APK и проверка обновлений.
 
-**[Скачать APK / Download APK](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.5.2-preview)** · [Issues](https://github.com/RoyMatus/qcatalog-quest/issues) · [Русский](#русский) · [English](#english)
+**[Скачать APK / Download APK](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.5.3-preview)** · [Issues](https://github.com/RoyMatus/qcatalog-quest/issues) · [Русский](#русский) · [English](#english)
 
-Версия / Version: **0.5.2-preview**. Проверено / Tested: **Quest 3S, ARM64, Android API 34**, 20 October 2026.
+Версия / Version: **0.5.3-preview**. Проверено / Tested: **Quest 3S, ARM64, Android API 34**, 20 October 2026.
 
 [История изменений / Changelog](CHANGELOG.md)
 
@@ -35,7 +35,7 @@ QCatalog — отдельное Android-приложение с обычным �
 
 Используется [набор Cards v1](design/cards-v1/README.md). Основной каталог открывается развёрнутым в горизонтальном формате 1920 × 1080 dp; в сетке 5 колонок при ширине 1920 dp и 4 при 1280 dp. В узкой области боковое меню заменяется кнопкой «Разделы». Фон, текст, кнопки и диалоги следуют системной светлой/тёмной теме. Минимальная цель нажатия — 64 dp; кнопки действий выровнены и при нехватке места переходят в колонку.
 
-Окно сведений об игре узкое: максимум 720 dp, с уменьшением под доступную область. Карусель показывает один крупный кадр со счётчиком. По бокам — полупрозрачные стрелки без залитых полос; они появляются при наведении указателя или фокусе и скрываются после ухода. Изображения можно листать горизонтальным жестом. Нажатие на изображение или сам кадр видео увеличивает его почти на всю панель, повторное нажатие возвращает обратно. Отдельных кнопок увеличения, закрытия и подложки нет. Размер видео меняется с сохранением пропорций и текущего воспроизведения. Внизу видео — запуск/пауза, время, перемотка, выключение звука и громкость самого плеера. Видео запускается только кнопкой ▶; смена кадра или сворачивание приложения приостанавливает воспроизведение.
+Окно сведений об игре узкое: максимум 720 dp, с уменьшением под доступную область. Карусель показывает один крупный кадр без подписей и счётчика. По бокам — полупрозрачные стрелки без залитых полос; они появляются при наведении указателя или фокусе и скрываются после ухода. Изображения можно листать горизонтальным жестом. Нажатие на изображение или сам кадр видео увеличивает его почти на всю панель, повторное нажатие возвращает обратно. Отдельных кнопок увеличения, закрытия и подложки нет. Размер видео меняется с сохранением пропорций и текущего воспроизведения. Внизу видео — запуск/пауза, время, перемотка, выключение звука и громкость самого плеера. Видео запускается только кнопкой ▶; смена кадра или сворачивание приложения приостанавливает воспроизведение.
 
 Настройки подключения доступны через «Разделы → Настройки» или кнопку внизу бокового меню. Выбранная сортировка сохраняется; её статистика остаётся только в оперативной памяти. При недоступности рейтинга приложение явно переключается на А–Я; повторный выбор режима повторяет запрос. Личная история скачиваний в статистику не отправляется.
 
@@ -66,7 +66,7 @@ QCatalog — отдельное Android-приложение с обычным �
 - В Meta Horizon на телефоне выбери значок шлема → свой Quest → Headset Settings → Developer Mode и включи режим разработчика.
 - Для Windows установи [Oculus ADB Drivers](https://developers.meta.com/vr/downloads/package/oculus-adb-drivers/), если нужный драйвер ещё не установлен. Подробности и актуальные требования смотри в инструкции Meta.
 
-1. Скачай `QCatalog-0.5.2-preview.apk` из [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.5.2-preview).
+1. Скачай `QCatalog-0.5.3-preview.apk` из [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.5.3-preview).
 2. Подключи Quest по USB и разреши USB-отладку **внутри шлема**. Отображение «Внутреннего общего накопителя» в Проводнике означает доступ к файлам, но ещё не подтверждает разрешение отладки.
 3. В PowerShell, открытом в папке Platform Tools, проверь устройства:
 
@@ -77,7 +77,7 @@ QCatalog — отдельное Android-приложение с обычным �
 4. Найди именно свой Quest со статусом `device`. Если указано `unauthorized`, подтверди запрос в шлеме. В следующих командах замени `QUEST_SERIAL` на серийный номер своего Quest, а путь к APK — на путь скачанного файла:
 
    ```powershell
-   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.5.2-preview.apk'
+   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.5.3-preview.apk'
    ```
 
 5. Открой библиотеку приложений Quest → «Неизвестные источники» → **QCatalog**. Расположение фильтра зависит от версии интерфейса Quest.
@@ -151,11 +151,13 @@ QCatalog — отдельное Android-приложение с обычным �
 
 ### Описания, перевод и медиа
 
-Описание и ссылки карусели запрашиваются только при открытии игры. Короткое русское описание показывается напрямую; английский фрагмент переводится через [MyMemory](https://mymemory.translated.net/doc/spec.php). Полный исходный текст доступен по кнопке «Оригинал описания». Перевод может содержать ошибки; если сервис недоступен, остаётся оригинал.
+Описание и ссылки карусели запрашиваются только при открытии игры. Русский текст источника показывается напрямую. Английское описание появляется сразу после получения; короткий фрагмент переводится через [MyMemory](https://mymemory.translated.net/doc/spec.php) и при успехе заменяет оригинал. Если перевод недоступен или пуст, английский остаётся без сообщений об ошибке перевода. Отдельной кнопки описания нет. Описания сокращаются до краткого текста; перевод может содержать ошибки.
 
-MyMemory выбран как вариант без регистрации пользователя и ключа API. У анонимного доступа есть [лимит 5 000 символов в день на IP](https://mymemory.translated.net/doc/usagelimits.php). Официальный Google Cloud Translation — отдельный от бесплатного сайта Google Translate сервис: нужны проект, авторизация и включённый биллинг; для стандартного NMT-перевода первые 500 000 символов в месяц бесплатны, затем действует оплата. [Настройка Google](https://docs.cloud.google.com/translate/docs/setup), [тарифы](https://cloud.google.com/products/translate/pricing). Переключатель на Google в приложении не реализован.
+Проверка публичного API QLoader 20 октября 2026 года с запросом русского языка вернула английские описания Beat Saber, Star Wars: Tales from the Galaxy’s Edge, Gorilla Tag и Demeo. Это выборка, а не проверка всего каталога; поле языков игры не означает наличие описания на этих языках.
 
-Источники карусели: API QLoader, публичная страница Meta по идентификатору игры из QLoader, изображения в папке релиза и `.meta/videos/PACKAGE.mp4` на зеркале QLoader. Страница Meta позволяет получить свежие ссылки, когда ссылки из API устарели. Изображения и видео привязываются к выбранной игре, а не к рекомендациям магазина. У части игр медиа отсутствует, удалено или временно недоступно — приложение сообщает об этом.
+MyMemory выбран как вариант без регистрации пользователя и ключа API. У анонимного доступа есть [лимит 5 000 символов в день на IP](https://mymemory.translated.net/doc/usagelimits.php). Официальный Google Cloud Translation — отдельный от бесплатного сайта Google Translate сервис: нужны проект, авторизация и включённый биллинг; для стандартного NMT-перевода первые 500 000 символов в месяц бесплатны, затем действует оплата. [Настройка Google](https://docs.cloud.google.com/translate/docs/setup), [тарифы](https://cloud.google.com/products/translate/pricing). Переключатель на Google в приложении не реализован. MyMemory не заявляется лучшим по качеству. Проверенного бесплатного публичного API без ограничений не найдено. [LibreTranslate на собственном сервере](https://docs.libretranslate.com/guides/installation/) позволяет не задавать квоты символов и запросов, но требует работающего сервера и его ресурсов; к приложению такой сервер сейчас не подключён.
+
+Источники карусели: API QLoader, публичная страница Meta по идентификатору игры из QLoader, изображения в папке релиза и `.meta/videos/PACKAGE.mp4` на зеркале QLoader. Страница Meta позволяет получить свежие ссылки, когда ссылки из API устарели. Изображения и видео привязываются к выбранной игре, а не к рекомендациям магазина. У части игр медиа отсутствует, удалено или временно недоступно.
 
 Загружается только выбранное изображение; все скриншоты заранее не скачиваются. Видео читается после нажатия кнопки в ограниченный буфер RAM до 64 МиБ. Слишком большой или неподдерживаемый ролик выдаёт сообщение и не мешает установке игры. При закрытии окна запросы отменяются, плеер и буферы освобождаются.
 
@@ -191,7 +193,7 @@ MyMemory выбран как вариант без регистрации пол
 
 Если проверенный архив уже есть, используй `fetch-engine.ps1 -ArchivePath 'C:\Path\To\linux-arm64.tar'`. Если поставщик изменит архив, проверка хэша остановит извлечение. Не отключай её без проверки нового файла.
 
-Результат: `build/QCatalog-0.5.2-preview.apk`. Сборка проверяет подпись APK и запускает тесты каталога, безопасного удаления файлов и форматирования описаний. Исходники модифицированного бинарного движка поставщика в репозиторий не входят; этот движок не пересобирается из исходников.
+Результат: `build/QCatalog-0.5.3-preview.apk`. Сборка проверяет подпись APK и запускает тесты каталога, безопасного удаления файлов и форматирования описаний. Исходники модифицированного бинарного движка поставщика в репозиторий не входят; этот движок не пересобирается из исходников.
 
 Для обновления поверх установленного APK нужен тот же ключ подписи. `build.ps1` создаёт локальный `build/debug.keystore`, если его ещё нет. Сохрани свой ключ отдельно; он исключён из Git. Самостоятельная сборка с новым ключом не установится как обновление готового APK из Releases.
 
@@ -210,6 +212,7 @@ MyMemory выбран как вариант без регистрации пол
 
 ### Проверки текущей версии
 
+- 58 изолированных UI-проверок в 0.5.3: карусель без подписей и счётчика, сохранённые жесты, увеличение и управление. 9 проверок форматирования и выбора русского/английского описания без сети.
 - 67 изолированных UI-проверок в 0.5.2 на Quest 3S: карточки и темы, карусель и стрелки, увеличение/возврат по клику, отсутствие подложки и кнопки закрытия, громкость и выключение звука. На публичном видео проверены реальное увеличение, сохранение позиции и воспроизведения, возврат к исходному размеру, пауза и переключение кадра.
 - 72 изолированные проверки хранения/очереди/медиа и 36 проверок установленного приложения в 0.5.0 подтвердили настоящий скриншот, видео именно с настроенного зеркала QLoader, воспроизведение, паузу, перемотку, отсутствие новых файлов медиа и сохранность очереди.
 - Проверка скачанного Half-Life / XASH: 13 112 распакованных файлов, 4 368 536 271 байт, совпадение версии APK с каталогом. Эта проверка не устанавливала игру и не меняла её существующие данные.
@@ -251,7 +254,7 @@ This is an independent experimental client, not an official Meta, QLoader or dip
 
 The app uses [Cards v1 resources](design/cards-v1/README.md). The main catalogue opens expanded at 1920 × 1080 dp in landscape, with five columns at 1920 dp or four at 1280 dp. Narrow layouts use the labelled Sections menu. System light/dark settings control surfaces, text, buttons and dialogs. Targets are at least 64 dp; action buttons align and stack when space is insufficient.
 
-The game-details dialog is narrow: up to 720 dp, constrained by the available panel. The carousel displays one large frame with a counter. Translucent edge chevrons have no filled side panels; hover or focus reveals them, and leaving hides them. Images support horizontal swipes. Click an image or the video picture to expand it to near-panel size; click again to return. There are no separate enlarge/close buttons or backdrop. Video keeps its aspect ratio and playback position while resizing. Bottom controls provide play/pause, elapsed time, seeking, mute and player volume. Video starts only after pressing ▶ and pauses when changing frames or backgrounding the app.
+The game-details dialog is narrow: up to 720 dp, constrained by the available panel. The carousel displays one large frame without captions or counters. Translucent edge chevrons have no filled side panels; hover or focus reveals them, and leaving hides them. Images support horizontal swipes. Click an image or the video picture to expand it to near-panel size; click again to return. There are no separate enlarge/close buttons or backdrop. Video keeps its aspect ratio and playback position while resizing. Bottom controls provide play/pause, elapsed time, seeking, mute and player volume. Video starts only after pressing ▶ and pauses when changing frames or backgrounding the app.
 
 Connection settings are under Sections → Settings or the sidebar Settings button. Only the selected sorting mode persists; statistics stay in RAM. Service failures explicitly fall back to A–Z, and reselecting a mode retries the request. No personal download reports are sent.
 
@@ -282,7 +285,7 @@ You need a Quest with Developer Mode enabled, a USB data cable, and Android SDK 
 - In the phone's Meta Horizon app, select the headset icon → your Quest → Headset Settings → Developer Mode, and enable it.
 - On Windows, install [Oculus ADB Drivers](https://developers.meta.com/vr/downloads/package/oculus-adb-drivers/) if not already installed. Refer to Meta's guide for the current requirements and details.
 
-1. Download `QCatalog-0.5.2-preview.apk` from [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.5.2-preview).
+1. Download `QCatalog-0.5.3-preview.apk` from [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.5.3-preview).
 2. Connect the Quest over USB and allow USB debugging **inside the headset**. Seeing the headset's shared storage in Windows Explorer does not mean USB debugging has been authorized.
 3. Open PowerShell in the Platform Tools directory and run:
 
@@ -293,7 +296,7 @@ You need a Quest with Developer Mode enabled, a USB data cable, and Android SDK 
 4. Identify your Quest with the `device` status. For `unauthorized`, accept the debugging prompt inside the headset. Replace `QUEST_SERIAL` below with your Quest's serial, and adjust the APK path:
 
    ```powershell
-   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.5.2-preview.apk'
+   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.5.3-preview.apk'
    ```
 
 5. Open the Quest app library → **Unknown Sources** → **QCatalog**. The filter's location depends on the Quest software version.
@@ -361,11 +364,13 @@ For one item, open it → **«Ещё» (More)** → select the action. Cleanup a
 
 ### Descriptions, translation and media
 
-Descriptions and carousel references load only when opening a game. Russian source text is shortened directly; English fragments are translated on demand using [MyMemory](https://mymemory.translated.net/doc/spec.php). **«Оригинал описания» (Original description)** retains the full source. Machine translation can be inaccurate; the original remains available on service failure.
+Descriptions and carousel references load only when opening a game. Russian source text is displayed directly. English text appears as soon as fetched; a short fragment is translated using [MyMemory](https://mymemory.translated.net/doc/spec.php) and replaces the source on success. An unavailable or empty translation leaves English visible without translation-error notices. There is no separate description button. Text is shortened; machine translation can be inaccurate.
 
-MyMemory is the keyless option, with an anonymous [5,000-character daily allowance per IP](https://mymemory.translated.net/doc/usagelimits.php). Google Cloud Translation is separate from the free consumer Translate website: it requires a project, authentication and billing; standard NMT has a 500,000-character monthly free allowance followed by usage charges. [Google setup](https://docs.cloud.google.com/translate/docs/setup), [pricing](https://cloud.google.com/products/translate/pricing). The app does not currently offer a Google provider switch.
+A public QLoader API sample on 20 October 2026 returned English descriptions for Beat Saber, Star Wars: Tales from the Galaxy’s Edge, Gorilla Tag and Demeo despite requesting Russian. This does not establish the language of the entire catalogue; supported game languages do not imply localized descriptions.
 
-Carousel sources are the QLoader API, the public Meta page identified by QLoader, images in the release directory and the mirror's `.meta/videos/PACKAGE.mp4`. The Meta page supplies fresh links when API links expire. Structured references are scoped to the chosen game, excluding store recommendations. Missing, delisted or unavailable media is reported explicitly.
+MyMemory is the keyless option, with an anonymous [5,000-character daily allowance per IP](https://mymemory.translated.net/doc/usagelimits.php). Google Cloud Translation is separate from the free consumer Translate website: it requires a project, authentication and billing; standard NMT has a 500,000-character monthly free allowance followed by usage charges. [Google setup](https://docs.cloud.google.com/translate/docs/setup), [pricing](https://cloud.google.com/products/translate/pricing). The app does not currently offer a Google provider switch. MyMemory is not claimed to offer the best quality. No verified free, unlimited public API was found. [Self-hosted LibreTranslate](https://docs.libretranslate.com/guides/installation/) can run without character/request quotas, but requires an operating server and its resources; no such server is currently connected to this app.
+
+Carousel sources are the QLoader API, the public Meta page identified by QLoader, images in the release directory and the mirror's `.meta/videos/PACKAGE.mp4`. The Meta page supplies fresh links when API links expire. Structured references are scoped to the chosen game, excluding store recommendations. Media can be missing, delisted or temporarily unavailable.
 
 Only the selected image loads; screenshots are not prefetched as a set. Video loads after a button press into a bounded RAM buffer of up to 64 MiB. Unsupported/oversized videos do not block game installation. Closing details cancels requests and releases player and buffers.
 
@@ -399,7 +404,7 @@ Requirements: **Windows, PowerShell 7, JDK 21, Android SDK Build Tools 36.1.0, S
 
 Use `fetch-engine.ps1 -ArchivePath 'C:\Path\To\linux-arm64.tar'` for an existing archive. A changed provider archive fails the pinned hash check; review it before changing the expected hash.
 
-Output: `build/QCatalog-0.5.2-preview.apk`. The build verifies the APK signature and runs catalogue, download-containment/deletion and description-formatting tests. The provider's modified native engine source is not included or rebuilt here.
+Output: `build/QCatalog-0.5.3-preview.apk`. The build verifies the APK signature and runs catalogue, download-containment/deletion and description-formatting tests. The provider's modified native engine source is not included or rebuilt here.
 
 The build creates a local `build/debug.keystore` when absent. Keep your signing key privately: it is excluded from Git, and updates require the same key. Your own rebuild with a new key cannot update the APK distributed in Releases.
 
@@ -418,6 +423,7 @@ The build runs `fetch-dependencies.ps1`; its first run requires network/Maven Ce
 
 ### Current validation
 
+- 58 isolated UI checks in 0.5.3 verify the caption/counter-free carousel, retained gestures, expansion and controls. Nine offline description checks cover formatting and Russian/English selection.
 - 67 isolated UI checks in 0.5.2 on Quest 3S cover cards/themes, carousel/arrows, click-to-expand/restore without a backdrop or close button, volume and mute. A public video verifies actual enlargement, retained playback/position, restored compact size, pause and frame switching.
 - 72 isolated storage/queue/media checks and 36 installed-app checks in 0.5.0 verified a real screenshot and configured-mirror video, playback, pause, seeking, no added media files and unchanged queue.
 - An existing Half-Life / XASH release expanded into 13,112 files (4,368,536,271 bytes), with a matching APK catalogue version. Validation did not install the game or change existing game data.

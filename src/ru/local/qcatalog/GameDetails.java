@@ -49,6 +49,9 @@ final class GameDetails implements AutoCloseable {
         return pkg.replaceFirst("^(mr|mrf)\\.", "").replaceFirst("\\.jjb$", "");
     }
     Info description(String pkg) throws Exception {
+        return description(pkg,info -> {});
+    }
+    Info description(String pkg,java.util.function.Consumer<Info> originalReady) throws Exception {
         pkg = originalPackage(pkg); if (!Catalog.safePackage(pkg)) throw new IOException("Некорректное имя приложения.");
         Info result = new Info();
         JSONObject json;
@@ -62,6 +65,8 @@ final class GameDetails implements AutoCloseable {
         if (DescriptionText.hasRussianText(result.original)) {
             result.russian = DescriptionText.brief(result.original,1500); result.note = "Описание из QLoader"; return result;
         }
+        // Display the source immediately; translation must not delay a readable description.
+        originalReady.accept(result);
         // Anonymous documented API; only a short public description is sent, never QLoader access data.
         String brief = DescriptionText.brief(result.original,450);
         try {

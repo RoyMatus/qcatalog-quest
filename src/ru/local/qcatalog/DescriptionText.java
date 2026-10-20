@@ -5,6 +5,9 @@ import java.text.BreakIterator;
 import java.util.Locale;
 
 final class DescriptionText {
+    static String preferred(String original, String russian) {
+        return brief(russian.trim().isEmpty() ? original : russian,1500);
+    }
     static String plain(String value) {
         return value.replaceAll("(?is)<(script|style)[^>]*>.*?</\\1>", " ")
             .replaceAll("(?i)<br\\s*/?>|</p>", "\n").replaceAll("<[^>]*>", "")

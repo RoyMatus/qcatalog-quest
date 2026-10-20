@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.3-preview — 2026-10-20
+
+- Убраны счётчик кадров, подписи карусели, кнопка оригинала описания и служебные сообщения о переводе.
+- Английский оригинал показывается сразу после загрузки; русский перевод заменяет его при успехе. При сбое или пустом переводе остаётся английский.
+- Removed carousel counters/captions, the original-description button and translation-status messages. English appears immediately and is replaced by Russian when available; failures retain English.
+- RU/EN README documents the sampled catalogue languages and the limits of hosted translation options. MyMemory remains the keyless provider; no claim of unlimited service or best translation quality.
+- Validation: 58 isolated UI checks on Quest 3S; 9 offline description formatting/language-selection checks; existing build suites passed.
+
 ## 0.5.2-preview — 2026-10-20
 
 - Клик по изображению или кадру видео увеличивает его; повторный клик возвращает. Убраны отдельные кнопки увеличения, закрытия и подложка просмотра.

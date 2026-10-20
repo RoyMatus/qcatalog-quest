@@ -198,9 +198,8 @@ public final class MainActivity extends Activity {
         layout.addView(text(versionText,16,MINT));
         String pkg = installed == null ? game.pkg : installed.metadataPackage(game.pkg);
         MediaCarousel gallery=new MediaCarousel(this,pkg);openCarousels.add(gallery);layout.addView(gallery);
-        TextView description = text("Загружаю описание…",19,Color.WHITE); description.setPadding(0,dp(12),0,dp(8)); layout.addView(description);
-        TextView attribution = text("Описание и медиа загружаются при открытии карточки.",13,MUTED); layout.addView(attribution);
-        Button original = button("Оригинал описания"); original.setVisibility(View.GONE); layout.addView(original);
+        TextView description = text("",19,getColor(R.color.qc_text)); description.setPadding(0,dp(12),0,dp(8)); layout.addView(description);
+        TextView developer = text("",13,MUTED); developer.setVisibility(View.GONE); layout.addView(developer);
         TextView release = text(game.release,13,MUTED); release.setPadding(0,dp(12),0,0); layout.addView(release);
         ScrollView scroll = new ScrollView(this); scroll.addView(layout);
         AlertDialog.Builder builder = new AlertDialog.Builder(this).setTitle(game.name).setView(scroll).setNegativeButton("Закрыть",null);
@@ -208,23 +207,25 @@ public final class MainActivity extends Activity {
         else { builder.setPositiveButton("Открыть",(d,w) -> launch(current.pkg)); builder.setNeutralButton("Скачать APK",(d,w) -> enqueue(game)); }
         AlertDialog dialog = builder.create(); Cards.dialog(dialog);
         gallery.setHostDialog(dialog);GameDetails session = new GameDetails(this); openDetails.add(session);
-        dialog.setOnDismissListener(d -> { session.close(); openDetails.remove(session); gallery.close();openCarousels.remove(gallery); description.setText(""); original.setOnClickListener(null); }); dialog.show();
+        dialog.setOnDismissListener(d -> { session.close(); openDetails.remove(session); gallery.close();openCarousels.remove(gallery); description.setText(""); }); dialog.show();
         Cards.sizeGameDialog(this,dialog);
         detailIo.execute(() -> {
             try {
-                GameDetails.Info info = session.description(pkg);
-                runOnUiThread(() -> {
-                    if (!dialog.isShowing() || isDestroyed()) return;
-                    description.setText(info.russian.isEmpty() ? info.note : info.russian);
-                    attribution.setText((info.russian.isEmpty() ? "Источник: QLoader" : info.note) + (info.developer.isEmpty() ? "" : "\nРазработчик: " + info.developer));
-                    if (!info.original.isEmpty()) { original.setVisibility(View.VISIBLE); original.setOnClickListener(v -> new AlertDialog.Builder(this).setTitle("Оригинал из QLoader").setMessage(info.original).setPositiveButton("Закрыть",null).show()); }
-                });
-            } catch (Exception e) { runOnUiThread(() -> { if (dialog.isShowing() && !isDestroyed()) description.setText("Не удалось загрузить описание. Открой карточку позже."); }); }
+                java.util.function.Consumer<GameDetails.Info> render = info -> {
+                    String content=DescriptionText.preferred(info.original,info.russian),author=info.developer;
+                    runOnUiThread(() -> {
+                        if (!dialog.isShowing() || isDestroyed()) return;
+                        description.setText(content);
+                        developer.setText(author.isEmpty()?"":"Разработчик: "+author);developer.setVisibility(author.isEmpty()?View.GONE:View.VISIBLE);
+                    });
+                };
+                render.accept(session.description(pkg,render));
+            } catch (Exception ignored) { /* Keep an already loaded source on network failure. */ }
         });
         detailIo.execute(() -> {
             try { MediaInfo info=session.media(game,pkg);
                 runOnUiThread(() -> { if(dialog.isShowing()&&!isDestroyed())gallery.configure(info); });
-            }catch(Exception ignored){runOnUiThread(()->{if(dialog.isShowing())gallery.origin.setText("Карусель временно недоступна. Открой карточку позже.");});}
+            }catch(Exception ignored){}
         });
     }
     private void enqueue(Catalog.Game game) {

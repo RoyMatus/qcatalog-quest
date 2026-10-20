@@ -95,7 +95,8 @@ public final class UiChecks extends Instrumentation {
             require(carousel[0].video.play.isEnabled()&&carousel[0].video.play.getContentDescription().toString().equals("Воспроизвести"),"Video never autoplays when selecting its frame");
             carousel[0].select(0);require(carousel[0].video.getVisibility()==View.GONE,"Returning to cover hides the video frame");
             android.view.MotionEvent down=android.view.MotionEvent.obtain(1,1,android.view.MotionEvent.ACTION_DOWN,Cards.dp(activity,200),Cards.dp(activity,100),0),up=android.view.MotionEvent.obtain(1,2,android.view.MotionEvent.ACTION_UP,Cards.dp(activity,20),Cards.dp(activity,100),0);
-            carousel[0].image.dispatchTouchEvent(down);carousel[0].image.dispatchTouchEvent(up);down.recycle();up.recycle();require(carousel[0].label.getText().toString().startsWith("Скриншот 1"),"Horizontal swipe advances the carousel");carousel[0].select(0);
+            carousel[0].image.dispatchTouchEvent(down);carousel[0].image.dispatchTouchEvent(up);down.recycle();up.recycle();require((Integer)field(carousel[0],"position")==1,"Horizontal swipe advances the carousel");carousel[0].select(0);
+            require(carousel[0].getChildCount()==1&&carousel[0].getChildAt(0)==carousel[0].frame,"Carousel has only media, without frame counters or source captions");
         });settle();runOnMainSync(()->{try{
             require(mediaDialog[0].getWindow().getDecorView().getWidth()<=Cards.dp(activity,720),"Game details return to a narrow 720 dp maximum width");
             require(carousel[0].next.getHeight()==carousel[0].image.getHeight()&&carousel[0].previous.getHeight()==carousel[0].image.getHeight(),"Side arrows match the full image height");
