@@ -1,0 +1,8 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="ru.local.qcatalog.networkchecks">
+ <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="32"/>
+ <uses-permission android:name="android.permission.INTERNET"/><uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+ <application android:label="QCatalog network checks" android:theme="@style/QCatalogTheme" android:debuggable="true" android:allowBackup="false">
+  <activity android:name="ru.local.qcatalog.NetworkApkActivity" android:exported="false" android:screenOrientation="landscape"><layout android:defaultWidth="1280dp" android:defaultHeight="900dp"/></activity>
+ </application>
+ <instrumentation android:name="ru.local.qcatalog.NetworkChecks" android:targetPackage="ru.local.qcatalog.networkchecks"/>
+</manifest>

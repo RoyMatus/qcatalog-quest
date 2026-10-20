@@ -1,4 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="ru.local.qcatalog" android:versionCode="17" android:versionName="0.5.6-preview">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="ru.local.qcatalog" android:versionCode="18" android:versionName="0.6.0-preview">
     <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="32" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -15,6 +15,7 @@
             <layout android:defaultWidth="1920dp" android:defaultHeight="1080dp" android:gravity="center" />
             <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
         </activity>
+        <activity android:name=".NetworkApkActivity" android:exported="false" android:screenOrientation="landscape" android:resizeableActivity="false"><layout android:defaultWidth="1280dp" android:defaultHeight="900dp" android:gravity="center" /></activity>
         <service android:name=".DownloadService" android:exported="false" android:foregroundServiceType="dataSync" />
         <receiver android:name=".InstallReceiver" android:exported="false" />
         <receiver android:name=".BootReceiver" android:exported="true">

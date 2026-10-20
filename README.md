@@ -2,9 +2,9 @@
 
 Каталог QLoader прямо на шлеме: поиск, скачивание, установка APK и проверка обновлений.
 
-**[Скачать APK / Download APK](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.5.6-preview)** · [Issues](https://github.com/RoyMatus/qcatalog-quest/issues) · [Русский](#русский) · [English](#english)
+**[Скачать APK / Download APK](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.6.0-preview)** · [Issues](https://github.com/RoyMatus/qcatalog-quest/issues) · [Русский](#русский) · [English](#english)
 
-Версия / Version: **0.5.6-preview**. Проверено / Tested: **Quest 3S, ARM64, Android API 34**, 20 October 2026.
+Версия / Version: **0.6.0-preview**. Проверено / Tested: **Quest 3S, ARM64, Android API 34**, 20 October 2026.
 
 [История изменений / Changelog](CHANGELOG.md)
 
@@ -35,7 +35,7 @@ QCatalog — отдельное Android-приложение с обычным �
 
 Используется [набор Cards v1](design/cards-v1/README.md). Основной каталог открывается развёрнутым в горизонтальном формате 1920 × 1080 dp; в сетке 5 колонок при ширине 1920 dp и 4 при 1280 dp. В узкой области боковое меню заменяется кнопкой «Разделы». Фон, текст, кнопки и диалоги следуют системной светлой/тёмной теме. Минимальная цель нажатия — 64 dp; кнопки действий выровнены и при нехватке места переходят в колонку.
 
-Окно сведений об игре узкое: максимум 720 dp, с уменьшением под доступную область. Карусель показывает один крупный кадр без подписей и счётчика. По бокам — полупрозрачные стрелки без залитых полос; они появляются при наведении указателя или фокусе и скрываются после ухода. Изображения можно листать горизонтальным жестом. Стик влево/вправо переключает кадр сразу в увеличенном просмотре, а также в карточке, когда указатель наведён на медиа. При удержании переключение повторяется раз в секунду. Horizon OS передаёт Touch-стики как горизонтальную прокрутку ACTION_SCROLL / AXIS_HSCROLL; события обычных геймпадов также поддерживаются. Возврат стика в центр, потеря фокуса, сворачивание приложения или выход из увеличенного просмотра прекращают повтор. Нажатие на изображение или сам кадр видео увеличивает его почти на всю панель, повторное нажатие возвращает обратно. Отдельных кнопок увеличения, закрытия и подложки нет. Размер видео меняется с сохранением пропорций и текущего воспроизведения. Внизу видео — запуск/пауза, время, перемотка, выключение звука и громкость самого плеера. Видео запускается только кнопкой ▶; смена кадра или сворачивание приложения приостанавливает воспроизведение.
+Окно сведений об игре узкое: максимум 720 dp, с уменьшением под доступную область. Карусель показывает один крупный кадр без подписей и счётчика. По бокам — полупрозрачные стрелки без залитых полос; они появляются при наведении указателя или фокусе и скрываются после ухода. Изображения можно листать горизонтальным жестом. Стик влево/вправо переключает кадр сразу в увеличенном просмотре, а также в карточке, когда указатель наведён на медиа. Каждое отдельное отклонение переключает кадр сразу; интервал в секунду действует только при непрерывном удержании. Horizon OS передаёт Touch-стики как горизонтальную прокрутку ACTION_SCROLL / AXIS_HSCROLL; события обычных геймпадов также поддерживаются. Возврат стика в центр, потеря фокуса, сворачивание приложения или выход из увеличенного просмотра прекращают повтор. Нажатие на изображение или сам кадр видео увеличивает его почти на всю панель, повторное нажатие возвращает обратно. Отдельных кнопок увеличения, закрытия и подложки нет. Размер видео меняется с сохранением пропорций и текущего воспроизведения. Внизу видео — запуск/пауза, время, перемотка, выключение звука и громкость самого плеера. Видео запускается только кнопкой ▶; смена кадра или сворачивание приложения приостанавливает воспроизведение.
 
 Настройки подключения доступны через «Разделы → Настройки» или кнопку внизу бокового меню. Выбранная сортировка сохраняется; её статистика остаётся только в оперативной памяти. При недоступности рейтинга приложение явно переключается на А–Я; повторный выбор режима повторяет запрос. Личная история скачиваний в статистику не отправляется.
 
@@ -66,7 +66,7 @@ QCatalog — отдельное Android-приложение с обычным �
 - В Meta Horizon на телефоне выбери значок шлема → свой Quest → Headset Settings → Developer Mode и включи режим разработчика.
 - Для Windows установи [Oculus ADB Drivers](https://developers.meta.com/vr/downloads/package/oculus-adb-drivers/), если нужный драйвер ещё не установлен. Подробности и актуальные требования смотри в инструкции Meta.
 
-1. Скачай `QCatalog-0.5.6-preview.apk` из [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.5.6-preview).
+1. Скачай `QCatalog-0.6.0-preview.apk` из [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.6.0-preview).
 2. Подключи Quest по USB и разреши USB-отладку **внутри шлема**. Отображение «Внутреннего общего накопителя» в Проводнике означает доступ к файлам, но ещё не подтверждает разрешение отладки.
 3. В PowerShell, открытом в папке Platform Tools, проверь устройства:
 
@@ -77,7 +77,7 @@ QCatalog — отдельное Android-приложение с обычным �
 4. Найди именно свой Quest со статусом `device`. Если указано `unauthorized`, подтверди запрос в шлеме. В следующих командах замени `QUEST_SERIAL` на серийный номер своего Quest, а путь к APK — на путь скачанного файла:
 
    ```powershell
-   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.5.6-preview.apk'
+   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.6.0-preview.apk'
    ```
 
 5. Открой библиотеку приложений Quest → «Неизвестные источники» → **QCatalog**. Расположение фильтра зависит от версии интерфейса Quest.
@@ -149,6 +149,17 @@ QCatalog — отдельное Android-приложение с обычным �
 
 Для одной загрузки: запись → «Ещё» → нужное действие. Перед удалением появляется подтверждение. Общая очистка находит и файлы релизов, записи которых уже удалены из истории. Во время активных загрузок и установок очистка блокируется. После новой успешной установки/обновления установочные файлы автоматически удаляются, а задача исчезает из активных загрузок. Ошибка установки сохраняет файлы; ошибка очистки допускает отдельный повтор. Старые завершённые записи автоматически не очищаются.
 
+### Установка APK с компьютера по сети
+
+Нажми **«APK с компьютера»** слева или **Настройки → Установить APK с компьютера**. Выбери найденный компьютер либо введи его имя, локальный IPv4-адрес или путь `\\компьютер\папка`. Затем выбери общую папку, вложенную папку и APK.
+
+Для защищённой папки введи имя пользователя Windows (при необходимости `КОМПЬЮТЕР\пользователь` или `ДОМЕН\пользователь`) и пароль. PIN Windows Hello не подходит. Пустой логин означает гостевой доступ, если он разрешён на компьютере. Пароль хранится только в памяти соединения; поле сразу очищается после подключения, буфер пароля очищается при закрытии.
+
+APK копируется на шлем с прогрессом и возможностью отмены, затем проходит обычную проверку пакета, версии и совместимости подписи и передаётся системному установщику. Подтверди установку в окне Android. После успешной установки действуют обычные правила очистки загрузок. Для сетевых APK версия читается из самого файла, а не из каталога QLoader.
+
+Компьютер и шлем должны находиться в одной локальной сети; общей папке нужно разрешение чтения. Если автопоиск ничего не нашёл, попробуй адрес вручную и проверь настройки общего доступа/брандмауэра компьютера. Поддерживаются SMB2/SMB3; доступ к файлам компьютера только на чтение. Автопоиск проверяет ближайший диапазон IPv4; компьютеры в других сегментах можно указать вручную. Для нестандартного порта допустим `имя:порт`.
+
+Списки сетевых папок и реквизиты не записываются на диск. APK относится к установочным загрузкам и сохраняется для установки/повтора. Отменённая передача удаляет свой неполный файл; сетевой импорт после прерывания нужно выбрать заново, автоматическая докачка QLoader к нему не относится. Split-комплекты и дополнительные OBB из сетевой папки этим выбором не импортируются.
 ### Описания, перевод и медиа
 
 Описание и ссылки карусели запрашиваются только при открытии игры. Русский текст источника показывается напрямую. Английское описание появляется сразу после получения; короткий фрагмент переводится через [MyMemory](https://mymemory.translated.net/doc/spec.php) и при успехе заменяет оригинал. Если перевод недоступен или пуст, английский остаётся без сообщений об ошибке перевода. Отдельной кнопки описания нет. Ссылки и email в описании нажимаются и открываются соответствующим приложением; адреса именованных HTML-ссылок сохраняются при очистке текста. Описания сокращаются до краткого текста; перевод может содержать ошибки.
@@ -195,7 +206,7 @@ MyMemory выбран как вариант без регистрации пол
 
 Если проверенный архив уже есть, используй `fetch-engine.ps1 -ArchivePath 'C:\Path\To\linux-arm64.tar'`. Если поставщик изменит архив, проверка хэша остановит извлечение. Не отключай её без проверки нового файла.
 
-Результат: `build/QCatalog-0.5.6-preview.apk`. Сборка проверяет подпись APK и запускает тесты каталога, безопасного удаления файлов и форматирования описаний. Исходники модифицированного бинарного движка поставщика в репозиторий не входят; этот движок не пересобирается из исходников.
+Результат: `build/QCatalog-0.6.0-preview.apk`. Сборка проверяет подпись APK и запускает тесты каталога, безопасного удаления файлов и форматирования описаний. Исходники модифицированного бинарного движка поставщика в репозиторий не входят; этот движок не пересобирается из исходников.
 
 Для обновления поверх установленного APK нужен тот же ключ подписи. `build.ps1` создаёт локальный `build/debug.keystore`, если его ещё нет. Сохрани свой ключ отдельно; он исключён из Git. Самостоятельная сборка с новым ключом не установится как обновление готового APK из Releases.
 
@@ -210,10 +221,11 @@ MyMemory выбран как вариант без регистрации пол
 
 `test-storage.ps1` принимает те же параметры и проверяет шифрование ссылки и пустую ссылку при импорте файла в отдельном тестовом приложении. Он не останавливает основной QCatalog и не обращается к его данным. Дополнительные параметры `-PreviousApk` и `-IncomingApk` позволяют проверить подписи двух локальных APK относительно установленного приложения: ожидается, что первый конфликтует, а второй имеет совместимую подпись. Тест не устанавливает эти APK и удаляет временные копии вместе со своим тестовым пакетом.
 
-Сборка запускает `fetch-dependencies.ps1`: при первом запуске нужны Maven Central и сеть для библиотек 7z. Версии и SHA-256 закреплены в `dependencies.json`; библиотеки включаются в APK, поэтому на шлеме отдельно скачивать их не требуется. Лицензии включены в `assets/licenses/`.
+Сборка запускает `fetch-dependencies.ps1`: при первом запуске нужны Maven Central и сеть для библиотек 7z и SMB. Версии и SHA-256 закреплены в `dependencies.json`; библиотеки включаются в APK, поэтому на шлеме отдельно скачивать их не требуется. Лицензии включены в `assets/licenses/`.
 
 ### Проверки текущей версии
 
+- В 0.6.0: 153 изолированные UI/cache-проверки, включая отдельные быстрые отклонения стика и секундный повтор; 16 проверок сетевых адресов и путей на ПК; 16 проверок на Quest настоящей SMB2-шары, окна выбора файла, передачи APK с совпадением SHA-256, отмены, очистки пароля и подготовки сессии Android. Тестовая сессия отменена без установки игры. Временная шара, сервер, папка и реквизиты после проверки удалены.
 - 76 проверок хранения/очереди/медиа в 0.5.6, включая предзагрузку настоящей галереи до выбора кадра, повторное использование битмапа и видео; новые медиафайлы в приватном хранилище и дисковом кэше не появились.
 - 151 изолированная UI-проверка в 0.5.6, включая предзагрузку всех кадров до выбора, повторное использование тех же изображений, бюджет RAM, отсутствие новых файлов и освобождение памяти/отмену поздних результатов при закрытии.
 - 88 изолированных UI-проверок в 0.5.5: прокрутка Horizon OS в обоих размерах карусели, попадание указателя в медиа, секундный повтор и отсутствие самопроизвольного листания после отпускания, кликабельные ссылки и точные адреса запуска браузера. 11 проверок текста без сети. Источник схемы ввода: [Meta input adaptation](https://github.com/meta-quest/agentic-tools/blob/main/skills/hz-android-2d-porting/references/input-adaptation.md).
@@ -260,7 +272,7 @@ This is an independent experimental client, not an official Meta, QLoader or dip
 
 The app uses [Cards v1 resources](design/cards-v1/README.md). The main catalogue opens expanded at 1920 × 1080 dp in landscape, with five columns at 1920 dp or four at 1280 dp. Narrow layouts use the labelled Sections menu. System light/dark settings control surfaces, text, buttons and dialogs. Targets are at least 64 dp; action buttons align and stack when space is insufficient.
 
-The game-details dialog is narrow: up to 720 dp, constrained by the available panel. The carousel displays one large frame without captions or counters. Translucent edge chevrons have no filled side panels; hover or focus reveals them, and leaving hides them. Images support horizontal swipes. Moving the stick left/right changes one frame immediately in expanded view or while pointing at media in the game card; holding repeats once per second. Horizon OS delivers Touch stick input as ACTION_SCROLL / AXIS_HSCROLL; ordinary gamepad events are also supported. Centering the stick, losing focus, backgrounding the app or leaving expanded view stops repetition. Click an image or the video picture to expand it to near-panel size; click again to return. There are no separate enlarge/close buttons or backdrop. Video keeps its aspect ratio and playback position while resizing. Bottom controls provide play/pause, elapsed time, seeking, mute and player volume. Video starts only after pressing ▶ and pauses when changing frames or backgrounding the app.
+The game-details dialog is narrow: up to 720 dp, constrained by the available panel. The carousel displays one large frame without captions or counters. Translucent edge chevrons have no filled side panels; hover or focus reveals them, and leaving hides them. Images support horizontal swipes. Moving the stick left/right changes one frame immediately in expanded view or while pointing at media in the game card; each separate flick acts immediately and only continuous holding repeats once per second. Horizon OS delivers Touch stick input as ACTION_SCROLL / AXIS_HSCROLL; ordinary gamepad events are also supported. Centering the stick, losing focus, backgrounding the app or leaving expanded view stops repetition. Click an image or the video picture to expand it to near-panel size; click again to return. There are no separate enlarge/close buttons or backdrop. Video keeps its aspect ratio and playback position while resizing. Bottom controls provide play/pause, elapsed time, seeking, mute and player volume. Video starts only after pressing ▶ and pauses when changing frames or backgrounding the app.
 
 Connection settings are under Sections → Settings or the sidebar Settings button. Only the selected sorting mode persists; statistics stay in RAM. Service failures explicitly fall back to A–Z, and reselecting a mode retries the request. No personal download reports are sent.
 
@@ -291,7 +303,7 @@ You need a Quest with Developer Mode enabled, a USB data cable, and Android SDK 
 - In the phone's Meta Horizon app, select the headset icon → your Quest → Headset Settings → Developer Mode, and enable it.
 - On Windows, install [Oculus ADB Drivers](https://developers.meta.com/vr/downloads/package/oculus-adb-drivers/) if not already installed. Refer to Meta's guide for the current requirements and details.
 
-1. Download `QCatalog-0.5.6-preview.apk` from [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.5.6-preview).
+1. Download `QCatalog-0.6.0-preview.apk` from [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.6.0-preview).
 2. Connect the Quest over USB and allow USB debugging **inside the headset**. Seeing the headset's shared storage in Windows Explorer does not mean USB debugging has been authorized.
 3. Open PowerShell in the Platform Tools directory and run:
 
@@ -302,7 +314,7 @@ You need a Quest with Developer Mode enabled, a USB data cable, and Android SDK 
 4. Identify your Quest with the `device` status. For `unauthorized`, accept the debugging prompt inside the headset. Replace `QUEST_SERIAL` below with your Quest's serial, and adjust the APK path:
 
    ```powershell
-   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.5.6-preview.apk'
+   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.6.0-preview.apk'
    ```
 
 5. Open the Quest app library → **Unknown Sources** → **QCatalog**. The filter's location depends on the Quest software version.
@@ -368,6 +380,17 @@ Under **«Загрузки» → «Очистка файлов и истории
 
 For one item, open it → **«Ещё» (More)** → select the action. Cleanup asks for confirmation and is blocked during active downloads/installations. Bulk file cleanup also finds downloads whose history entries have already been removed. New successful installs/updates automatically delete their staging files and leave the active download list. Failed installs retain source files; failed cleanup has a separate retry. Legacy completed tasks are not automatically migrated into deletion.
 
+### Install an APK from a computer over the network
+
+Choose **«APK с компьютера»** in the sidebar, or **Settings → Install APK from computer**. Select a discovered computer or enter its hostname, local IPv4 address or UNC path `\\computer\share`. Browse the share and folders, then select an APK.
+
+Protected shares require the Windows username (optionally `COMPUTER\user` or `DOMAIN\user`) and password, not the Windows Hello PIN. A blank username requests guest access if the server allows it. Credentials remain in connection memory only; the password field clears immediately and the password buffer is erased on close.
+
+The APK copies to the headset with progress/cancellation, then uses the normal package/version/signature checks and Android installer confirmation. Successful installation uses the usual download cleanup. Network-APK versions come from the file itself, independently of the QLoader catalogue.
+
+Both devices must be on the same local network and the share must allow reading. If discovery finds nothing, enter the address manually and check Windows sharing/firewall settings. SMB2/SMB3 are supported with read-only file access. Discovery checks the nearby IPv4 range; other segments can be entered manually. Custom ports use `hostname:port`.
+
+Directory listings and credentials have no disk cache. The APK itself is an installation download retained for installation/retry. Cancellation deletes the incomplete transfer; interrupted network imports must be selected again and do not use QLoader automatic resume. This picker imports individual APKs, not split packages or additional OBB files.
 ### Descriptions, translation and media
 
 Descriptions and carousel references load only when opening a game. Russian source text is displayed directly. English text appears as soon as fetched; a short fragment is translated using [MyMemory](https://mymemory.translated.net/doc/spec.php) and replaces the source on success. An unavailable or empty translation leaves English visible without translation-error notices. There is no separate description button. Web/email links are clickable and open in the corresponding application; named HTML link destinations survive text cleanup. Text is shortened; machine translation can be inaccurate.
@@ -412,7 +435,7 @@ Requirements: **Windows, PowerShell 7, JDK 21, Android SDK Build Tools 36.1.0, S
 
 Use `fetch-engine.ps1 -ArchivePath 'C:\Path\To\linux-arm64.tar'` for an existing archive. A changed provider archive fails the pinned hash check; review it before changing the expected hash.
 
-Output: `build/QCatalog-0.5.6-preview.apk`. The build verifies the APK signature and runs catalogue, download-containment/deletion and description-formatting tests. The provider's modified native engine source is not included or rebuilt here.
+Output: `build/QCatalog-0.6.0-preview.apk`. The build verifies the APK signature and runs catalogue, download-containment/deletion and description-formatting tests. The provider's modified native engine source is not included or rebuilt here.
 
 The build creates a local `build/debug.keystore` when absent. Keep your signing key privately: it is excluded from Git, and updates require the same key. Your own rebuild with a new key cannot update the APK distributed in Releases.
 
@@ -431,6 +454,7 @@ The build runs `fetch-dependencies.ps1`; its first run requires network/Maven Ce
 
 ### Current validation
 
+- Version 0.6.0: 153 isolated UI/cache checks including quick separate stick flicks and held repeats; 16 host address/path checks; 16 Quest checks against a real SMB2 fixture share, picker UI, byte-identical APK transfer, cancellation, password cleanup and Android installer-session staging. The test session was abandoned without installing a game. Temporary share/server, folder and credentials were removed afterwards.
 - 76 storage/queue/media checks in 0.5.6 include real-gallery prefetch before selection, bitmap reuse and video; no new media files appeared in private storage or disk cache.
 - 151 isolated UI checks in 0.5.6 include all-frame prefetch before selection, identical bitmap reuse, RAM bounds, no new files, close-time memory release and discarded late results.
 - 88 isolated UI checks in 0.5.5 cover Horizon OS scroll routing in both carousel sizes, pointer hit testing, one-second repeat with no runaway after release, clickable links and exact browser targets. Eleven offline text checks passed. Input mapping reference: [Meta input adaptation](https://github.com/meta-quest/agentic-tools/blob/main/skills/hz-android-2d-porting/references/input-adaptation.md).

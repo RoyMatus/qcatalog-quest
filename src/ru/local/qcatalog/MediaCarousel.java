@@ -17,7 +17,7 @@ final class MediaCarousel extends LinearLayout implements AutoCloseable {
     private String pkg;private int position;private boolean closed,navigationVisible;private Dialog enlarged;private float touchX,touchY;
     private ViewGroup originalParent;private ViewGroup.LayoutParams originalParams;private int originalIndex;private View originalRoot,activityRoot;private float rootAlpha,activityAlpha;
     private Dialog hostDialog;private int hostFlags;private float hostDim,hostWindowAlpha,activityWindowAlpha;
-    private boolean mediaHovered;private int scrollDirection;private long scrollStepAt;
+    private boolean mediaHovered;private int scrollDirection;private long scrollStepAt,scrollEventAt;
     private final Runnable hideArrows=()->{mediaHovered=false;showArrows(false);if(enlarged==null)stopNavigation();};
     private int heldDirection,stickDirection,keyDirection;
     private final Runnable repeatNavigation=new Runnable(){public void run(){if(closed||!navigationActive()||heldDirection==0)return;select(position+heldDirection);frame.postDelayed(this,1000);}};
@@ -33,9 +33,10 @@ final class MediaCarousel extends LinearLayout implements AutoCloseable {
             float x=event.getAxisValue(MotionEvent.AXIS_HSCROLL),y=event.getAxisValue(MotionEvent.AXIS_VSCROLL);
             if(Math.abs(x)<.01f||Math.abs(y)>Math.abs(x)){stopNavigation();return false;}
             stickDirection=keyDirection=0;navigationDirection(0);
-            long now=android.os.SystemClock.uptimeMillis();int direction=x>0?1:-1;
-            if(direction!=scrollDirection||now-scrollStepAt>=1000){select(position+direction);scrollStepAt=now;}
-            scrollDirection=direction;return true;
+            long now=event.getEventTime();int direction=x>0?1:-1;
+            // Pointer scroll has no release event: a quiet gap ends the previous stick gesture.
+            if(direction!=scrollDirection||now-scrollEventAt>150||now-scrollStepAt>=1000){select(position+direction);scrollStepAt=now;}
+            scrollDirection=direction;scrollEventAt=now;return true;
         }
         if(!navigationActive()||(!event.isFromSource(InputDevice.SOURCE_JOYSTICK)&&!event.isFromSource(InputDevice.SOURCE_GAMEPAD)))return false;
         if(event.getActionMasked()==MotionEvent.ACTION_CANCEL){stopNavigation();return true;}

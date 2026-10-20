@@ -57,6 +57,7 @@ public final class MainActivity extends Activity {
         TextView logo=text("QCatalog",32,INK);logo.setTypeface(Typeface.DEFAULT,Typeface.BOLD);logo.setPadding(dp(16),0,0,dp(32));rail.addView(logo);
         String[] labels={"Каталог","Библиотека","Загрузки","Обновления"};int[] icons={R.drawable.qc_ic_catalog,R.drawable.qc_ic_library,R.drawable.qc_ic_download,R.drawable.qc_ic_update};
         for(int i=0;i<labels.length;i++){final int target=i;Button b=button(labels[i]);b.setGravity(Gravity.START|Gravity.CENTER_VERTICAL);b.setCompoundDrawablesWithIntrinsicBounds(icons[i],0,0,0);b.setCompoundDrawablePadding(dp(12));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.bottomMargin=dp(16);rail.addView(b,lp);navigation.add(b);b.setOnClickListener(v->selectSection(target));}
+        Button networkApk=button("APK с компьютера");rail.addView(networkApk);networkApk.setOnClickListener(v->networkApk());
         rail.addView(new View(this),new LinearLayout.LayoutParams(1,0,1));Button settings=button("Настройки");rail.addView(settings);settings.setOnClickListener(v->settings());
         body=column();body.setPadding(dp(32),dp(20),dp(32),dp(12));root.addView(body,new LinearLayout.LayoutParams(0,-1,1));
         LinearLayout top=row();body.addView(top);sections=button("Разделы");sections.setVisibility(getResources().getConfiguration().screenWidthDp<880?View.VISIBLE:View.GONE);top.addView(sections);sections.setOnClickListener(v->new AlertDialog.Builder(this).setTitle("Разделы").setItems(new String[]{"Каталог","Библиотека","Загрузки","Обновления","Настройки"},(d,w)->{if(w==4)settings();else selectSection(w);}).show());
@@ -90,7 +91,8 @@ public final class MainActivity extends Activity {
     private TextView text(String value,int size,int color){return Cards.text(this,value,Math.max(20,size),color==Color.WHITE?INK:color);}
     private Button button(String value){return Cards.button(this,value,false);}
     private void showStatus(String value){runOnUiThread(()->{if(!isDestroyed())status.setText(value);});}
-    private void settings(){new AlertDialog.Builder(this).setTitle("Настройки QCatalog").setItems(new String[]{"Подключение QLoader","Разрешения установки","Обновить каталог","Очистка файлов и истории"},(d,w)->{if(w==0)connection();else if(w==1)permissions();else if(w==2)refresh();else cleanupMenu(null);}).setNegativeButton("Закрыть",null).show();}
+    private void networkApk(){if(busy){showStatus("Дождись завершения текущей операции.");return;}startActivityForResult(new Intent(this,NetworkApkActivity.class),42);}
+    private void settings(){new AlertDialog.Builder(this).setTitle("Настройки QCatalog").setItems(new String[]{"Подключение QLoader","Разрешения установки","Обновить каталог","Очистка файлов и истории","Установить APK с компьютера"},(d,w)->{if(w==0)connection();else if(w==1)permissions();else if(w==2)refresh();else if(w==3)cleanupMenu(null);else networkApk();}).setNegativeButton("Закрыть",null).show();}
     private void selectTab(boolean value){selectSection(value?2:0);}
     private void selectSection(int value){section=value;downloads=value==2;if(grid==null)return;int width=Math.round(getWindow().getDecorView().getWidth()/getResources().getDisplayMetrics().density);columns=downloads?1:cardColumns(width);grid.setNumColumns(columns);search.setVisibility(downloads?View.GONE:View.VISIBLE);sort.setVisibility(downloads?View.GONE:View.VISIBLE);cleanup.setVisibility(downloads?View.VISIBLE:View.GONE);for(int i=0;i<navigation.size();i++)navigation.get(i).setBackground(Cards.background(this,i==section?R.drawable.qc_bg_selected:R.drawable.qc_bg_surface));heading.setText(new String[]{"Каталог","Библиотека","Загрузки","Обновления"}[section]);queueSignature="";updateQueue();filter();grid.smoothScrollToPosition(0);}
     private void updateQueue(){try{
@@ -178,6 +180,7 @@ public final class MainActivity extends Activity {
     }
     @Override protected void onActivityResult(int request,int result,Intent data) {
         super.onActivityResult(request,result,data);
+        if(request==42&&result==RESULT_OK&&data!=null){JSONObject imported=QueueStore.get(this,data.getStringExtra("jobId"));if(imported!=null){selectTab(true);install(imported);}return;}
         if (request != 41 || result != RESULT_OK || data == null || data.getData() == null) return;
         Uri uri = data.getData(); busy = true; showStatus("Импортирую конфигурацию…");
         io.execute(() -> {
@@ -297,7 +300,7 @@ public final class MainActivity extends Activity {
     private void install(JSONObject job) {
         if (busy) return;
         if (!getPackageManager().canRequestPackageInstalls()) { permissions(); return; }
-        busy = true; showStatus("Проверяю APK и распаковываю архивы данных…");
+        busy = true; showStatus("Проверяю APK перед установкой…");
         io.execute(() -> {
             try {
                 Installer.Bundle bundle = Installer.inspect(this,job);

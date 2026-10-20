@@ -25,6 +25,14 @@ final class QueueStore {
         JSONArray array = new JSONArray(); for (JSONObject row : rows) array.put(row);
         PrivateStore.atomic(new File(c.getFilesDir(), "queue.json"), array.toString().getBytes(StandardCharsets.UTF_8));
     }
+    static synchronized JSONObject addLocal(Context c,File apk,android.content.pm.PackageInfo info)throws Exception{
+        if(!Catalog.safePackage(info.packageName)||info.getLongVersionCode()<0)throw new IOException("Некорректные сведения APK.");
+        String id=Catalog.digest("network-apk:"+UUID.randomUUID());File directory=DownloadFiles.path(base(c),id);if(!directory.mkdirs())throw new IOException("Не удалось сохранить загруженный APK.");
+        File saved=new File(directory,"package.apk");if(!apk.renameTo(saved)){directory.delete();throw new IOException("Не удалось переместить APK в загрузки.");}
+        info.applicationInfo.sourceDir=saved.getAbsolutePath();info.applicationInfo.publicSourceDir=saved.getAbsolutePath();String label=info.applicationInfo.loadLabel(c.getPackageManager()).toString();
+        JSONObject row=new JSONObject().put("id",id).put("name",label).put("release",label+" · APK с компьютера").put("pkg",info.packageName).put("version",info.getLongVersionCode()).put("mb",(saved.length()+1048575)/1048576).put("state","downloaded").put("source","network").put("message","APK получен с компьютера. Готов к установке.");
+        try{List<JSONObject> rows=all(c);rows.add(row);write(c,rows);return row;}catch(Exception e){saved.delete();directory.delete();throw e;}
+    }
     static synchronized void add(Context c, Catalog.Game game) throws Exception {
         List<JSONObject> rows = all(c);
         for (JSONObject row : rows) if (row.optString("id").equals(game.id)) {

@@ -1,6 +1,18 @@
 QCatalog — сведения о стороннем компоненте
 
 Third-party notices / Сведения о сторонних компонентах
+
+Network folder support / Поддержка сетевых папок:
+- SMBJ 0.14.0 and ASN.1 asn-one 0.6.0: Apache-2.0, https://github.com/hierynomus/smbj and https://github.com/hierynomus/asn-one
+- SMBJ-RPC (dcerpc) 0.12.13: BSD-3-Clause, Copyright 2017-2021 Rapid7, Inc., https://github.com/rapid7/smbj-rpc
+- Bouncy Castle bcprov-jdk18on 1.83: Bouncy Castle license (MIT-style), https://www.bouncycastle.org/licence.html
+- MBassador 1.3.0: MIT, https://github.com/bennidi/mbassador
+- SLF4J API 2.0.17: MIT, https://www.slf4j.org/license.html
+- Guava 33.4.8-android, failureaccess 1.0.3, JSpecify 1.0.0, Error Prone annotations 2.36.0, J2ObjC annotations 3.0.0: Apache-2.0.
+Dependency versions, download locations and SHA-256 hashes are pinned in dependencies.json.
+License texts are included in assets/licenses/ (upstream META-INF notices plus licenses/).
+Temporary SMB test server components are development-only and are not included in the application.
+
 QCatalog's Java application code and the bundled native provider engine
 are separate components. The upstream rclone license below applies to rclone.
 It does not declare a license for the QCatalog application itself.

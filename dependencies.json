@@ -23,5 +23,60 @@
     "File": "commons-lang3-3.18.0.jar",
     "Url": "https://repo.maven.apache.org/maven2/org/apache/commons/commons-lang3/3.18.0/commons-lang3-3.18.0.jar",
     "Sha256": "4eeeae8d20c078abb64b015ec158add383ac581571cddc45c68f0c9ae0230720"
+  },
+  {
+    "File": "smbj-0.14.0.jar",
+    "Url": "https://repo.maven.apache.org/maven2/com/hierynomus/smbj/0.14.0/smbj-0.14.0.jar",
+    "Sha256": "f5cd63af2f343bfa13d41dbf50cfd251d2b99c4118fbe82b0e94ee0f93d1cc14"
+  },
+  {
+    "File": "dcerpc-0.12.13.jar",
+    "Url": "https://repo.maven.apache.org/maven2/com/rapid7/client/dcerpc/0.12.13/dcerpc-0.12.13.jar",
+    "Sha256": "ea3f970d4b6f5bedbca843551b9c4fe250de34942aa02e02a7f957a402f5cbb8"
+  },
+  {
+    "File": "bcprov-jdk18on-1.83.jar",
+    "Url": "https://repo.maven.apache.org/maven2/org/bouncycastle/bcprov-jdk18on/1.83/bcprov-jdk18on-1.83.jar",
+    "Sha256": "82cf3a2af766c3bc874f6d36b9f20a8b99a8f09762dc776e8a227a45d8daaafb"
+  },
+  {
+    "File": "mbassador-1.3.0.jar",
+    "Url": "https://repo.maven.apache.org/maven2/net/engio/mbassador/1.3.0/mbassador-1.3.0.jar",
+    "Sha256": "f065031a490c88c9b20d34f3c9c4eb6e0dffe329c090788c383574e1ac7c6bba"
+  },
+  {
+    "File": "asn-one-0.6.0.jar",
+    "Url": "https://repo.maven.apache.org/maven2/com/hierynomus/asn-one/0.6.0/asn-one-0.6.0.jar",
+    "Sha256": "e4f70fd92849b52240048b8ebace0c9a17d3bb7b9c882b3c7778cec3458495f5"
+  },
+  {
+    "File": "slf4j-api-2.0.17.jar",
+    "Url": "https://repo.maven.apache.org/maven2/org/slf4j/slf4j-api/2.0.17/slf4j-api-2.0.17.jar",
+    "Sha256": "7b751d952061954d5abfed7181c1f645d336091b679891591d63329c622eb832"
+  },
+  {
+    "File": "guava-33.4.8-android.jar",
+    "Url": "https://repo.maven.apache.org/maven2/com/google/guava/guava/33.4.8-android/guava-33.4.8-android.jar",
+    "Sha256": "a1f8a4bafe5a77232d333356843e194599b30837574a7f4be1063daaaaab102c"
+  },
+  {
+    "File": "failureaccess-1.0.3.jar",
+    "Url": "https://repo.maven.apache.org/maven2/com/google/guava/failureaccess/1.0.3/failureaccess-1.0.3.jar",
+    "Sha256": "cbfc3906b19b8f55dd7cfd6dfe0aa4532e834250d7f080bd8d211a3e246b59cb"
+  },
+  {
+    "File": "jspecify-1.0.0.jar",
+    "Url": "https://repo.maven.apache.org/maven2/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar",
+    "Sha256": "1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab"
+  },
+  {
+    "File": "error_prone_annotations-2.36.0.jar",
+    "Url": "https://repo.maven.apache.org/maven2/com/google/errorprone/error_prone_annotations/2.36.0/error_prone_annotations-2.36.0.jar",
+    "Sha256": "77440e270b0bc9a249903c5a076c36a722c4886ca4f42675f2903a1c53ed61a5"
+  },
+  {
+    "File": "j2objc-annotations-3.0.0.jar",
+    "Url": "https://repo.maven.apache.org/maven2/com/google/j2objc/j2objc-annotations/3.0.0/j2objc-annotations-3.0.0.jar",
+    "Sha256": "88241573467ddca44ffd4d74aa04c2bbfd11bf7c17e0c342c94c9de7a70a7c64"
   }
 ]

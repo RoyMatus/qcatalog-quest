@@ -48,7 +48,7 @@ try {
             $inputStream=$entry.Open();$outputStream=$outEntry.Open();try { $inputStream.CopyTo($outputStream) }finally { $inputStream.Dispose();$outputStream.Dispose() }
         }}finally{$library.Dispose()}
     }
-    [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip, "$buildDir\dex\classes.dex", 'classes.dex', [IO.Compression.CompressionLevel]::Optimal) | Out-Null
+    foreach ($dex in Get-ChildItem -LiteralPath "$buildDir\dex" -Filter "classes*.dex") { [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip,$dex.FullName,$dex.Name,[IO.Compression.CompressionLevel]::Optimal) | Out-Null }
     [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip, $engineFile, 'lib/arm64-v8a/librclone.so', [IO.Compression.CompressionLevel]::Optimal) | Out-Null
     [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip, "$PSScriptRoot\THIRD_PARTY_NOTICES.txt", 'assets/THIRD_PARTY_NOTICES.txt', [IO.Compression.CompressionLevel]::Optimal) | Out-Null
 } finally { $zip.Dispose() }
@@ -59,7 +59,7 @@ if (!(Test-Path -LiteralPath $key)) {
     & "$JavaHome\bin\keytool.exe" -genkeypair -keystore $key -storepass android -keypass android -alias qcatalog -keyalg RSA -keysize 2048 -validity 10000 -dname 'CN=QCatalog Local Development' 2>&1 | ForEach-Object { $_.ToString() }
     Assert-Exit 'Local development key'
 }
-$apk = "$buildDir\QCatalog-0.5.6-preview.apk"
+$apk = "$buildDir\QCatalog-0.6.0-preview.apk"
 & "$toolsDir\apksigner.bat" sign --ks $key --ks-key-alias qcatalog --ks-pass pass:android --key-pass pass:android --out $apk "$buildDir\aligned.apk"
 Assert-Exit 'APK signing'
 & "$toolsDir\apksigner.bat" verify --verbose $apk
@@ -68,6 +68,10 @@ Assert-Exit 'APK signature verification'
 Assert-Exit 'Parser test compilation'
 & "$JavaHome\bin\java.exe" -cp "$buildDir\tests" ru.local.qcatalog.CatalogTest
 Assert-Exit 'Parser tests'
+& "$JavaHome\bin\javac.exe" -encoding UTF-8 --release 8 -d "$buildDir\tests" "$PSScriptRoot\src\ru\local\qcatalog\NetworkAddress.java" "$PSScriptRoot\tests\NetworkAddressTest.java"
+Assert-Exit 'Network validation compilation'
+& "$JavaHome\bin\java.exe" -cp "$buildDir\tests" ru.local.qcatalog.NetworkAddressTest
+Assert-Exit 'Network validation tests'
 & "$JavaHome\bin\java.exe" -cp "$buildDir\tests" ru.local.qcatalog.DownloadFilesTest "$buildDir\test-data"
 Assert-Exit 'Download cleanup tests'
 & "$JavaHome\bin\java.exe" -cp "$buildDir\tests" ru.local.qcatalog.DescriptionTextTest

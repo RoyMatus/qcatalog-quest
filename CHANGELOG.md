@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.0-preview — 2026-10-20
+
+- Кнопка «APK с компьютера»: поиск локальных компьютеров, вход в SMB2/SMB3, список общих папок, переход по вложенным папкам и выбор APK. Доступ на чтение; пароли только в памяти соединения.
+- Передача с прогрессом/отменой, проверка реального APK и обычная системная установка через очередь QCatalog. Пароли и списки папок не сохраняются. Незавершённый сетевой импорт выбирается заново; докачка QLoader остаётся отдельной функцией.
+- Отдельные отклонения Touch-стика снова переключают кадр сразу. Односекундный интервал применяется к непрерывному удержанию; конец scroll-потока распознаётся по паузе между событиями.
+- Network APK picker: local discovery, SMB2/3 authentication, share/folder browsing, cancellable copying and normal Android installer handoff. Read-only access; memory-only credentials.
+- Separate stick flicks act immediately; continuous holding repeats once per second. Added multi-DEX packaging and pinned/licensed SMB dependencies.
+- Validation: 153 isolated UI/cache checks, 16 host address/path checks and existing build suites; 16 isolated Quest SMB2/picker/APK checks against a temporary read-only share, including exact SHA-256, cancellation, password cleanup, APK import and real installer-session staging. Test installation session was abandoned; no user game was installed or changed. Temporary share/server, folder and credentials removed afterwards.
+
 ## 0.5.6-preview — 2026-10-20
 
 - При открытии карточки её изображения заранее загружаются и декодируются в RAM. Листание готовых кадров использует те же объекты без повторных сетевых запросов.

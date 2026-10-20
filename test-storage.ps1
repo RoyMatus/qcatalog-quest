@@ -2,6 +2,7 @@ param(
     [Parameter(Mandatory=$true)][string]$Serial,
     [Parameter(Mandatory=$true)][string]$JavaHome,
     [Parameter(Mandatory=$true)][string]$SdkPath,
+    [string]$NetworkConfig,
     [string]$PreviousApk,
     [string]$IncomingApk,
     [string]$ResumeRemote,
@@ -22,8 +23,8 @@ $env:JAVA_HOME = $JavaHome
 & (Join-Path $PSScriptRoot 'fetch-dependencies.ps1')
 $dependencyJars=@((Get-Content (Join-Path $PSScriptRoot 'dependencies.json') -Raw | ConvertFrom-Json) | ForEach-Object { Join-Path (Join-Path $PSScriptRoot 'lib') $_.File })
 $compileClasspath=(@($androidJar)+$dependencyJars) -join ';'
-$testPackage=if($Ui){'ru.local.qcatalog.uichecks'}else{'ru.local.qcatalog.storagechecks'}
-$testType=if($Ui){'ui'}else{'storage'}
+$testPackage=if($NetworkConfig){'ru.local.qcatalog.networkchecks'}elseif($Ui){'ru.local.qcatalog.uichecks'}else{'ru.local.qcatalog.storagechecks'}
+$testType=if($NetworkConfig){'network'}elseif($Ui){'ui'}else{'storage'}
 $manifestType=if($Ui -and $LiveMedia){'ui-live'}else{$testType}
 function Assert-Exit([string]$stage) { if ($LASTEXITCODE -ne 0) { throw "$stage failed (exit $LASTEXITCODE)" } }
 foreach ($dir in @($qaDir,"$qaDir\classes","$qaDir\dex","$qaDir\tmp","$qaDir\generated")) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
@@ -35,7 +36,7 @@ $sources=@(Get-ChildItem -LiteralPath "$PSScriptRoot\src" -Recurse -Filter '*.ja
 $sources+="$PSScriptRoot\tests\SpecialInstallTest.java"
 $sources+="$PSScriptRoot\tests\MediaChecks.java"
 $sources+="$PSScriptRoot\tests\ImageCacheChecks.java"
-$sources+=if($Ui){"$PSScriptRoot\tests\ui\UiChecks.java"}else{"$PSScriptRoot\tests\storage\StorageChecks.java"}
+$sources+=if($NetworkConfig){"$PSScriptRoot\tests\network\NetworkChecks.java"}elseif($Ui){"$PSScriptRoot\tests\ui\UiChecks.java"}else{"$PSScriptRoot\tests\storage\StorageChecks.java"}
 $sources+=@(Get-ChildItem -LiteralPath "$qaDir\generated" -Recurse -Filter '*.java' | ForEach-Object FullName)
 & "$JavaHome\bin\javac.exe" --release 8 -encoding UTF-8 -cp $compileClasspath -d "$qaDir\classes" @sources
 Assert-Exit 'Storage QA compilation'
@@ -54,7 +55,7 @@ try {
             $inputStream=$entry.Open();$outputStream=$outEntry.Open();try { $inputStream.CopyTo($outputStream) }finally { $inputStream.Dispose();$outputStream.Dispose() }
         }}finally{$library.Dispose()}
     }
-    [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip,"$qaDir\dex\classes.dex",'classes.dex',[IO.Compression.CompressionLevel]::Optimal) | Out-Null
+    foreach ($dex in Get-ChildItem -LiteralPath "$qaDir\dex" -Filter "classes*.dex") { [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip,$dex.FullName,$dex.Name,[IO.Compression.CompressionLevel]::Optimal) | Out-Null }
     if ($ResumeRemote) { [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip,"$PSScriptRoot\native\linux-arm64\rclone",'lib/arm64-v8a/librclone.so',[IO.Compression.CompressionLevel]::Optimal) | Out-Null }
 } finally { $zip.Dispose() }
 & "$toolsDir\zipalign.exe" -f 4 "$qaDir\unsigned.apk" "$qaDir\aligned.apk"
@@ -78,6 +79,12 @@ try {
             } finally { & $adb -s $Serial shell rm -f $remote | Out-Null }
         }
     }
+    if($NetworkConfig){
+        $remote='/data/local/tmp/qcatalog-network-test.json'
+        & $adb -s $Serial push $NetworkConfig $remote | Out-Null
+        Assert-Exit 'Private SMB fixture configuration'
+        try{& $adb -s $Serial shell "cat $remote | run-as $testPackage sh -c 'mkdir -p files; cat > files/connection.json'";Assert-Exit 'SMB fixture transfer'}finally{& $adb -s $Serial shell rm -f $remote | Out-Null}
+    }
     $instrumentArgs=@('-s',$Serial,'shell','am','instrument','-w')
     if($LiveMedia){$instrumentArgs+=@('-e','liveMedia','true')}
     if($LivePopularity){if($Ui){throw 'UI fixtures intentionally have no network permission.'};$instrumentArgs+=@('-e','livePopularity','true')}
@@ -88,7 +95,7 @@ try {
         $encoded=[Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($ResumeRemote))
         $instrumentArgs+=@('-e','remote64',$encoded,'-e','size',[string]$ResumeSize,'-e','sha',$ResumeSha256,'-e','prefixSha',$ResumePrefixSha256)
     }
-    $instrumentArgs+=if($Ui){"$testPackage/ru.local.qcatalog.UiChecks"}else{"$testPackage/ru.local.qcatalog.StorageChecks"}
+    $instrumentArgs+=if($NetworkConfig){"$testPackage/ru.local.qcatalog.NetworkChecks"}elseif($Ui){"$testPackage/ru.local.qcatalog.UiChecks"}else{"$testPackage/ru.local.qcatalog.StorageChecks"}
     $result = (& $adb @instrumentArgs) -join "`n"
     $result
     if($Ui){foreach($name in @('catalog','library','downloads','ready','installing','error','catalog-wide','theme-light','theme-dark','carousel')){& $adb -s $Serial shell "run-as $testPackage cat files/$name.png > /data/local/tmp/qcatalog-ui-$name.png"; & $adb -s $Serial pull "/data/local/tmp/qcatalog-ui-$name.png" "$qaDir\$name.png"; & $adb -s $Serial shell rm "/data/local/tmp/qcatalog-ui-$name.png"}}
