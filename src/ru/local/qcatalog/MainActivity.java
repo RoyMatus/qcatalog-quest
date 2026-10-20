@@ -231,7 +231,7 @@ public final class MainActivity extends Activity {
         detailIo.execute(() -> {
             try { MediaInfo info=session.media(game,pkg);
                 runOnUiThread(() -> { if(dialog.isShowing()&&!isDestroyed())gallery.configure(info); });
-            }catch(Exception ignored){}
+            }catch(Exception ignored){runOnUiThread(()->{if(dialog.isShowing()&&!isDestroyed())gallery.configure(new MediaInfo());});}
         });
     }
     private void enqueue(Catalog.Game game) {
