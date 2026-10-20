@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.5-preview — 2026-10-20
+
+- Одна плитка на точный пакет приложения в каталоге, библиотеке и обновлениях. Внизу открытой карточки — выбор релиза с версией, размером и полным именем. Старые и равные по коду версии остаются доступны; поиск учитывает все релизы. Установка и скачивание используют именно выбранный релиз.
+- Исправлены обложки и фотографии: свежая обложка и галерея запрашиваются со страницы Meta вместо истёкших подписанных ссылок. Готовая публичная галерея больше не ждёт обхода зеркала; зеркало остаётся запасным источником.
+- После возврата карточки в сетку отменённая загрузка обложки возобновляется; ошибки повторяются ограниченное число раз. Неудачный кадр можно загрузить повторным выбором. Медиа не сохраняются на диск.
+- One tile per exact app package; choose the install release at the bottom of the open card. Preserves older/equal-code variants and release-aware search; actions use the selected release.
+- Refreshes expired cover URLs from the current Meta page, avoids blocking a ready gallery behind mirror scans, restarts recycled-cell cover requests and allows failed-frame retries. Bounded RAM-only media caches.
+- Validation: 172 isolated Quest UI/cache checks (including selected action targets and cover cancellation/reattachment), 79 isolated live media/storage checks with real cover, screenshots and video; 15 catalogue checks and existing build suites; 16 installed-app checks with the real catalogue/versions and preserved queue. No catalogue-wide network scan.
+
+
 ## 0.6.4-preview — 2026-10-20
 
 - По просьбе пользователя отменено последнее изменение 0.6.3. Счётчик фотографий убран, интерфейс карточки возвращён к 0.6.2: надпись «Загрузка» и три точки.

@@ -17,9 +17,19 @@ public class CatalogTest {
         boolean rejected = false;
         try { Catalog.parse(new StringReader(header + "\"unterminated")); } catch (IOException expected) { rejected = true; }
         require(rejected, "reject malformed CSV");
+        Catalog.Game older=new Catalog.Game("Same game","Legacy v1","org.test.same",1,"",20),newer=new Catalog.Game("Same game","Latest v3","org.test.same",3,"",30),variant=new Catalog.Game("Same game","Latest v3 RUS","org.test.same",3,"",40),other=new Catalog.Game("Same game","Other v2","org.test.other",2,"",10);
+        List<Catalog.Game> releases=Arrays.asList(older,variant,other,newer);
+        require(Catalog.latest(releases,"").size()==2,"One tile per package; equal names from different packages remain separate");
+        require(Catalog.latest(releases,"").get(0)==newer,"Highest version is the representative, with deterministic ties");
+        require(Catalog.releases(releases,older.pkg).size()==3,"Same-code language/release variants remain selectable");
+        require(Catalog.releases(releases,older.pkg).get(2)==older,"Release picker orders newest version first");
+        require(Catalog.latest(releases,"legacy").size()==1&&Catalog.latest(releases,"legacy").get(0)==newer,"Searching an older release still finds its single game tile");
+        require(Catalog.latest(releases,"missing").isEmpty(),"Nonmatching release search returns no tiles");
+        require(Catalog.releases(releases,"org.test.missing").isEmpty(),"Picker never mixes package identities");
+        require(releases.size()==4,"Grouping does not mutate or discard source catalogue releases");
         if (args.length == 1) try (Reader in = new InputStreamReader(new FileInputStream(args[0]), StandardCharsets.UTF_8)) {
             System.out.println("Local QLoader catalogue parsed: " + Catalog.parse(in).size() + " entries");
         }
-        System.out.println("Catalog tests passed (7 checks)");
+        System.out.println("Catalog tests passed (15 checks)");
     }
 }

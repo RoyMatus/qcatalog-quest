@@ -29,6 +29,14 @@ public final class Catalog {
             return out.toString();
         } catch (Exception e) { throw new IllegalStateException(e); }
     }
+    private static final Comparator<Game> RELEASE_ORDER=Comparator.comparingLong((Game game)->game.version).reversed().thenComparing(game->game.release);
+    public static List<Game> releases(Collection<Game> games,String pkg){List<Game> result=new ArrayList<>();for(Game game:games)if(game.pkg.equals(pkg))result.add(game);result.sort(RELEASE_ORDER);return result;}
+    /** One representative per exact Android package; search still sees all its release names. */
+    public static List<Game> latest(Collection<Game> games,String query){
+        String needle=query.toLowerCase(Locale.ROOT).trim();Map<String,Game> newest=new LinkedHashMap<>();Set<String> matches=new HashSet<>();
+        for(Game game:games){Game previous=newest.get(game.pkg);if(previous==null||RELEASE_ORDER.compare(game,previous)<0)newest.put(game.pkg,game);if(needle.isEmpty()||(game.name+" "+game.release+" "+game.pkg).toLowerCase(Locale.ROOT).contains(needle))matches.add(game.pkg);}
+        List<Game> result=new ArrayList<>();for(Game game:newest.values())if(matches.contains(game.pkg))result.add(game);return result;
+    }
     public static boolean safeRelease(String s) {
         return s != null && !s.isEmpty() && !s.equals(".") && !s.equals("..") &&
             s.indexOf('/') < 0 && s.indexOf('\\') < 0 && s.indexOf('\0') < 0 && s.indexOf('\r') < 0 && s.indexOf('\n') < 0;

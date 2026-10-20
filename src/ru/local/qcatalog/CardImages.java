@@ -41,6 +41,7 @@ final class CardImages implements AutoCloseable {
             main.post(()->{synchronized(this){
                 pending.remove(key);if(closed){if(result!=null)result.recycle();return;}
                 if(result!=null){int count=result.getAllocationByteCount();if(bytes+count<=limit){cache.put(key,result);bytes+=count;}else result.recycle();}
+                if(!cache.containsKey(key))requested.remove(key); // A failed frame can be retried on selection.
                 ready.accept(key,cache.get(key));
             }});
         });

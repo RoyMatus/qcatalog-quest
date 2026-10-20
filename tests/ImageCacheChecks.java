@@ -34,6 +34,23 @@ final class ImageCacheChecks {
             public void close(){cancelled.set(true);release.countDown();}
         },(key,bitmap)->callbacks.incrementAndGet());
         try{pending.request("slow");require(started.await(5,TimeUnit.SECONDS),"Slow request started");pending.close();long deadline=System.currentTimeMillis()+5000;while(System.currentTimeMillis()<deadline&&(late.get()==null||!late.get().isRecycled())){Thread.sleep(25);instrumentation.waitForIdleSync();}require(cancelled.get(),"Closing cancels in-flight network source");require(late.get()!=null&&late.get().isRecycled(),"Late result after close releases its bitmap");require(callbacks.get()==0&&pending.size()==0,"Late result cannot repopulate a closed card");}finally{pending.close();}
+        AtomicInteger attempts=new AtomicInteger();CountDownLatch first=new CountDownLatch(1),second=new CountDownLatch(1);
+        CardImages retry=new CardImages(()->new CardImages.Source(){public Bitmap load(String key,int pixels){return attempts.incrementAndGet()==1?null:Bitmap.createBitmap(20,20,Bitmap.Config.ARGB_8888);}public void close(){}},(key,bitmap)->{if(bitmap==null)first.countDown();else second.countDown();});
+        try{retry.request("retry");require(first.await(5,TimeUnit.SECONDS),"Failed image attempt completes");retry.request("retry");require(second.await(5,TimeUnit.SECONDS)&&retry.get("retry")!=null,"Selecting a failed frame retries instead of permanently keeping its placeholder");}finally{retry.close();}
+        return checks;
+    }
+    static int covers(android.app.Activity activity,Instrumentation instrumentation)throws Exception{
+        checks=0;AtomicInteger opens=new AtomicInteger();CountDownLatch firstStarted=new CountDownLatch(1),releaseFirst=new CountDownLatch(1),secondReady=new CountDownLatch(1);AtomicReference<Bitmap> late=new AtomicReference<>(),expected=new AtomicReference<>();
+        CoverLoader loader=new CoverLoader(()->{int attempt=opens.incrementAndGet();return new CardImages.Source(){public Bitmap load(String key,int pixels)throws Exception{if(attempt==1){firstStarted.countDown();try{releaseFirst.await(5,TimeUnit.SECONDS);}catch(InterruptedException ignored){}Bitmap result=Bitmap.createBitmap(24,24,Bitmap.Config.ARGB_8888);late.set(result);return result;}Bitmap result=Bitmap.createBitmap(32,32,Bitmap.Config.ARGB_8888);expected.set(result);secondReady.countDown();return result;}public void close(){if(attempt==1)releaseFirst.countDown();}};});
+        android.widget.LinearLayout[] host={null};android.widget.ImageView[] image={null};android.app.Dialog[] dialog={null};
+        try{
+            instrumentation.runOnMainSync(()->{host[0]=new android.widget.LinearLayout(activity);image[0]=new android.widget.ImageView(activity);loader.bind(image[0],"org.test.cover");require(opens.get()==0,"Binding before attachment does not start an invisible request");host[0].addView(image[0],new android.widget.LinearLayout.LayoutParams(100,100));dialog[0]=new android.app.AlertDialog.Builder(activity).setView(host[0]).create();dialog[0].show();});
+            require(firstStarted.await(5,TimeUnit.SECONDS),"Attaching a prebound grid cover starts its load");
+            instrumentation.runOnMainSync(()->{host[0].removeView(image[0]);host[0].addView(image[0],new android.widget.LinearLayout.LayoutParams(100,100));});
+            require(secondReady.await(5,TimeUnit.SECONDS),"Reattaching a recycled cover restarts its cancelled request");
+            long deadline=System.currentTimeMillis()+5000;while(System.currentTimeMillis()<deadline&&(late.get()==null||!late.get().isRecycled())){Thread.sleep(20);instrumentation.waitForIdleSync();}
+            instrumentation.runOnMainSync(()->{require(image[0].getDrawable() instanceof android.graphics.drawable.BitmapDrawable&&((android.graphics.drawable.BitmapDrawable)image[0].getDrawable()).getBitmap()==expected.get(),"Late cancelled cover cannot overwrite the currently bound bitmap");require(late.get()!=null&&late.get().isRecycled(),"Cancelled cover pixels are released");loader.release(image[0]);host[0].removeView(image[0]);host[0].addView(image[0]);require(opens.get()==2,"Explicit release removes the binding and prevents reattachment requests");});
+        }finally{instrumentation.runOnMainSync(()->{loader.close();if(dialog[0]!=null)dialog[0].dismiss();});}
         return checks;
     }
 }

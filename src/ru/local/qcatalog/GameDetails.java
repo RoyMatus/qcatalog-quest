@@ -85,10 +85,16 @@ final class GameDetails implements AutoCloseable {
         }
         return result;
     }
-    MediaInfo media(Catalog.Game game,String pkg)throws Exception {
-        pkg=originalPackage(pkg);if(!Catalog.safePackage(pkg))throw new IOException("Некорректное имя приложения.");
+    private MediaInfo publicMedia(String pkg)throws Exception {
         MediaInfo info;try{info=MediaInfo.provider(metadata(pkg));}catch(Exception e){if(closed)throw new InterruptedIOException();info=new MediaInfo();}
         if(!info.storeId.isEmpty())try{info.metaPage(new String(get("https://www.meta.com/experiences/quest/"+info.storeId+"/",4*1024*1024),StandardCharsets.UTF_8));}catch(Exception ignored){}
+        if(closed)throw new InterruptedIOException();return info;
+    }
+    MediaInfo media(Catalog.Game game,String pkg)throws Exception {
+        pkg=originalPackage(pkg);if(!Catalog.safePackage(pkg))throw new IOException("Некорректное имя приложения.");
+        MediaInfo info=publicMedia(pkg);
+        // Do not hold a usable gallery behind slow/unavailable mirror directory scans.
+        if(info.note.equals("QLoader → галерея Meta")&&!info.images.isEmpty()&&!info.trailer.isEmpty())return info;
         String mirror=context.getSharedPreferences("state",0).getString("mirror","");
         if(mirror.matches("FFA-\\d+")) {
             Engine engine=new Engine(context);imageEngine=engine;
@@ -120,6 +126,7 @@ final class GameDetails implements AutoCloseable {
     }
     Bitmap cover(String pkg,int maxPixels) throws Exception {
         pkg = originalPackage(pkg); if (!Catalog.safePackage(pkg)) throw new IOException("Некорректное имя приложения.");
+        try{MediaInfo info=publicMedia(pkg);if(!info.cover.isEmpty()){Bitmap cover=image(info.cover,maxPixels);if(cover!=null)return cover;}}catch(Exception ignored){if(closed)throw new InterruptedIOException();}
         Engine engine = new Engine(context); imageEngine = engine;
         if (closed) { engine.cancel(); throw new InterruptedIOException(); }
         String mirror = context.getSharedPreferences("state",0).getString("mirror","");

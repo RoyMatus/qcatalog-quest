@@ -8,7 +8,7 @@ import java.util.regex.*;
 /** Public gallery references only. No HTML execution, cookies or local cache. */
 final class MediaInfo {
     final List<String> images=new ArrayList<>();
-    String trailer="",storeId="",note="QLoader";long trailerSize=-1;
+    String trailer="",cover="",storeId="",note="QLoader";long trailerSize=-1;
     static String https(String value) {
         try{URI uri=Engine.validateUrl(value);String host=uri.getHost().toLowerCase(Locale.ROOT);
             if(host.equals("oculuscdn.com")||host.endsWith(".oculuscdn.com")||host.equals("fbcdn.net")||host.endsWith(".fbcdn.net")||host.equals("meta.com")||host.endsWith(".meta.com")||host.equals("cloud.dipvr.ru"))return uri.toString();
@@ -17,11 +17,13 @@ final class MediaInfo {
     static String reference(Object value){if(value instanceof String)return (String)value;if(value instanceof JSONObject){JSONObject j=(JSONObject)value;return j.optString("contentUrl",j.optString("url",j.optString("@id","")));}return "";}
     void addImage(String url){url=https(url);if(!url.isEmpty()&&!images.contains(url)&&images.size()<16)images.add(url);}
     static MediaInfo provider(JSONObject json){MediaInfo result=new MediaInfo();result.storeId=json.optString("id","");if(!result.storeId.matches("[0-9]{5,30}"))result.storeId="";
-        result.addImage(json.optString("cover_url"));for(String field:Arrays.asList("screenshots","screenshot_urls")){JSONArray shots=json.optJSONArray(field);if(shots!=null)for(int i=0;i<shots.length();i++)result.addImage(reference(shots.opt(i)));}
+        result.cover=https(json.optString("cover_url"));result.addImage(result.cover);for(String field:Arrays.asList("screenshots","screenshot_urls")){JSONArray shots=json.optJSONArray(field);if(shots!=null)for(int i=0;i<shots.length();i++)result.addImage(reference(shots.opt(i)));}
         result.trailer=https(json.optString("trailer_url"));return result;
     }
     void metaPage(String html) throws Exception {
         if(storeId.isEmpty())return;
+        Matcher tags=Pattern.compile("(?is)<meta\\b[^>]*>").matcher(html);
+        while(tags.find()){Map<String,String> attributes=new HashMap<>();Matcher attr=Pattern.compile("(?is)([\\w:]+)\\s*=\\s*([\"'])(.*?)\\2").matcher(tags.group());while(attr.find())attributes.put(attr.group(1).toLowerCase(Locale.ROOT),attr.group(3));String property=attributes.containsKey("property")?attributes.get("property"):attributes.get("name");if("og:image".equalsIgnoreCase(property)){String refreshedCover=https(DescriptionText.plain(attributes.getOrDefault("content","")));if(!refreshedCover.isEmpty())cover=refreshedCover;}}
         Matcher scripts=Pattern.compile("(?is)<script\\b[^>]*type=[\"']application/ld\\+json[\"'][^>]*>(.*?)</script>").matcher(html);
         List<String> refreshed=new ArrayList<>();String video="";
         while(scripts.find()) {

@@ -51,7 +51,7 @@ public final class QuestChecks extends Instrumentation {
             require(!dir.exists(),"Release directory removed");
             InstalledApps local = InstalledApps.read(target);
             InstalledApps.Entry self = local.get(target.getPackageName());
-            require(self != null && self.version == 22,"Installed app version comes from PackageManager");
+            require(self != null && self.version == 23,"Installed app version comes from PackageManager");
             require(InstalledApps.isNewer(self.version + 1,self.version),"Newer code is an update");
             require(!InstalledApps.isNewer(self.version,self.version),"Equal code is current");
             require(!InstalledApps.isNewer(self.version - 1,self.version),"Older code is not an update");
