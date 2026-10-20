@@ -22,6 +22,7 @@ public final class StorageChecks extends Instrumentation {
         Bundle result = new Bundle(); int outcome = Activity.RESULT_OK;
         try {
             Context isolated = getTargetContext();
+            checks+=SpecialInstallTest.run(new File(isolated.getFilesDir(),"special-install"));
             require(PrivateStore.loadUrl(isolated).isEmpty(),"Fresh storage has no URL");
             PrivateStore.saveUrl(isolated,"");
             require(PrivateStore.loadUrl(isolated).isEmpty(),"File import accepts an empty encrypted URL");
@@ -53,6 +54,8 @@ public final class StorageChecks extends Instrumentation {
             require(QueueStore.get(isolated,fixture.id).optString("state").equals("queued"),"Interrupted download is automatically queued");
             QueueStore.update(isolated,fixture.id,"paused","manual pause"); QueueStore.progress(isolated,fixture.id,"late progress"); QueueStore.interrupted(isolated);
             require(QueueStore.get(isolated,fixture.id).optString("state").equals("paused"),"Manual pause survives late progress and recovery");
+            QueueStore.stage(isolated,fixture.id,"preparing","Распаковка 7z",1,2,"fixture");QueueStore.interrupted(isolated);
+            require(QueueStore.get(isolated,fixture.id).optString("state").equals("downloaded"),"Interrupted pre-install extraction retries from saved files, not a presumed installed APK");
             final int[] starts={0};
             android.content.ContextWrapper fake=new android.content.ContextWrapper(isolated) {
                 @Override public android.content.ComponentName startForegroundService(android.content.Intent intent) { starts[0]++; return new android.content.ComponentName(getPackageName(),DownloadService.class.getName()); }

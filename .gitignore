@@ -10,3 +10,4 @@ access.bin
 *.apk.idsig
 *.log
 .idea/
+lib/

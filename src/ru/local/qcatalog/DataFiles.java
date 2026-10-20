@@ -19,6 +19,7 @@ final class DataFiles {
             if(path.isEmpty() || path.startsWith("/") || path.contains("\\") || Arrays.asList(path.split("/")).contains("..")) throw new IOException("Недопустимый путь данных.");
             File target=new File(root,path);
             if(!target.getCanonicalPath().startsWith(root.getCanonicalPath()+File.separator)) throw new IOException("Недопустимый путь данных.");
+            for(File parent=target.getParentFile();parent!=null&&!parent.equals(root);parent=parent.getParentFile())if(Files.isSymbolicLink(parent.toPath()))throw new IOException("Ссылки в папках данных не поддерживаются.");
             if(!target.getParentFile().isDirectory() && !target.getParentFile().mkdirs()) throw new IOException("Не удалось создать папку данных.");
             File pending=new File(target.getParentFile(),target.getName()+".qcatalog-part");
             if(Files.isSymbolicLink(pending.toPath()) || Files.isSymbolicLink(target.toPath())) throw new IOException("Ссылки в файлах данных не поддерживаются.");

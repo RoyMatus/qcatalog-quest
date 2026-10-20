@@ -75,7 +75,7 @@ public final class MainActivity extends Activity {
                 root.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->configureWidth(Math.round((r-l)/getResources().getDisplayMetrics().density)));
         configureWidth(getResources().getConfiguration().screenWidthDp);
         try{games.addAll(new Engine(this).cached());if(!games.isEmpty())status.setText("Каталог · "+games.size()+" записей");}catch(Exception e){showStatus(DownloadService.safeMessage(e));}
-        selectSection(section);if(state!=null)search.setText(state.getString("query",""));
+        Installer.recoverLegacyScripts(this);selectSection(section);if(state!=null)search.setText(state.getString("query",""));
         File bootstrap=new File(getFilesDir(),"bootstrap.json");if(bootstrap.exists())try{JSONObject data=new JSONObject(new String(PrivateStore.read(bootstrap,32768),StandardCharsets.UTF_8));String address=data.getString("configUrl");Engine.validateUrl(address);PrivateStore.saveUrl(this,address);if(!bootstrap.delete())throw new IOException("Не удалось удалить временный файл подключения.");refresh();}catch(Exception e){showStatus(DownloadService.safeMessage(e));}
         if(!sortMode.equals("name"))loadPopularity();
     }
@@ -284,14 +284,14 @@ public final class MainActivity extends Activity {
                 Installer.Bundle bundle = Installer.inspect(this, job);
                 QueueStore.update(this, job.getString("id"), "downloaded", bundle.needsApproval(job) ? "Скачано. Имя пакета отличается от каталога — при установке покажу подробности." : "Файлы проверены. Можно установить.");
                 showStatus("Скачанный APK проверен. Нажми «Установить».");
-            } catch (Exception e) { showStatus(DownloadService.safeMessage(e)); }
+            } catch (Exception e) { QueueStore.update(this,job.optString("id"),"installError",DownloadService.safeMessage(e));showStatus(DownloadService.safeMessage(e)); }
             finally { busy = false; }
         });
     }
     private void install(JSONObject job) {
         if (busy) return;
         if (!getPackageManager().canRequestPackageInstalls()) { permissions(); return; }
-        busy = true; showStatus("Проверяю APK перед установкой…");
+        busy = true; showStatus("Проверяю APK и распаковываю архивы данных…");
         io.execute(() -> {
             try {
                 Installer.Bundle bundle = Installer.inspect(this,job);

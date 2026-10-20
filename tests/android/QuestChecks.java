@@ -11,8 +11,9 @@ import java.util.*;
 /** Creates isolated fixtures only. Does not fetch cards, remove user downloads, or install games. */
 public final class QuestChecks extends Instrumentation {
     private int checks;
+    private Bundle arguments;
     private void require(boolean ok,String message) { checks++; if (!ok) throw new AssertionError(message); }
-    @Override public void onCreate(Bundle args) { super.onCreate(args); start(); }
+    @Override public void onCreate(Bundle args) { super.onCreate(args);arguments=args;start(); }
     @Override public void onStart() {
         Bundle result = new Bundle(); Context target = getTargetContext();
         String fixtureId = Catalog.digest("qcatalog-tests-" + System.nanoTime());
@@ -50,7 +51,7 @@ public final class QuestChecks extends Instrumentation {
             require(!dir.exists(),"Release directory removed");
             InstalledApps local = InstalledApps.read(target);
             InstalledApps.Entry self = local.get(target.getPackageName());
-            require(self != null && self.version == 9,"Installed app version comes from PackageManager");
+            require(self != null && self.version == 10,"Installed app version comes from PackageManager");
             require(InstalledApps.isNewer(self.version + 1,self.version),"Newer code is an update");
             require(!InstalledApps.isNewer(self.version,self.version),"Equal code is current");
             require(!InstalledApps.isNewer(self.version - 1,self.version),"Older code is not an update");
@@ -59,6 +60,20 @@ public final class QuestChecks extends Instrumentation {
             Set<String> installed = new HashSet<>(), updates = new HashSet<>();
             for (Catalog.Game item : catalogue) { InstalledApps.Entry present = local.get(item.pkg); if (present != null) { installed.add(present.pkg); if (local.newer(item)) updates.add(present.pkg); } }
             require(catalogue.size() > 0,"Existing catalogue is readable");
+            String special=arguments.getString("specialReleaseId","");
+            if(!special.isEmpty()) {
+                if(!special.matches("[a-f0-9]{64}"))throw new IOException("Invalid special-release identifier");
+                JSONObject saved=QueueStore.get(target,special);require(saved!=null,"Downloaded special release exists");
+                // Use the existing download as input, but keep queue/progress fixtures isolated.
+                Context inspectContext=new ContextWrapper(isolated){
+                    @Override public File getExternalFilesDir(String type){return target.getExternalFilesDir(type);}
+                };
+                Installer.Bundle bundle=Installer.inspect(inspectContext,saved);
+                require(bundle.sharedData&&!bundle.data.isEmpty(),"Actual special release produces a shared-storage data plan");
+                require(bundle.apkInfo.getLongVersionCode()==saved.getLong("version"),"Actual APK version matches catalogue");
+                long bytes=0;for(Map.Entry<File,String> file:bundle.data.entrySet()){require(file.getKey().isFile(),"Extracted data file exists");InstallPlan.destination("/sdcard/"+file.getValue(),saved.getString("pkg"));bytes+=file.getKey().length();}
+                result.putString("specialRelease","PASS; data files="+bundle.data.size()+"; extracted bytes="+bytes+"; no game installed or deleted");
+            }
             require(Arrays.equals(before,realQueue.exists() ? Files.readAllBytes(realQueue.toPath()) : null),"Real download history is unchanged");
             result.putString("result","PASS " + checks + " checks; catalogue=" + catalogue.size() + "; installed=" + installed.size() + "; updates=" + updates.size());
             result.putString("network","No description, translation, or image request was made.");

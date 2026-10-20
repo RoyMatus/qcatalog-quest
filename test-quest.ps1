@@ -1,7 +1,8 @@
 param(
     [Parameter(Mandatory=$true)][string]$Serial,
     [Parameter(Mandatory=$true)][string]$JavaHome,
-    [Parameter(Mandatory=$true)][string]$SdkPath
+    [Parameter(Mandatory=$true)][string]$SdkPath,
+    [string]$SpecialReleaseId
 )
 $ErrorActionPreference = 'Stop'
 $buildDir = Join-Path $PSScriptRoot 'build'
@@ -30,7 +31,8 @@ Assert-Exit 'QA signing'
 & $adb -s $Serial install -r "$qaDir\checks.apk"
 Assert-Exit 'QA install'
 try {
-    $result = (& $adb -s $Serial shell am instrument -w ru.local.qcatalog.tests/ru.local.qcatalog.QuestChecks) -join "`n"
+    $extra=@();if($SpecialReleaseId){if($SpecialReleaseId -notmatch '^[a-f0-9]{64}$'){throw 'Invalid release identifier'};$extra=@('-e','specialReleaseId',$SpecialReleaseId)}
+    $result = (& $adb -s $Serial shell am instrument -w @extra ru.local.qcatalog.tests/ru.local.qcatalog.QuestChecks) -join "`n"
     $result
     if ($result -notmatch 'result=PASS ') { throw 'On-device checks failed.' }
 } finally { & $adb -s $Serial uninstall ru.local.qcatalog.tests | Out-Null }

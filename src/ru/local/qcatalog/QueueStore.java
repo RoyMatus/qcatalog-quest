@@ -112,6 +112,9 @@ final class QueueStore {
     static synchronized void interrupted(Context c) {
         for (JSONObject row : all(c)) {
             String state = row.optString("state");
+            if(state.equals("preparing")&&row.optString("phase").equals("Распаковка 7z")) {
+                update(c,row.optString("id"),"downloaded","Распаковка прервалась. Нажми «Установить»: скачанный архив сохранён.");continue;
+            }
             if (state.equals("downloading")) update(c, row.optString("id"), "queued", "Продолжу с сохранённой позиции.");
             if (state.equals("copying") || state.equals("verifying")) update(c,row.optString("id"),"needsData","Повторно проверю и завершу файлы данных.");
             if (state.equals("installing") || state.equals("preparing")) {

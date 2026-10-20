@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.3-preview — 2026-10-20
+
+- Поддержаны install.txt с одним APK и размещением данных adb push. Встроенная распаковка 7z с CRC-проверкой, ограничением путей, места и памяти, повторным запуском после прерывания.
+- Half-Life / XASH распаковывается и копируется прямо на шлеме. Существующие файлы, которых нет в поставке, включая сохранения, не удаляются; команды uninstall/rm из текста не запускаются.
+- Старая ошибка install.txt переводится в готовую к установке задачу без повторной загрузки. Неизвестные инструкции по-прежнему явно отклоняются с сохранением файлов.
+- Declarative install.txt support for one APK and adb push data placement, with built-in checked 7z extraction. No shell execution, uninstall or recursive deletion of installed game data.
+- Legacy install.txt errors can retry installation from existing downloads. Unsupported instructions remain explicit errors.
+
 ## 0.4.2-preview — 2026-10-20
 
 - Компактные карточки: обложки примерно в 1,5 раза ниже, меньше отступы, до пяти колонок; кнопки загрузок сохраняют размер.

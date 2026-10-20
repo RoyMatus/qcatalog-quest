@@ -18,6 +18,9 @@ $toolsDir = Join-Path $SdkPath 'build-tools\36.1.0'
 $androidJar = Join-Path $SdkPath 'platforms\android-36.1\android.jar'
 $adb = Join-Path $SdkPath 'platform-tools\adb.exe'
 $env:JAVA_HOME = $JavaHome
+& (Join-Path $PSScriptRoot 'fetch-dependencies.ps1')
+$dependencyJars=@((Get-Content (Join-Path $PSScriptRoot 'dependencies.json') -Raw | ConvertFrom-Json) | ForEach-Object { Join-Path (Join-Path $PSScriptRoot 'lib') $_.File })
+$compileClasspath=(@($androidJar)+$dependencyJars) -join ';'
 $testPackage=if($Ui){'ru.local.qcatalog.uichecks'}else{'ru.local.qcatalog.storagechecks'}
 $testType=if($Ui){'ui'}else{'storage'}
 function Assert-Exit([string]$stage) { if ($LASTEXITCODE -ne 0) { throw "$stage failed (exit $LASTEXITCODE)" } }
@@ -27,17 +30,26 @@ Assert-Exit 'Storage resources'
 & "$toolsDir\aapt2.exe" link -I $androidJar --manifest "$PSScriptRoot\tests\$testType\AndroidManifest.xml" --custom-package ru.local.qcatalog --java "$qaDir\generated" -o "$qaDir\unsigned.apk" "$qaDir\resources.zip"
 Assert-Exit 'Storage QA manifest'
 $sources=@(Get-ChildItem -LiteralPath "$PSScriptRoot\src" -Recurse -Filter '*.java' | ForEach-Object FullName)
+$sources+="$PSScriptRoot\tests\SpecialInstallTest.java"
 $sources+=if($Ui){"$PSScriptRoot\tests\ui\UiChecks.java"}else{"$PSScriptRoot\tests\storage\StorageChecks.java"}
 $sources+=@(Get-ChildItem -LiteralPath "$qaDir\generated" -Recurse -Filter '*.java' | ForEach-Object FullName)
-& "$JavaHome\bin\javac.exe" --release 8 -encoding UTF-8 -cp $androidJar -d "$qaDir\classes" @sources
+& "$JavaHome\bin\javac.exe" --release 8 -encoding UTF-8 -cp $compileClasspath -d "$qaDir\classes" @sources
 Assert-Exit 'Storage QA compilation'
 & "$JavaHome\bin\jar.exe" "-J-Djava.io.tmpdir=$qaDir\tmp" --create --file "$qaDir\classes.jar" -C "$qaDir\classes" .
 Assert-Exit 'Storage QA archive'
-& "$toolsDir\d8.bat" --lib $androidJar --min-api 29 --output "$qaDir\dex" "$qaDir\classes.jar"
+& "$toolsDir\d8.bat" --lib $androidJar --min-api 29 --output "$qaDir\dex" "$qaDir\classes.jar" @dependencyJars
 Assert-Exit 'Storage QA DEX'
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $zip = [IO.Compression.ZipFile]::Open("$qaDir\unsigned.apk",[IO.Compression.ZipArchiveMode]::Update)
 try {
+    foreach ($license in Get-ChildItem (Join-Path $PSScriptRoot 'licenses') -File) { [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip,$license.FullName,('assets/licenses/'+$license.Name),[IO.Compression.CompressionLevel]::Optimal) | Out-Null }
+    foreach ($dependency in $dependencyJars) {
+        $library=[IO.Compression.ZipFile]::OpenRead($dependency)
+        try { foreach ($entry in $library.Entries | Where-Object { $_.FullName -match '^META-INF/(LICENSE|NOTICE|COPYING)' }) {
+            $outEntry=$zip.CreateEntry('assets/licenses/'+[IO.Path]::GetFileNameWithoutExtension($dependency)+'/'+$entry.FullName)
+            $inputStream=$entry.Open();$outputStream=$outEntry.Open();try { $inputStream.CopyTo($outputStream) }finally { $inputStream.Dispose();$outputStream.Dispose() }
+        }}finally{$library.Dispose()}
+    }
     [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip,"$qaDir\dex\classes.dex",'classes.dex',[IO.Compression.CompressionLevel]::Optimal) | Out-Null
     if ($ResumeRemote) { [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip,"$PSScriptRoot\native\linux-arm64\rclone",'lib/arm64-v8a/librclone.so',[IO.Compression.CompressionLevel]::Optimal) | Out-Null }
 } finally { $zip.Dispose() }

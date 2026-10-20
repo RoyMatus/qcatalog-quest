@@ -2,9 +2,9 @@
 
 Каталог QLoader прямо на шлеме: поиск, скачивание, установка APK и проверка обновлений.
 
-**[Скачать APK / Download APK](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.4.2-preview)** · [Issues](https://github.com/RoyMatus/qcatalog-quest/issues) · [Русский](#русский) · [English](#english)
+**[Скачать APK / Download APK](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.4.3-preview)** · [Issues](https://github.com/RoyMatus/qcatalog-quest/issues) · [Русский](#русский) · [English](#english)
 
-Версия / Version: **0.4.2-preview**. Проверено / Tested: **Quest 3S, ARM64, Android API 34**, 20 October 2026.
+Версия / Version: **0.4.3-preview**. Проверено / Tested: **Quest 3S, ARM64, Android API 34**, 20 October 2026.
 
 
 ### Интерфейс и сортировка / Interface and sorting
@@ -74,7 +74,7 @@ QCatalog — отдельное Android-приложение с обычным �
 - В Meta Horizon на телефоне выбери значок шлема → свой Quest → Headset Settings → Developer Mode и включи режим разработчика.
 - Для Windows установи [Oculus ADB Drivers](https://developers.meta.com/vr/downloads/package/oculus-adb-drivers/), если нужный драйвер ещё не установлен. Подробности и актуальные требования смотри в инструкции Meta.
 
-1. Скачай `QCatalog-0.4.2-preview.apk` из [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.4.2-preview).
+1. Скачай `QCatalog-0.4.3-preview.apk` из [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.4.3-preview).
 2. Подключи Quest по USB и разреши USB-отладку **внутри шлема**. Отображение «Внутреннего общего накопителя» в Проводнике означает доступ к файлам, но ещё не подтверждает разрешение отладки.
 3. В PowerShell, открытом в папке Platform Tools, проверь устройства:
 
@@ -85,7 +85,7 @@ QCatalog — отдельное Android-приложение с обычным �
 4. Найди именно свой Quest со статусом `device`. Если указано `unauthorized`, подтверди запрос в шлеме. В следующих командах замени `QUEST_SERIAL` на серийный номер своего Quest, а путь к APK — на путь скачанного файла:
 
    ```powershell
-   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.4.2-preview.apk'
+   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.4.3-preview.apk'
    ```
 
 5. Открой библиотеку приложений Quest → «Неизвестные источники» → **QCatalog**. Расположение фильтра зависит от версии интерфейса Quest.
@@ -164,7 +164,7 @@ QCatalog — отдельное Android-приложение с обычным �
 ### Ограничения и проверка
 
 - Подтверждены получение каталога, скачивание на Quest 3S и установка одного обычного APK через Android. Запуск самой установленной игры в рамках проверки не проверялся.
-- Релизы с несколькими APK, split APK или непустым `install.txt` не поддерживаются. Команды из загруженных текстовых файлов не выполняются.
+- Для `install.txt` поддерживаются установка одного APK и копирование данных `adb push`, в том числе из архивов 7z. Пути и содержимое архива проверяются; команды оболочки не запускаются. Инструкции удаления старого APK/данных не выполняются: существующие сохранения остаются, файлы поставки заменяются проверенными копиями. Неизвестные команды показывают конкретную ошибку, скачанные файлы сохраняются. Несколько APK и split APK пока не поддерживаются.
 - Копирование OBB реализовано, но успешная установка OBB на Quest 3S **не подтверждена**. По [документации Android](https://developer.android.com/training/data-storage/manage-all-files), доступ ко всем файлам не отменяет ограничения чужих каталогов `Android/obb`. При отказе записи QCatalog отдельно сообщает, что APK установлен, а данные не завершены.
 - Для загрузок, начатых в 0.3.0, позиция внутри файла сохраняется на диск. После повторного открытия QCatalog или загрузки шлема очередь продолжается автоматически; ручная «Пауза» сохраняется и сама не отменяется. Полностью скачанные файлы повторно не загружаются. При обычной паузе сохраняется принятый байт; при аварийном выключении используется последний надёжный checkpoint, записываемый примерно каждые 4 МиБ. Если параметры исходного неполного файла изменились, он загружается заново. Частичные файлы старых версий не имеют этих checkpoints и могут потребовать нового скачивания.
 - Автозапуск после включения зависит от системного события загрузки и доступности сети/разблокировки. После «Принудительно остановить» в настройках Android нужно снова открыть QCatalog. Сам шлем в ходе проверки не перезагружался, чтобы не прерывать пользовательскую очередь; обработчик события проверяется в отдельном тесте.
@@ -191,7 +191,7 @@ QCatalog — отдельное Android-приложение с обычным �
 
 Если проверенный архив уже есть, используй `fetch-engine.ps1 -ArchivePath 'C:\Path\To\linux-arm64.tar'`. Если поставщик изменит архив, проверка хэша остановит извлечение. Не отключай её без проверки нового файла.
 
-Результат: `build/QCatalog-0.4.2-preview.apk`. Сборка проверяет подпись APK и запускает тесты каталога, безопасного удаления файлов и форматирования описаний. Исходники модифицированного бинарного движка поставщика в репозиторий не входят; этот движок не пересобирается из исходников.
+Результат: `build/QCatalog-0.4.3-preview.apk`. Сборка проверяет подпись APK и запускает тесты каталога, безопасного удаления файлов и форматирования описаний. Исходники модифицированного бинарного движка поставщика в репозиторий не входят; этот движок не пересобирается из исходников.
 
 Для обновления поверх установленного APK нужен тот же ключ подписи. `build.ps1` создаёт локальный `build/debug.keystore`, если его ещё нет. Сохрани свой ключ отдельно; он исключён из Git. Самостоятельная сборка с новым ключом не установится как обновление готового APK из Releases.
 
@@ -254,7 +254,7 @@ You need a Quest with Developer Mode enabled, a USB data cable, and Android SDK 
 - In the phone's Meta Horizon app, select the headset icon → your Quest → Headset Settings → Developer Mode, and enable it.
 - On Windows, install [Oculus ADB Drivers](https://developers.meta.com/vr/downloads/package/oculus-adb-drivers/) if not already installed. Refer to Meta's guide for the current requirements and details.
 
-1. Download `QCatalog-0.4.2-preview.apk` from [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.4.2-preview).
+1. Download `QCatalog-0.4.3-preview.apk` from [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.4.3-preview).
 2. Connect the Quest over USB and allow USB debugging **inside the headset**. Seeing the headset's shared storage in Windows Explorer does not mean USB debugging has been authorized.
 3. Open PowerShell in the Platform Tools directory and run:
 
@@ -265,7 +265,7 @@ You need a Quest with Developer Mode enabled, a USB data cable, and Android SDK 
 4. Identify your Quest with the `device` status. For `unauthorized`, accept the debugging prompt inside the headset. Replace `QUEST_SERIAL` below with your Quest's serial, and adjust the APK path:
 
    ```powershell
-   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.4.2-preview.apk'
+   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.4.3-preview.apk'
    ```
 
 5. Open the Quest app library → **Unknown Sources** → **QCatalog**. The filter's location depends on the Quest software version.
@@ -338,7 +338,7 @@ This version has **covers**, not screenshot galleries or trailers. No verified s
 ### Limitations, validation and privacy
 
 - Catalogue retrieval, direct downloading and installation of one ordinary APK were verified on Quest 3S. The installed game's own runtime behavior was not tested.
-- Multiple APKs, split APK releases and non-empty `install.txt` scripts are unsupported. Downloaded script commands are never executed.
+- `install.txt` supports one APK and declarative `adb push` data placement, including 7z archives. Archive entries and paths are validated; no shell is launched. Legacy uninstall/delete instructions are not executed: existing saves remain and supplied files are replaced with verified copies. Unknown commands produce an explicit error while keeping downloads. Multiple APKs and split APK remain unsupported.
 - OBB copying is implemented but successful OBB installation on Quest 3S is **unverified**. [Android's all-files access](https://developer.android.com/training/data-storage/manage-all-files) does not remove restrictions on other apps' `Android/obb` directories. A data-copy failure is reported separately from APK installation.
 - Downloads started with 0.3.0 persist a byte checkpoint. Reopening QCatalog or receiving the headset boot event restores pending work automatically; a manual pause remains paused. Completed files are reused. Normal pause saves the received byte position; abrupt power loss resumes from the last durable checkpoint, written roughly every 4 MiB. A changed partial-file identity restarts that file. Older versions' partial files lack these checkpoints and may need downloading again.
 - Boot restart depends on Android delivering the boot event and network/unlock availability. After Android's Force stop action, reopen QCatalog first. The headset was not rebooted during validation to preserve the user's active queue; boot handling is tested in isolation.
@@ -363,7 +363,7 @@ Requirements: **Windows, PowerShell 7, JDK 21, Android SDK Build Tools 36.1.0, S
 
 Use `fetch-engine.ps1 -ArchivePath 'C:\Path\To\linux-arm64.tar'` for an existing archive. A changed provider archive fails the pinned hash check; review it before changing the expected hash.
 
-Output: `build/QCatalog-0.4.2-preview.apk`. The build verifies the APK signature and runs catalogue, download-containment/deletion and description-formatting tests. The provider's modified native engine source is not included or rebuilt here.
+Output: `build/QCatalog-0.4.3-preview.apk`. The build verifies the APK signature and runs catalogue, download-containment/deletion and description-formatting tests. The provider's modified native engine source is not included or rebuilt here.
 
 The build creates a local `build/debug.keystore` when absent. Keep your signing key privately: it is excluded from Git, and updates require the same key. Your own rebuild with a new key cannot update the APK distributed in Releases.
 
@@ -394,3 +394,19 @@ Source and releases are public to read and download; issues are open for bug rep
 29 изолированных UI-проверок на Quest 3S: компактная сетка 5/4 колонки, зелёная отметка только новой версии, отсутствие ложной отметки при повторном использовании карточки, цели VR от 64 dp; сохранены проверки действий и тем.
 
 29 isolated UI checks on Quest 3S cover compact 5/4-column grids, green checks only for newer releases, recycled-card reset and 64 dp minimum VR targets, alongside action alignment and theme checks.
+
+### Дополнительная установка / Special installation (0.4.3)
+
+Релизы портов вроде Half-Life / XASH могут содержать `Install.txt`, APK и большой архив `.7z`. QCatalog распаковывает архив во временную папку внутри скачанного релиза, проверяет CRC, затем переводит `adb install` и `adb push` в системную установку APK и проверенное копирование файлов. Регистр имён источников учитывается без неоднозначных совпадений (`xash` / `XASH`). Полная распаковка повторно используется; после прерывания незавершённая распаковка перезапускается из уже скачанного архива. Сам архив повторно скачивать не требуется. Для распаковки и копирования нужно дополнительное свободное место.
+
+Команды `uninstall` и `rm -rf` не выполняются: QCatalog сохраняет существующие файлы вне поставки, включая сохранения, и заменяет только поставляемые файлы. Поэтому это поддержка известных инструкций размещения, а не произвольного командного сценария. Для данных в `/sdcard/XASH` нужен «Доступ ко всем файлам». После успешной установки и проверки удаляется только скачанный релиз QCatalog, не установленная папка XASH.
+
+Старая ошибка о неподдерживаемом install.txt при запуске меняется на «Файлы сохранены. Нажми “Установить”». Перед установкой файлы проверяются повторно. Удалять игру или запускать загрузку заново не нужно.
+
+Port releases such as Half-Life / XASH may contain `Install.txt`, an APK and a large `.7z` archive. QCatalog extracts locally inside the downloaded release with CRC/path checks, then translates `adb install` and `adb push` into Android package installation and verified data copying. Source lookup handles case without ambiguous matches. Completed extraction is reused; interrupted extraction retries from the saved archive without downloading it again. Additional free space is required for extraction and copying.
+
+Legacy `uninstall` / `rm -rf` commands are not executed. Existing files outside the supplied set, including saves, remain; supplied files are replaced. This supports known placement instructions, not arbitrary scripts. Shared game folders such as `/sdcard/XASH` require All files access. Successful cleanup removes only QCatalog's downloaded release, not installed XASH files.
+
+The old unsupported-install.txt error becomes a ready-to-install task on launch. Files are rechecked before installation. Do not delete or redownload the game merely to clear this old error.
+
+Build dependencies are pinned by SHA-256 in `dependencies.json`. `build.ps1` and `test-storage.ps1` run `fetch-dependencies.ps1`; the first build requires Maven Central access. Libraries are embedded in the APK, so headset extraction needs neither a PC nor a library download. Original licenses are bundled under `assets/licenses/`.

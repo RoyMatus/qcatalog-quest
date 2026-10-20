@@ -15,6 +15,7 @@ final class Installer {
         File apk;
         PackageInfo apkInfo;
         String packageName, label, sha256;
+        boolean sharedData, preservesOldData;
         final LinkedHashMap<File,String> data = new LinkedHashMap<>();
         boolean needsApproval(JSONObject job) {
             return !packageName.equals(job.optString("pkg")) &&
@@ -24,6 +25,7 @@ final class Installer {
     private static List<File> files(File dir) throws IOException {
         List<File> result = new ArrayList<>(); File[] entries = dir.listFiles(); if (entries == null) throw new IOException("Не удалось прочитать папку релиза.");
         for (File f : entries) {
+            if (f.getName().equals(".qcatalog-expanded")) continue;
             if (Files.isSymbolicLink(f.toPath())) throw new IOException("Ссылки в релизах не поддерживаются.");
             if (f.isDirectory()) result.addAll(files(f)); else result.add(f);
         }
@@ -32,10 +34,12 @@ final class Installer {
     static Bundle inspect(Context c, JSONObject job) throws Exception {
         String pkg = job.getString("pkg"); if (!Catalog.safePackage(pkg)) throw new IOException("Некорректное имя пакета.");
         File dir = QueueStore.directory(c, job); Bundle result = new Bundle(); Set<String> destinations = new HashSet<>();
+        File script=null;List<File> archives=new ArrayList<>();boolean unmappedObb=false;
         for (File f : files(dir)) {
             if (f.getName().endsWith(".qcatalog-part") || f.getName().endsWith(".qcatalog-resume") || f.getName().endsWith(".qcatalog-resume.tmp")) throw new IOException("В релизе остались незавершённые файлы. Продолжи загрузку перед установкой.");
             String relative = dir.toPath().relativize(f.toPath()).toString().replace('\\', '/');
-            if (f.getName().equalsIgnoreCase("install.txt") && f.length() > 0) throw new IOException("Релиз содержит install.txt. Произвольные скрипты установки в этой версии не выполняются.");
+            if (f.getName().equalsIgnoreCase("install.txt") && f.length() > 0) {if(script!=null)throw new IOException("В релизе несколько install.txt.");script=f;continue;}
+            if (f.getName().toLowerCase(Locale.ROOT).endsWith(".7z")) archives.add(f);
             if (f.getName().toLowerCase(Locale.ROOT).endsWith(".apk")) {
                 if (result.apk != null) throw new IOException("В релизе несколько APK. Такие комплекты пока не поддерживаются.");
                 result.apk = f; continue;
@@ -46,8 +50,17 @@ final class Installer {
             if (mapped != null) {
                 if (mapped.isEmpty() || Arrays.asList(mapped.split("/")).contains("..") || !destinations.add(mapped)) throw new IOException("Некорректные пути дополнительных файлов.");
                 result.data.put(f, mapped);
-            } else if (f.getName().endsWith(".obb")) throw new IOException("Не удалось определить место установки OBB-файла.");
+            } else if (f.getName().endsWith(".obb")) unmappedObb=true;
         }
+        if(script!=null) {
+            List<File> roots=new ArrayList<>();roots.add(script.getParentFile());
+            for(File archive:archives)roots.add(ArchiveFiles.expand(archive,dir,(done,total)->{
+                JSONObject current=QueueStore.get(c,job.optString("id"));
+                if(current!=null&&current.optString("state").equals("paused"))throw new InterruptedIOException("Распаковка приостановлена. Скачанный архив сохранён.");
+                if(current!=null)QueueStore.stage(c,job.optString("id"),current.optString("state").equals("downloading")?"downloading":"preparing","Распаковка 7z",done,total,"Распаковка: "+DownloadFiles.format(done)+" / "+DownloadFiles.format(total));
+            }));
+            InstallPlan plan=InstallPlan.read(script,roots,pkg);result.apk=plan.apk;result.data.clear();result.data.putAll(plan.files);result.sharedData=true;result.preservesOldData=plan.preservesOldData;
+        }else if(unmappedObb)throw new IOException("Не удалось определить место установки OBB-файла.");
         if (result.apk == null) throw new IOException("В загруженном релизе нет APK.");
         PackageInfo apkInfo = c.getPackageManager().getPackageArchiveInfo(result.apk.getAbsolutePath(), PackageManager.GET_SIGNING_CERTIFICATES);
         if (apkInfo == null) throw new IOException("Не удалось прочитать APK. Файл повреждён или загрузка не завершена.");
@@ -69,6 +82,12 @@ final class Installer {
         }
         return result;
     }
+    static void recoverLegacyScripts(Context c) {
+        for(JSONObject job:QueueStore.all(c))if(job.optString("state").equals("error")&&job.optString("message").contains("install.txt")&&!job.optBoolean("filesRemoved"))try{
+            File dir=QueueStore.directory(c,job);File script=InstallPlan.lookup(dir,"install.txt");
+            if(script!=null&&script.isFile())QueueStore.update(c,job.optString("id"),"downloaded","Файлы сохранены. Нажми «Установить»: архив будет распакован на шлеме. Старые данные не удаляются.");
+        }catch(Exception ignored){}
+    }
     static void checkUpdateSignature(Context c, Bundle bundle) throws IOException {
         SigningPreflight.check(c,bundle.apkInfo);
     }
@@ -78,7 +97,7 @@ final class Installer {
         if (bundle.needsApproval(job)) throw new IOException("Перед установкой подтверди расхождение имени пакета с каталогом.");
         if (!c.getPackageManager().canRequestPackageInstalls()) throw new IOException("Разреши QCatalog устанавливать приложения в системных настройках.");
         if (!bundle.data.isEmpty() && Build.VERSION.SDK_INT >= 30 && !Environment.isExternalStorageManager())
-            throw new IOException("Для OBB требуется разрешение «Доступ ко всем файлам». Оно запрашивается в настройках приложения.");
+            throw new IOException("Для данных игры требуется разрешение «Доступ ко всем файлам». Оно запрашивается в настройках приложения.");
         PackageInstaller installer = c.getPackageManager().getPackageInstaller();
         PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
         params.setAppPackageName(bundle.packageName); params.setSize(bundle.apk.length());
@@ -108,7 +127,7 @@ final class Installer {
         if (installed.getLongVersionCode() != job.getLong("version")) throw new IOException("Android не подтвердил установку нужной версии APK.");
         if (bundle.data.isEmpty()) return;
         if (Build.VERSION.SDK_INT >= 30 && !Environment.isExternalStorageManager()) throw new IOException("Разреши доступ ко всем файлам и повтори установку данных.");
-        File root = new File(Environment.getExternalStorageDirectory(), "Android/obb/" + pkg);
+        File root = bundle.sharedData ? Environment.getExternalStorageDirectory() : new File(Environment.getExternalStorageDirectory(), "Android/obb/" + pkg);
         long bytes = 0; for (File file : bundle.data.keySet()) bytes = Math.addExact(bytes, file.length());
         if (Environment.getExternalStorageDirectory().getUsableSpace() < bytes + 64L * 1024 * 1024) throw new IOException("Недостаточно места для файлов данных.");
         if (!root.isDirectory() && !root.mkdirs()) throw new IOException("Прошивка не разрешила запись в Android/obb. APK установлен, данные ещё не установлены.");
