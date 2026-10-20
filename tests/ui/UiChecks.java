@@ -30,6 +30,7 @@ public final class UiChecks extends Instrumentation {
         DownloadService.RUNNING.set(true);
         Intent intent=new Intent(c,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);activity=(MainActivity)startActivitySync(intent);waitForIdleSync();
         queueDuringTap(c,job,false);queueDuringTap(c,job,true);
+        listControls();
         boolean night=(activity.getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES;
         require(activity.getColor(R.color.qc_background)==Color.parseColor(night?"#101823":"#F5F3EF"),"Background follows actual system night mode");
         result.putString("window",activity.getResources().getConfiguration().screenWidthDp+"x"+activity.getResources().getConfiguration().screenHeightDp+" dp; night="+night);
@@ -189,5 +190,35 @@ public final class UiChecks extends Instrumentation {
             require(single,"One down/up opens exactly one game card while a download progresses");
         });
         QueueStore.stage(c,job.id,"downloading","Скачивание",68*1024*1024,100*1024*1024,"Тестовый прогресс");
+    }
+    void listControls()throws Exception{
+        EditText search=(EditText)field(activity,"search");Button clear=(Button)field(activity,"clearSearch");GridView grid=(GridView)field(activity,"grid");ScrollRail rail=(ScrollRail)field(activity,"scrollRail");
+        runOnMainSync(()->{require(clear.getVisibility()==View.GONE,"Empty search has no clear cross");search.setText("Moss");require(grid.getAdapter().getCount()==1,"Typed query filters games");require(clear.getVisibility()==View.VISIBLE&&clear.getContentDescription().equals("Очистить поиск"),"Nonempty search has labelled clear action");});
+        settle();
+        runOnMainSync(()->{
+            require(clear.getWidth()>=Cards.dp(activity,64)&&clear.getHeight()>=Cards.dp(activity,64),"Search cross has a VR-sized pointer target");
+            int[] p=new int[2],origin=new int[2];clear.getLocationOnScreen(p);activity.getWindow().getDecorView().getLocationOnScreen(origin);float x=p[0]-origin[0]+clear.getWidth()/2f,y=p[1]-origin[1]+clear.getHeight()/2f;long now=android.os.SystemClock.uptimeMillis();
+            for(int action:new int[]{MotionEvent.ACTION_DOWN,MotionEvent.ACTION_UP}){MotionEvent event=MotionEvent.obtain(now,now+20,action,x,y,0);event.setSource(InputDevice.SOURCE_MOUSE);activity.dispatchTouchEvent(event);event.recycle();}
+        });
+        settle();
+        runOnMainSync(()->{require(search.length()==0&&clear.getVisibility()==View.GONE,"One pointer click clears text and hides cross");require(grid.getAdapter().getCount()==6,"Clearing restores all games");});
+        @SuppressWarnings("unchecked") java.util.List<Catalog.Game> source=(java.util.List<Catalog.Game>)field(activity,"games");java.util.List<Catalog.Game> original=new java.util.ArrayList<>(source);
+        try{
+            runOnMainSync(()->{for(int i=0;i<100;i++)source.add(new Catalog.Game("Scroll "+i,"Scroll v1","org.qcatalog.scroll"+i,1,"",1));search.setText("Scroll");});settle();
+            runOnMainSync(()->{require(rail.scrollable(),"Long filtered catalogue exposes draggable scrollbar");require(rail.getWidth()>=Cards.dp(activity,64),"Scrollbar has a wide VR hit area");require(rail.thumbBounds().height()>=Cards.dp(activity,72),"Scrollbar thumb never becomes too small to grab");require(rail.getLeft()>=grid.getRight(),"Scrollbar cannot cover game tiles");});
+            dragRail(rail,0.5f);settle();
+            runOnMainSync(()->require(grid.getFirstVisiblePosition()>20&&grid.getFirstVisiblePosition()<60,"Dragging to the middle seeks into the list"));
+            dragRail(rail,1);settle();
+            runOnMainSync(()->require(grid.getLastVisiblePosition()==grid.getCount()-1,"Dragging the scrollbar reaches the last game"));
+            dragRail(rail,0);settle();
+            runOnMainSync(()->require(grid.getFirstVisiblePosition()==0,"Dragging the scrollbar back reaches the first game"));
+            capture("controls");
+            runOnMainSync(()->search.setText("Moss"));settle();runOnMainSync(()->require(!rail.scrollable(),"Scrollbar becomes inactive when filtered results fit"));
+        }finally{runOnMainSync(()->{source.clear();source.addAll(original);search.setText("");});settle();}
+    }
+    void dragRail(ScrollRail rail,float fraction){
+        long now=android.os.SystemClock.uptimeMillis();final float[] y={0};runOnMainSync(()->{y[0]=rail.thumbBounds().centerY();MotionEvent event=MotionEvent.obtain(now,now,MotionEvent.ACTION_DOWN,rail.getWidth()/2f,y[0],0);event.setSource(InputDevice.SOURCE_MOUSE);require(rail.dispatchTouchEvent(event),"Scrollbar accepts pointer grab");event.recycle();});
+        runOnMainSync(()->{float target=fraction*rail.getHeight();MotionEvent event=MotionEvent.obtain(now,now+100,MotionEvent.ACTION_MOVE,rail.getWidth()/2f,target,0);event.setSource(InputDevice.SOURCE_MOUSE);rail.dispatchTouchEvent(event);event.recycle();});settle();
+        runOnMainSync(()->{float target=fraction*rail.getHeight();MotionEvent event=MotionEvent.obtain(now,now+150,MotionEvent.ACTION_UP,rail.getWidth()/2f,target,0);event.setSource(InputDevice.SOURCE_MOUSE);rail.dispatchTouchEvent(event);event.recycle();});
     }
 }

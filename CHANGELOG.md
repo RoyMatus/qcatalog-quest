@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.10-preview — 2026-10-20
+
+- Пройдены 311 изолированных проверок интерфейса и кэша на Quest, включая нажатие крестика указателем, перетаскивание ползунка к середине/концу/началу списка и скрытие при коротких результатах. Штатные проверки сборки пройдены.
+- Passed 311 isolated Quest UI/cache checks, including pointer-driven search clearing, scrollbar dragging to the middle/end/start, and short-list behaviour. Existing build checks passed.
+
+- Справа от каталога, библиотеки, загрузок и обновлений добавлена полоса прокрутки: ползунок можно захватить указателем и перетащить, также можно нажать на дорожку. Область захвата — 64 dp, минимальная высота ползунка — 72 dp. Полоса занимает отдельное место и не перекрывает плитки; скрывается, когда прокрутка не нужна. Цвета следуют системной теме.
+- Внутри поля поиска справа появился крестик: одно нажатие очищает запрос и возвращает полный список текущего раздела. При пустом запросе крестик скрыт.
+- Added a draggable right-hand scrollbar to catalogue, library, downloads and updates. A 64 dp hit area and minimum 72 dp thumb make pointer interaction easier. Track clicks seek through the list. The rail reserves its own space, hides when scrolling is unnecessary and follows the system theme.
+- Added an in-field clear search button. One pointer click clears the query and restores the current section's results; the button hides for an empty query.
+
 ## 0.6.9-preview — 2026-10-20
 
 - Исправлена причина потери нажатий во время скачивания: обновление прогресса больше не перестраивает каталог/библиотеку каждые полсекунды. Подпись раздела не задаётся повторно без изменений; установленные версии обновляются после завершения установки и штатной периодической проверкой.

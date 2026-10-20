@@ -31,12 +31,12 @@ public final class MainActivity extends Activity {
     private int section,columns=1;
     private long lastInstalledRead,seenCompletion;
     private TextView status,empty,versions,heading,notice;
-    private EditText search;
+    private EditText search; private FrameLayout searchBox; private Button clearSearch; private ScrollRail scrollRail;
     private Button cleanup,sort;
     private final List<Button> navigation=new ArrayList<>();
     private LinearLayout rail,body,tools;
     private Button sections,refreshControl; private int layoutMode=-1;
-    private GridView grid;
+    private ScrollRail.Grid grid;
     private InstalledApps installed;
     private Rows adapter;
     private CoverLoader covers;
@@ -65,16 +65,16 @@ public final class MainActivity extends Activity {
         heading=text("Каталог",32,INK);heading.setTypeface(Typeface.DEFAULT,Typeface.BOLD);top.addView(heading,new LinearLayout.LayoutParams(0,-2,1));
         refreshControl=button("Обновить каталог");if(getResources().getConfiguration().screenWidthDp<880)refreshControl.setVisibility(View.GONE);top.addView(refreshControl);refreshControl.setOnClickListener(v->refresh());
         status=text("Подключи QLoader в настройках.",20,MUTED);status.setPadding(0,dp(10),0,dp(8));body.addView(status);
-        tools=row();body.addView(tools);search=new EditText(this);search.setSingleLine(true);search.setTextSize(22);search.setTextColor(INK);search.setHintTextColor(MUTED);search.setHint("Найти игру");search.setPadding(dp(16),dp(12),dp(16),dp(12));search.setBackground(Cards.background(this,R.drawable.qc_bg_surface));tools.addView(search,new LinearLayout.LayoutParams(0,dp(64),1));
-        sort=button(sortLabel());LinearLayout.LayoutParams sl=new LinearLayout.LayoutParams(-2,-2);sl.leftMargin=dp(16);tools.addView(sort,sl);if(getResources().getConfiguration().screenWidthDp<880){tools.setOrientation(LinearLayout.VERTICAL);search.setLayoutParams(new LinearLayout.LayoutParams(-1,dp(64)));LinearLayout.LayoutParams narrow=new LinearLayout.LayoutParams(-1,-2);narrow.topMargin=dp(8);sort.setLayoutParams(narrow);}sort.setOnClickListener(v->sorting());
-        search.addTextChangedListener(new TextWatcher(){public void beforeTextChanged(CharSequence s,int st,int c,int a){}public void onTextChanged(CharSequence s,int st,int b,int c){filter();}public void afterTextChanged(Editable e){}});
+        tools=row();body.addView(tools);search=new EditText(this);search.setSingleLine(true);search.setTextSize(22);search.setTextColor(INK);search.setHintTextColor(MUTED);search.setHint("Найти игру");search.setPadding(dp(16),dp(12),dp(80),dp(12));search.setBackgroundColor(Color.TRANSPARENT);searchBox=new FrameLayout(this);searchBox.setBackground(Cards.background(this,R.drawable.qc_bg_surface));tools.addView(searchBox,new LinearLayout.LayoutParams(0,dp(64),1));searchBox.addView(search,new FrameLayout.LayoutParams(-1,-1));clearSearch=button("×");clearSearch.setTextSize(32);clearSearch.setPadding(0,0,0,0);clearSearch.setContentDescription("Очистить поиск");clearSearch.setVisibility(View.GONE);searchBox.addView(clearSearch,new FrameLayout.LayoutParams(dp(64),-1,Gravity.RIGHT));clearSearch.setOnClickListener(v->{search.setText("");search.requestFocus();});
+        sort=button(sortLabel());LinearLayout.LayoutParams sl=new LinearLayout.LayoutParams(-2,-2);sl.leftMargin=dp(16);tools.addView(sort,sl);if(getResources().getConfiguration().screenWidthDp<880){tools.setOrientation(LinearLayout.VERTICAL);searchBox.setLayoutParams(new LinearLayout.LayoutParams(-1,dp(64)));LinearLayout.LayoutParams narrow=new LinearLayout.LayoutParams(-1,-2);narrow.topMargin=dp(8);sort.setLayoutParams(narrow);}sort.setOnClickListener(v->sorting());
+        search.addTextChangedListener(new TextWatcher(){public void beforeTextChanged(CharSequence s,int st,int c,int a){}public void onTextChanged(CharSequence s,int st,int b,int c){clearSearch.setVisibility(s.length()==0?View.GONE:View.VISIBLE);filter();}public void afterTextChanged(Editable e){}});
         versions=text("Проверяю установленные версии…",20,MUTED);versions.setPadding(0,dp(12),0,dp(12));body.addView(versions);
         cleanup=button("Очистка файлов и истории");body.addView(cleanup);cleanup.setOnClickListener(v->cleanupMenu(null));
         FrameLayout content=new FrameLayout(this);body.addView(content,new LinearLayout.LayoutParams(-1,0,1));
-        grid=new GridView(this);grid.setVerticalSpacing(dp(16));grid.setHorizontalSpacing(dp(16));grid.setStretchMode(GridView.STRETCH_COLUMN_WIDTH);grid.setClipToPadding(false);grid.setPadding(0,dp(8),0,dp(12));content.addView(grid);
+        grid=new ScrollRail.Grid(this);grid.setVerticalScrollBarEnabled(false);grid.setVerticalSpacing(dp(16));grid.setHorizontalSpacing(dp(16));grid.setStretchMode(GridView.STRETCH_COLUMN_WIDTH);grid.setClipToPadding(false);grid.setPadding(0,dp(8),0,dp(12));FrameLayout.LayoutParams gridSpace=new FrameLayout.LayoutParams(-1,-1);gridSpace.rightMargin=dp(72);content.addView(grid,gridSpace);scrollRail=new ScrollRail(this,grid);content.addView(scrollRail,new FrameLayout.LayoutParams(dp(64),-1,Gravity.RIGHT));grid.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->scrollRail.sync());
         empty=text("Подключи QLoader в настройках.",26,MUTED);empty.setGravity(Gravity.CENTER);content.addView(empty,new FrameLayout.LayoutParams(-1,-1));grid.setEmptyView(empty);
         adapter=new Rows();grid.setAdapter(adapter);grid.setOnItemClickListener((p,v,position,id)->{if(downloads)jobDetails(jobs.get(position));else gameDetails(filtered.get(position));});
-        grid.setOnScrollListener(new AbsListView.OnScrollListener(){public void onScrollStateChanged(AbsListView view,int state){}public void onScroll(AbsListView view,int first,int count,int total){prefetchCovers(first,count);}});
+        grid.setOnScrollListener(new AbsListView.OnScrollListener(){public void onScrollStateChanged(AbsListView view,int state){}public void onScroll(AbsListView view,int first,int count,int total){prefetchCovers(first,count);scrollRail.sync();}});
         notice=text("",22,getColor(R.color.qc_success));notice.setPadding(dp(24),dp(16),dp(24),dp(16));notice.setBackgroundColor(getColor(R.color.qc_success_surface));notice.setVisibility(View.GONE);body.addView(notice);
                 root.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->configureWidth(Math.round((r-l)/getResources().getDisplayMetrics().density)));
         configureWidth(getResources().getConfiguration().screenWidthDp);
@@ -96,7 +96,7 @@ public final class MainActivity extends Activity {
     private void networkApk(){if(busy){showStatus("Дождись завершения текущей операции.");return;}startActivityForResult(new Intent(this,NetworkApkActivity.class),42);}
     private void settings(){new AlertDialog.Builder(this).setTitle("Настройки QCatalog").setItems(new String[]{"Подключение QLoader","Разрешения установки","Обновить каталог","Очистка файлов и истории","Установить APK с компьютера"},(d,w)->{if(w==0)connection();else if(w==1)permissions();else if(w==2)refresh();else if(w==3)cleanupMenu(null);else networkApk();}).setNegativeButton("Закрыть",null).show();}
     private void selectTab(boolean value){selectSection(value?2:0);}
-    private void selectSection(int value){section=value;downloads=value==2;if(grid==null)return;covers.viewport(Collections.emptyList(),Collections.emptyList());int width=Math.round(getWindow().getDecorView().getWidth()/getResources().getDisplayMetrics().density);columns=downloads?1:cardColumns(width);grid.setNumColumns(columns);search.setVisibility(downloads?View.GONE:View.VISIBLE);sort.setVisibility(downloads?View.GONE:View.VISIBLE);cleanup.setVisibility(downloads?View.VISIBLE:View.GONE);for(int i=0;i<navigation.size();i++)navigation.get(i).setBackground(Cards.background(this,i==section?R.drawable.qc_bg_selected:R.drawable.qc_bg_surface));heading.setText(new String[]{"Каталог","Библиотека","Загрузки","Обновления"}[section]);queueSignature="";updateQueue();filter();grid.smoothScrollToPosition(0);}
+    private void selectSection(int value){section=value;downloads=value==2;if(grid==null)return;covers.viewport(Collections.emptyList(),Collections.emptyList());int width=Math.round(getWindow().getDecorView().getWidth()/getResources().getDisplayMetrics().density);columns=downloads?1:cardColumns(width);grid.setNumColumns(columns);searchBox.setVisibility(downloads?View.GONE:View.VISIBLE);sort.setVisibility(downloads?View.GONE:View.VISIBLE);cleanup.setVisibility(downloads?View.VISIBLE:View.GONE);for(int i=0;i<navigation.size();i++)navigation.get(i).setBackground(Cards.background(this,i==section?R.drawable.qc_bg_selected:R.drawable.qc_bg_surface));heading.setText(new String[]{"Каталог","Библиотека","Загрузки","Обновления"}[section]);queueSignature="";updateQueue();filter();grid.smoothScrollToPosition(0);}
     private void prefetchCovers(int first,int count){
         List<String> visible=new ArrayList<>(),ahead=new ArrayList<>();
         if(!downloads&&count>0){
@@ -145,7 +145,7 @@ public final class MainActivity extends Activity {
     }
     private int cardColumns(int width){int available=width-64-(width>=880?248:0);return Math.max(1,Math.min(5,(available+16)/236));}
     private void configureWidth(int width){int mode=width>=1180?3:width>=880?2:1;
-        if(mode!=layoutMode){layoutMode=mode;boolean wide=mode>1;rail.setVisibility(wide?View.VISIBLE:View.GONE);sections.setVisibility(wide?View.GONE:View.VISIBLE);refreshControl.setVisibility(wide?View.VISIBLE:View.GONE);heading.setTextSize(wide?32:26);tools.setOrientation(wide?LinearLayout.HORIZONTAL:LinearLayout.VERTICAL);search.setLayoutParams(wide?new LinearLayout.LayoutParams(0,dp(64),1):new LinearLayout.LayoutParams(-1,dp(64)));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(wide?-2:-1,-2);lp.leftMargin=wide?dp(16):0;lp.topMargin=wide?0:dp(8);sort.setLayoutParams(lp);}
+        if(mode!=layoutMode){layoutMode=mode;boolean wide=mode>1;rail.setVisibility(wide?View.VISIBLE:View.GONE);sections.setVisibility(wide?View.GONE:View.VISIBLE);refreshControl.setVisibility(wide?View.VISIBLE:View.GONE);heading.setTextSize(wide?32:26);tools.setOrientation(wide?LinearLayout.HORIZONTAL:LinearLayout.VERTICAL);searchBox.setLayoutParams(wide?new LinearLayout.LayoutParams(0,dp(64),1):new LinearLayout.LayoutParams(-1,dp(64)));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(wide?-2:-1,-2);lp.leftMargin=wide?dp(16):0;lp.topMargin=wide?0:dp(8);sort.setLayoutParams(lp);}
         int n=downloads?1:cardColumns(width);if(n!=columns){columns=n;grid.setNumColumns(n);if(adapter!=null)adapter.notifyDataSetChanged();}
     }
     private void retryCleanup(JSONObject job){QueueStore.update(this,job.optString("id"),"cleanup","Повторная очистка установочных файлов");DownloadService.start(this);}

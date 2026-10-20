@@ -98,7 +98,7 @@ try {
     $instrumentArgs+=if($NetworkConfig){"$testPackage/ru.local.qcatalog.NetworkChecks"}elseif($Ui){"$testPackage/ru.local.qcatalog.UiChecks"}else{"$testPackage/ru.local.qcatalog.StorageChecks"}
     $result = (& $adb @instrumentArgs) -join "`n"
     $result
-    if($Ui){foreach($name in @('catalog','library','downloads','ready','installing','error','catalog-wide','theme-light','theme-dark','carousel')){& $adb -s $Serial shell "run-as $testPackage cat files/$name.png > /data/local/tmp/qcatalog-ui-$name.png"; & $adb -s $Serial pull "/data/local/tmp/qcatalog-ui-$name.png" "$qaDir\$name.png"; & $adb -s $Serial shell rm "/data/local/tmp/qcatalog-ui-$name.png"}}
+    if($Ui){foreach($name in @('catalog','library','downloads','ready','installing','error','catalog-wide','theme-light','theme-dark','carousel','controls')){& $adb -s $Serial shell "run-as $testPackage cat files/$name.png > /data/local/tmp/qcatalog-ui-$name.png"; & $adb -s $Serial pull "/data/local/tmp/qcatalog-ui-$name.png" "$qaDir\$name.png"; & $adb -s $Serial shell rm "/data/local/tmp/qcatalog-ui-$name.png"}}
     if($Ui -and $LiveMedia){foreach($name in @('video','video-expanded')){& $adb -s $Serial shell "run-as $testPackage cat files/$name.png > /data/local/tmp/qcatalog-ui-$name.png"; & $adb -s $Serial pull "/data/local/tmp/qcatalog-ui-$name.png" "$qaDir\$name.png"; & $adb -s $Serial shell rm "/data/local/tmp/qcatalog-ui-$name.png"}}
     if ($result -notmatch 'result=PASS ') { throw 'Storage checks failed.' }
 } finally { & $adb -s $Serial uninstall $testPackage | Out-Null }
