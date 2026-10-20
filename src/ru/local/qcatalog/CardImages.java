@@ -27,7 +27,6 @@ final class CardImages implements AutoCloseable {
     CardImages(Factory factory,BiConsumer<String,Bitmap> ready){this.factory=factory;this.ready=ready;}
     synchronized Bitmap get(String key){return cache.get(key);}
     synchronized int size(){return cache.size();}
-    synchronized int total(){return requested.size();}
     synchronized long bytes(){return bytes;}
     synchronized int pending(){return pending.size();}
     void prefetch(Collection<String> keys){for(String key:keys)if(!key.startsWith("video:"))request(key);}
