@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="qc_catalog">Каталог</string>
+  <string name="qc_library">Библиотека</string>
+  <string name="qc_downloads">Загрузки</string>
+  <string name="qc_updates">Обновления</string>
+  <string name="qc_search">Найти игру</string>
+  <string name="qc_install">Установить</string>
+  <string name="qc_update">Обновить</string>
+  <string name="qc_open">Открыть</string>
+  <string name="qc_pause">Пауза</string>
+  <string name="qc_resume">Продолжить</string>
+  <string name="qc_retry">Повторить</string>
+  <string name="qc_details">Подробнее</string>
+  <string name="qc_installing">Устанавливается…</string>
+  <string name="qc_wait_android">Ожидаем результат Android</string>
+  <string name="qc_confirm_android">Подтверди установку в системном окне</string>
+  <string name="qc_copying">Копирование данных</string>
+  <string name="qc_cleanup">Удаляем установочные файлы…</string>
+  <string name="qc_success">%1$s обновлено. Установочные файлы удалены.</string>
+  <string name="qc_cleanup_failed">Обновление установлено. Не удалось удалить установочные файлы.</string>
+  <string name="qc_retry_cleanup">Повторить очистку</string>
+  <string name="qc_install_failed">Не удалось установить</string>
+  <string name="qc_files_kept">Файлы сохранены — можно повторить установку.</string>
+  <string name="qc_empty_updates">Все игры обновлены</string>
+  <string name="qc_empty_downloads">Активных загрузок нет</string>
+  <string name="qc_no_description">Описание пока недоступно</string>
+</resources>

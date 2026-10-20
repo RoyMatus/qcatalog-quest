@@ -10,7 +10,7 @@ public final class BootReceiver extends BroadcastReceiver {
         try {
             if (DownloadService.RUNNING.get()) return;
             QueueStore.recover(context);
-            for (JSONObject job : QueueStore.all(context)) if (Arrays.asList("queued","needsData").contains(job.optString("state"))) {
+            for (JSONObject job : QueueStore.all(context)) if (QueueStore.pending(job)) {
                 DownloadService.start(context); break;
             }
         } catch (Exception e) { context.getSharedPreferences("state",0).edit().putString("lastError",DownloadService.safeMessage(e)).apply(); }

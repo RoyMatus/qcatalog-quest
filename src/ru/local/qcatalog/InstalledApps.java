@@ -31,5 +31,9 @@ final class InstalledApps {
     Entry get(String pkg) { return apps.get(aliases.containsKey(pkg) ? aliases.get(pkg) : pkg); }
     String metadataPackage(String pkg) { return aliases.containsKey(pkg) ? aliases.get(pkg) : pkg; }
     boolean newer(Catalog.Game game) { Entry current = get(game.pkg); return current != null && isNewer(game.version,current.version); }
+    boolean sameVersions(InstalledApps other) {
+        if(apps.size()!=other.apps.size() || !aliases.equals(other.aliases)) return false;
+        for(Entry e:apps.values()) { Entry next=other.apps.get(e.pkg);if(next==null || next.version!=e.version)return false; }return true;
+    }
     static boolean isNewer(long catalog, long installed) { return catalog > installed; }
 }

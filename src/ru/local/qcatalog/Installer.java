@@ -83,16 +83,21 @@ final class Installer {
         PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
         params.setAppPackageName(bundle.packageName); params.setSize(bundle.apk.length());
         int sessionId = installer.createSession(params); boolean committed = false;
+        QueueStore.session(c,job.getString("id"),sessionId);
         try (PackageInstaller.Session session = installer.openSession(sessionId)) {
+            final long total=bundle.apk.length(); long done=0,last=0;
+            QueueStore.stage(c,job.getString("id"),"preparing","Подготовка APK",0,total,"Передаю APK системному установщику");
             try (InputStream input = new FileInputStream(bundle.apk); OutputStream output = session.openWrite("base.apk", 0, bundle.apk.length())) {
                 byte[] buffer = new byte[1024 * 1024]; int n;
-                while ((n = input.read(buffer)) != -1) output.write(buffer, 0, n);
+                while ((n = input.read(buffer)) != -1) { output.write(buffer, 0, n); done+=n; long now=SystemClock.elapsedRealtime();
+                    if(now-last>250 || done==total) { last=now; QueueStore.stage(c,job.getString("id"),"preparing","Подготовка APK",done,total,"Передаю APK системному установщику"); }
+                }
                 session.fsync(output);
             }
-            Intent result = new Intent(c, InstallReceiver.class).setAction("ru.local.qcatalog.INSTALL_RESULT").putExtra("id", job.getString("id"));
+            Intent result = new Intent(c, InstallReceiver.class).setAction("ru.local.qcatalog.INSTALL_RESULT").putExtra("id", job.getString("id")).putExtra("sessionId",sessionId);
             int flags = PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 31 ? PendingIntent.FLAG_MUTABLE : 0);
             PendingIntent callback = PendingIntent.getBroadcast(c, sessionId, result, flags);
-            QueueStore.update(c, job.getString("id"), "installing", "Ожидаю результат системного установщика.");
+            QueueStore.stage(c,job.getString("id"),"installing","Установка APK",0,0,"Ожидаем результат Android");
             session.commit(callback.getIntentSender()); committed = true;
         } finally { if (!committed) installer.abandonSession(sessionId); }
     }
@@ -107,21 +112,6 @@ final class Installer {
         long bytes = 0; for (File file : bundle.data.keySet()) bytes = Math.addExact(bytes, file.length());
         if (Environment.getExternalStorageDirectory().getUsableSpace() < bytes + 64L * 1024 * 1024) throw new IOException("Недостаточно места для файлов данных.");
         if (!root.isDirectory() && !root.mkdirs()) throw new IOException("Прошивка не разрешила запись в Android/obb. APK установлен, данные ещё не установлены.");
-        for (Map.Entry<File,String> entry : bundle.data.entrySet()) {
-            File target = new File(root, entry.getValue());
-            if (!target.getCanonicalPath().startsWith(root.getCanonicalPath() + File.separator)) throw new IOException("Недопустимый путь OBB.");
-            if (!target.getParentFile().isDirectory() && !target.getParentFile().mkdirs()) throw new IOException("Не удалось создать папку OBB.");
-            File pending = new File(target.getParentFile(), target.getName() + ".qcatalog-part");
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            try (InputStream in = new FileInputStream(entry.getKey()); FileOutputStream out = new FileOutputStream(pending)) {
-                byte[] buffer = new byte[1024 * 1024]; int n;
-                while ((n = in.read(buffer)) != -1) { digest.update(buffer, 0, n); out.write(buffer, 0, n); }
-                out.getFD().sync();
-            } catch (IOException e) { throw new IOException("Запись данных не удалась. Проверь место и доступ к Android/obb."); }
-            byte[] expected = digest.digest(); digest.reset();
-            try (InputStream in = new FileInputStream(pending)) { byte[] buffer = new byte[1024 * 1024]; int n; while ((n = in.read(buffer)) != -1) digest.update(buffer, 0, n); }
-            if (!MessageDigest.isEqual(expected, digest.digest())) throw new IOException("Проверка записанного OBB не прошла.");
-            Files.move(pending.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        }
+        DataFiles.copy(bundle.data,root,(verifying,done,total) -> QueueStore.stage(c,job.optString("id"),verifying ? "verifying" : "copying",verifying ? "Проверка данных" : "Копирование данных",done,total,DownloadFiles.format(done)+" / "+DownloadFiles.format(total)));
     }
 }

@@ -44,15 +44,21 @@ public final class DownloadService extends Service {
             while (!stopping) {
                 JSONObject job = null;
                 for (JSONObject candidate : QueueStore.all(this)) {
-                    if (candidate.optString("state").equals("queued") || candidate.optString("state").equals("needsData")) { job = candidate; break; }
+                    if (QueueStore.pending(candidate)) { job = candidate; break; }
                 }
                 if (job == null) break;
                 activeId = job.getString("id");
                 final String id = activeId;
                 if (job.optString("state").equals("needsData")) {
                     notification("Устанавливаю файлы данных: " + job.getString("name"));
-                    try { Installer.finishData(this, job); QueueStore.update(this, id, "installed", "APK и файлы данных установлены."); }
+                    try { Installer.finishData(this, job); QueueStore.dataVerified(this,id); }
                     catch (Exception e) { QueueStore.update(this, id, "dataError", safeMessage(e)); }
+                    continue;
+                }
+                if (job.optString("state").equals("cleanup")) {
+                    notification("Удаляем установочные файлы: "+job.optString("name"));
+                    try { Completion.cleanup(this,job); }
+                    catch(Exception e) { QueueStore.update(this,id,"cleanupError","Игра установлена. "+safeMessage(e)+" Можно повторить очистку."); }
                     continue;
                 }
                 QueueStore.update(this, id, "downloading", "Подключаюсь к серверу");
@@ -68,8 +74,10 @@ public final class DownloadService extends Service {
                         if (QueueStore.get(this, id).optString("state").equals("paused")) throw new InterruptedIOException("Пауза.");
                         try {
                             String remote = mirror + ":Quest Games/" + release;
-                            active.downloadRelease(remote,dir,
-                                message -> { if (!active.cancelled.get()) QueueStore.progress(this, id, message); });
+                            active.downloadRelease(remote,dir,new Engine.Progress() {
+                                public void update(String message) { if (!active.cancelled.get()) QueueStore.progress(DownloadService.this,id,message); }
+                                public void bytes(long done,long total,double speed) { if (!active.cancelled.get()) QueueStore.stage(DownloadService.this,id,"downloading","Скачивание",done,total,DownloadFiles.format(done)+" / "+DownloadFiles.format(total)+(speed>0 ? String.format(Locale.ROOT," · %.1f МБ/с",speed) : "")); }
+                            });
                             downloaded = true; break;
                         } catch (InterruptedIOException e) { throw e; }
                         catch (Exception e) { last = e; if (e.getMessage() != null && e.getMessage().startsWith("Нужно около")) throw e; }
@@ -90,7 +98,7 @@ public final class DownloadService extends Service {
             if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
             new Handler(Looper.getMainLooper()).post(() -> {
                 RUNNING.set(false);
-                if (!stopping) for (JSONObject pending : QueueStore.all(this)) if (Arrays.asList("queued","needsData").contains(pending.optString("state"))) {
+                if (!stopping) for (JSONObject pending : QueueStore.all(this)) if (QueueStore.pending(pending)) {
                     start(this); return;
                 }
                 stopForeground(STOP_FOREGROUND_REMOVE); stopSelf();

@@ -28,7 +28,8 @@ final class QueueStore {
     static synchronized void add(Context c, Catalog.Game game) throws Exception {
         List<JSONObject> rows = all(c);
         for (JSONObject row : rows) if (row.optString("id").equals(game.id)) {
-            if (Arrays.asList("downloading", "installing", "needsData").contains(row.optString("state"))) return;
+            if (active(row)) return;
+            if (row.optString("state").equals("cleanupError")) return;
             if (Arrays.asList("downloaded","installError").contains(row.optString("state")) && !row.optBoolean("filesRemoved")) return;
             row.put("state", "queued").put("message", "В очереди").remove("filesRemoved"); write(c, rows); return;
         }
@@ -38,12 +39,35 @@ final class QueueStore {
     }
     static synchronized void update(Context c, String id, String state, String message) {
         try { List<JSONObject> rows = all(c); for (JSONObject row : rows) if (row.optString("id").equals(id)) {
+            if (!state.equals(row.optString("state"))) { row.remove("done"); row.remove("total"); row.remove("phase"); }
             row.put("state", state).put("message", message); break;
         } write(c, rows); } catch (Exception e) { throw new IllegalStateException("Не удалось сохранить очередь."); }
     }
     static synchronized void progress(Context c, String id, String message) {
         JSONObject current=get(c,id);
         if (current != null && current.optString("state").equals("downloading")) update(c,id,"downloading",message);
+    }
+    static synchronized void stage(Context c,String id,String state,String phase,long done,long total,String message) {
+        try { List<JSONObject> rows=all(c); for(JSONObject row:rows) if(row.optString("id").equals(id)) {
+            if(state.equals("downloading") && !row.optString("state").equals("downloading")) return;
+            row.put("state",state).put("phase",phase).put("done",Math.max(0,done)).put("total",Math.max(0,total)).put("message",message); break;
+        } write(c,rows); } catch(Exception e) { throw new IllegalStateException("Не удалось сохранить прогресс."); }
+    }
+    static synchronized void session(Context c,String id,int sessionId) throws Exception {
+        List<JSONObject> rows=all(c); for(JSONObject row:rows) if(row.optString("id").equals(id)) row.put("sessionId",sessionId); write(c,rows);
+    }
+    static boolean pending(JSONObject row) { return Arrays.asList("queued","needsData","cleanup").contains(row.optString("state")); }
+    static synchronized void dataVerified(Context c,String id) throws Exception {
+        List<JSONObject> rows=all(c); for(JSONObject row:rows) if(row.optString("id").equals(id)) {
+            row.put("dataVerified",true).put("state","cleanup").put("message","Удаляем установочные файлы…"); row.remove("total"); row.remove("done"); row.remove("phase");
+        } write(c,rows);
+    }
+    static synchronized void completed(Context c,String id) throws Exception {
+        List<JSONObject> rows=all(c); JSONObject finished=null;
+        for(JSONObject row:rows) if(row.optString("id").equals(id)) finished=row;
+        if(finished==null) return;
+        c.getSharedPreferences("state",0).edit().putString("completion",finished.optString("name")+": установлено. Установочные файлы удалены.").putLong("completionAt",System.currentTimeMillis()).commit();
+        final String remove=id; rows.removeIf(row -> row.optString("id").equals(remove)); write(c,rows);
     }
     static synchronized void approvePackage(Context c, String id, String pkg, String sha256) throws Exception {
         if (!Catalog.safePackage(pkg) || !sha256.matches("[a-f0-9]{64}")) throw new IOException("Некорректные сведения APK.");
@@ -55,7 +79,7 @@ final class QueueStore {
         throw new IOException("Загрузка не найдена.");
     }
     static String installedPackage(JSONObject job) { return job.optString("approvedPackage", job.optString("pkg")); }
-    static boolean active(JSONObject row) { return Arrays.asList("queued", "downloading", "installing", "needsData").contains(row.optString("state")); }
+    static boolean active(JSONObject row) { return Arrays.asList("queued", "downloading", "preparing", "installing", "needsData", "copying", "verifying", "cleanup").contains(row.optString("state")); }
     static synchronized void ensureIdle(Context c) throws IOException {
         if (DownloadService.RUNNING.get()) throw new IOException("Дождись завершения загрузки или поставь её на паузу.");
         for (JSONObject row : all(c)) if (active(row)) throw new IOException("Дождись завершения активных задач.");
@@ -89,7 +113,8 @@ final class QueueStore {
         for (JSONObject row : all(c)) {
             String state = row.optString("state");
             if (state.equals("downloading")) update(c, row.optString("id"), "queued", "Продолжу с сохранённой позиции.");
-            if (state.equals("installing")) {
+            if (state.equals("copying") || state.equals("verifying")) update(c,row.optString("id"),"needsData","Повторно проверю и завершу файлы данных.");
+            if (state.equals("installing") || state.equals("preparing")) {
                 try { android.content.pm.PackageInfo p = c.getPackageManager().getPackageInfo(installedPackage(row), 0);
                     if (p.getLongVersionCode() == row.optLong("version")) { update(c, row.optString("id"), "dataError", "APK установлен. Проверь файлы данных."); continue; }
                 } catch (Exception ignored) { }
@@ -112,6 +137,11 @@ final class QueueStore {
             case "paused": return "Пауза";
             case "downloaded": return "Готово к установке";
             case "installing": return "Установка APK";
+            case "preparing": return "Подготовка APK";
+            case "copying": return "Копирование данных";
+            case "verifying": return "Проверка данных";
+            case "cleanup": return "Очистка установочных файлов";
+            case "cleanupError": return "Игра установлена · нужна очистка";
             case "installError": return "Ошибка установки";
             case "needsData": return "Установка данных";
             case "dataError": return "APK установлен, данные не завершены";

@@ -1,0 +1,8 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="ru.local.qcatalog.uichecks">
+  <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="32"/>
+  <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
+  <application android:label="QCatalog UI checks" android:debuggable="true" android:theme="@style/QCatalogTheme" android:allowBackup="false">
+    <activity android:name="ru.local.qcatalog.MainActivity" android:exported="false" android:resizeableActivity="true"/>
+  </application>
+  <instrumentation android:name="ru.local.qcatalog.UiChecks" android:targetPackage="ru.local.qcatalog.uichecks"/>
+</manifest>

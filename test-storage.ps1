@@ -7,21 +7,28 @@ param(
     [string]$ResumeRemote,
     [long]$ResumeSize,
     [string]$ResumeSha256,
-    [string]$ResumePrefixSha256
+    [string]$ResumePrefixSha256,
+    [switch]$Ui,
+    [switch]$LivePopularity
 )
 $ErrorActionPreference = 'Stop'
 if ([bool]$PreviousApk -xor [bool]$IncomingApk) { throw 'Provide both PreviousApk and IncomingApk, or neither.' }
-$qaDir = Join-Path $PSScriptRoot 'build\storage-checks'
+$qaDir = Join-Path $PSScriptRoot $(if($Ui){'build\ui-checks'}else{'build\storage-checks'})
 $toolsDir = Join-Path $SdkPath 'build-tools\36.1.0'
 $androidJar = Join-Path $SdkPath 'platforms\android-36.1\android.jar'
 $adb = Join-Path $SdkPath 'platform-tools\adb.exe'
 $env:JAVA_HOME = $JavaHome
+$testPackage=if($Ui){'ru.local.qcatalog.uichecks'}else{'ru.local.qcatalog.storagechecks'}
+$testType=if($Ui){'ui'}else{'storage'}
 function Assert-Exit([string]$stage) { if ($LASTEXITCODE -ne 0) { throw "$stage failed (exit $LASTEXITCODE)" } }
-foreach ($dir in @($qaDir,"$qaDir\classes","$qaDir\dex","$qaDir\tmp")) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
-& "$toolsDir\aapt2.exe" link -I $androidJar --manifest "$PSScriptRoot\tests\storage\AndroidManifest.xml" -o "$qaDir\unsigned.apk"
+foreach ($dir in @($qaDir,"$qaDir\classes","$qaDir\dex","$qaDir\tmp","$qaDir\generated")) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
+& "$toolsDir\aapt2.exe" compile --dir "$PSScriptRoot\res" -o "$qaDir\resources.zip"
+Assert-Exit 'Storage resources'
+& "$toolsDir\aapt2.exe" link -I $androidJar --manifest "$PSScriptRoot\tests\$testType\AndroidManifest.xml" --custom-package ru.local.qcatalog --java "$qaDir\generated" -o "$qaDir\unsigned.apk" "$qaDir\resources.zip"
 Assert-Exit 'Storage QA manifest'
 $sources=@(Get-ChildItem -LiteralPath "$PSScriptRoot\src" -Recurse -Filter '*.java' | ForEach-Object FullName)
-$sources+="$PSScriptRoot\tests\storage\StorageChecks.java"
+$sources+=if($Ui){"$PSScriptRoot\tests\ui\UiChecks.java"}else{"$PSScriptRoot\tests\storage\StorageChecks.java"}
+$sources+=@(Get-ChildItem -LiteralPath "$qaDir\generated" -Recurse -Filter '*.java' | ForEach-Object FullName)
 & "$JavaHome\bin\javac.exe" --release 8 -encoding UTF-8 -cp $androidJar -d "$qaDir\classes" @sources
 Assert-Exit 'Storage QA compilation'
 & "$JavaHome\bin\jar.exe" "-J-Djava.io.tmpdir=$qaDir\tmp" --create --file "$qaDir\classes.jar" -C "$qaDir\classes" .
@@ -56,6 +63,7 @@ try {
         }
     }
     $instrumentArgs=@('-s',$Serial,'shell','am','instrument','-w')
+    if($LivePopularity){if($Ui){throw 'UI fixtures intentionally have no network permission.'};$instrumentArgs+=@('-e','livePopularity','true')}
     if ($ResumeRemote) {
         if ($ResumeSize -lt 65536 -or $ResumeSha256 -notmatch '^[a-f0-9]{64}$' -or $ResumePrefixSha256 -notmatch '^[a-f0-9]{64}$') { throw 'Supply verified size, full SHA-256 and first-65536-byte SHA-256 for the resume probe.' }
         & $adb -s $Serial shell "run-as ru.local.qcatalog cat files/FFA_config | run-as ru.local.qcatalog.storagechecks sh -c 'mkdir -p files; cat > files/FFA_config'"
@@ -63,8 +71,9 @@ try {
         $encoded=[Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($ResumeRemote))
         $instrumentArgs+=@('-e','remote64',$encoded,'-e','size',[string]$ResumeSize,'-e','sha',$ResumeSha256,'-e','prefixSha',$ResumePrefixSha256)
     }
-    $instrumentArgs+='ru.local.qcatalog.storagechecks/ru.local.qcatalog.StorageChecks'
+    $instrumentArgs+=if($Ui){"$testPackage/ru.local.qcatalog.UiChecks"}else{"$testPackage/ru.local.qcatalog.StorageChecks"}
     $result = (& $adb @instrumentArgs) -join "`n"
     $result
+    if($Ui){foreach($name in @('catalog','downloads','installing','error','catalog-wide')){& $adb -s $Serial shell "run-as $testPackage cat files/$name.png > /data/local/tmp/qcatalog-ui-$name.png"; & $adb -s $Serial pull "/data/local/tmp/qcatalog-ui-$name.png" "$qaDir\$name.png"; & $adb -s $Serial shell rm "/data/local/tmp/qcatalog-ui-$name.png"}}
     if ($result -notmatch 'result=PASS ') { throw 'Storage checks failed.' }
-} finally { & $adb -s $Serial uninstall ru.local.qcatalog.storagechecks | Out-Null }
+} finally { & $adb -s $Serial uninstall $testPackage | Out-Null }

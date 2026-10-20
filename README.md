@@ -2,9 +2,24 @@
 
 Каталог QLoader прямо на шлеме: поиск, скачивание, установка APK и проверка обновлений.
 
-**[Скачать APK / Download APK](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.3.0-preview)** · [Issues](https://github.com/RoyMatus/qcatalog-quest/issues) · [Русский](#русский) · [English](#english)
+**[Скачать APK / Download APK](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.4.0-preview)** · [Issues](https://github.com/RoyMatus/qcatalog-quest/issues) · [Русский](#русский) · [English](#english)
 
-Версия / Version: **0.3.0-preview**. Проверено / Tested: **Quest 3S, ARM64, Android API 34**, 19 October 2026.
+Версия / Version: **0.4.0-preview**. Проверено / Tested: **Quest 3S, ARM64, Android API 34**, 20 October 2026.
+
+
+### Интерфейс 0.4 и сортировка / Interface 0.4 and sorting
+
+Используется утверждённый [набор Cards v1](design/cards-v1/README.md), импортированный в `res/` без подмены цветов и иконок. В узком окне разделы открываются кнопкой «Разделы»; в широком видны боковое меню и сетка. Разверни окно на Quest для двух или трёх колонок. Настройки подключения доступны через «Разделы → Настройки» либо нижнюю кнопку бокового меню.
+
+Сортировка рядом с поиском: А–Я или популярность скачиваний за сутки / 7 / 30 дней. Источник — [публичная статистика QLoader](https://qloader.5698452.xyz/api/v1/popularity), а не рейтинг магазина Meta или точное число всех скачиваний. Выбранный режим сохраняется; сами данные статистики — только в RAM. Никакая личная история скачиваний этому сервису не передаётся. Повторный выбор сортировки позволяет повторить запрос после ошибки. Обложки видимых карточек используют ограниченный кеш RAM 16 МиБ, описания по-прежнему загружаются только по запросу; изображения/описания не сохраняются на диск.
+
+Approved [Cards v1 resources](design/cards-v1/README.md) are imported into `res/`. Narrow windows use the labelled Sections menu; wider windows show the sidebar and a two/three-column grid. Enlarge the Quest window for the desktop-like layout. Connection settings are under Sections → Settings or the sidebar Settings button.
+
+Sorting beside search supports A–Z and QLoader download popularity for 1/7/30 days, using its public API. This is not Meta store star ratings or an exact global download total. Missing statistics sort last; service failures explicitly fall back to alphabetical order. Only the selected sort setting persists; the data stays in RAM. No personal download reports are sent. Visible covers use a bounded 16 MiB RAM cache, with no disk media/description cache.
+
+Progress is phase-specific: downloading, APK preparation, Android installation (indeterminate when its exact percentage is unavailable), copying data and SHA-256 verification. After a newly successful install/update, only that task's downloaded staging files are removed. Installed OBB files, saved games, mods and other tasks are preserved. Cleanup failures expose a cleanup-only retry; installation/data failures keep the sources. Old completed entries remain available for manual cleanup and are hidden from active downloads.
+
+Validation for 0.4: 14 host copy/progress/corruption checks; 24 isolated Android checks for progress, version confirmation, cleanup boundaries, retry, sorting and a live popularity request from Quest; 10 isolated UI checks with synthetic data and no Internet permission, including narrow/wide render snapshots. Existing host parser/signing/resume tests also pass. Device UI render checks do not establish subjective comfort or controller-ray usability: the owner should verify those in the headset.
 
 ## Русский
 
@@ -22,7 +37,9 @@ QCatalog — отдельное Android-приложение с обычным �
 - Загрузка на сам шлем, очередь, пауза и повторная попытка.
 - Восстановление очереди после запуска приложения или шлема и продолжение частично скачанного файла с сохранённой позиции.
 - Установка поддерживаемых APK с подтверждением в системном окне Android.
-- Фильтры «Все игры», «Установленные», «Есть обновления».
+- Светлый интерфейс «Карточки»: каталог, библиотека, загрузки и обновления. Крупные цели нажатия и сетка 3/2/1 колонки по ширине окна.
+- Сортировка А–Я и по популярности скачиваний QLoader за сутки, 7 и 30 дней. Нет статистики — игра в конце; при ошибке сервиса явно показывается А–Я.
+- Прогресс скачивания, подготовки APK, копирования и проверки данных. Системная установка Android без точного процента показана неопределённым индикатором.
 - Сравнение установленного `versionCode` с числовым кодом версии в каталоге; кнопка «Обновить» для более нового релиза.
 - Удаление скачанных файлов отдельно от истории; очистка одной записи или всей истории.
 - Краткое описание на русском и обложка при открытии карточки. Описания, переводы и изображения не записываются в файлы на шлеме.
@@ -54,7 +71,7 @@ QCatalog — отдельное Android-приложение с обычным �
 - В Meta Horizon на телефоне выбери значок шлема → свой Quest → Headset Settings → Developer Mode и включи режим разработчика.
 - Для Windows установи [Oculus ADB Drivers](https://developers.meta.com/vr/downloads/package/oculus-adb-drivers/), если нужный драйвер ещё не установлен. Подробности и актуальные требования смотри в инструкции Meta.
 
-1. Скачай `QCatalog-0.3.0-preview.apk` из [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.3.0-preview).
+1. Скачай `QCatalog-0.4.0-preview.apk` из [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.4.0-preview).
 2. Подключи Quest по USB и разреши USB-отладку **внутри шлема**. Отображение «Внутреннего общего накопителя» в Проводнике означает доступ к файлам, но ещё не подтверждает разрешение отладки.
 3. В PowerShell, открытом в папке Platform Tools, проверь устройства:
 
@@ -65,7 +82,7 @@ QCatalog — отдельное Android-приложение с обычным �
 4. Найди именно свой Quest со статусом `device`. Если указано `unauthorized`, подтверди запрос в шлеме. В следующих командах замени `QUEST_SERIAL` на серийный номер своего Quest, а путь к APK — на путь скачанного файла:
 
    ```powershell
-   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.3.0-preview.apk'
+   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.4.0-preview.apk'
    ```
 
 5. Открой библиотеку приложений Quest → «Неизвестные источники» → **QCatalog**. Расположение фильтра зависит от версии интерфейса Quest.
@@ -112,7 +129,7 @@ QCatalog — отдельное Android-приложение с обычным �
 
 Если идентификатор пакета APK отличается от каталога, QCatalog покажет оба значения и запросит отдельное подтверждение. Оно действует только для конкретного файла с проверенным SHA-256. Несовпадение числового кода версии блокирует установку.
 
-Для обновлений нажми «Обновить» вверху, чтобы получить свежий каталог, затем выбери фильтр «Есть обновления». Карточка показывает установленную версию и версию каталога. Кнопка «Обновить» скачивает новый релиз, а сама установка по-прежнему требует системного подтверждения.
+Для обновлений выбери «Обновить каталог» (в узком окне — «Разделы → Настройки → Обновить каталог»), затем открой раздел «Обновления». Карточка показывает установленную версию и версию каталога. Кнопка «Обновить» скачивает новый релиз, а сама установка по-прежнему требует системного подтверждения.
 
 Перед установкой QCatalog проверяет доступные сведения о подписи. При явно разных ключах установленного приложения и APK он объясняет конфликт заранее. История ротации сертификатов учитывается; окончательную совместимость решает Android. Ошибки установщика показываются как «Ошибка установки» с причиной, а не как «Готово к установке, код 5». Повторная попытка использует уже скачанный APK.
 
@@ -129,11 +146,11 @@ QCatalog — отдельное Android-приложение с обычным �
 | Удалить скачанные файлы | Удаляются APK и прочие файлы релизов из собственной папки загрузок QCatalog. Установленные приложения и их сохранения остаются. |
 | Очистить историю загрузок | Удаляются записи списка. Скачанные файлы остаются на месте. |
 
-Для одной загрузки: запись → «Ещё» → нужное действие. Перед удалением появляется подтверждение. Общая очистка находит и файлы релизов, записи которых уже удалены из истории. Во время активных загрузок и установок очистка блокируется. После установки файлы автоматически не удаляются.
+Для одной загрузки: запись → «Ещё» → нужное действие. Перед удалением появляется подтверждение. Общая очистка находит и файлы релизов, записи которых уже удалены из истории. Во время активных загрузок и установок очистка блокируется. После новой успешной установки/обновления установочные файлы автоматически удаляются, а задача исчезает из активных загрузок. Ошибка установки сохраняет файлы; ошибка очистки допускает отдельный повтор. Старые завершённые записи автоматически не очищаются.
 
 ### Описания, русский язык и изображения
 
-Данные загружаются **только при открытии карточки**, без предварительного обхода каталога. Оригинальное описание приходит из API источника QLoader. Если оно уже русское, показывается короткий фрагмент. Если источник отдаёт английский текст, короткий фрагмент переводится через [MyMemory](https://mymemory.translated.net/doc/spec.php) в момент открытия. Это машинный перевод, его точность не гарантируется. Полный исходный текст доступен по кнопке «Оригинал описания».
+Описания загружаются **только при открытии карточки**, обложки — только для видимых карточек, без предварительного обхода каталога. Оригинальное описание приходит из API источника QLoader. Если оно уже русское, показывается короткий фрагмент. Если источник отдаёт английский текст, короткий фрагмент переводится через [MyMemory](https://mymemory.translated.net/doc/spec.php) в момент открытия. Это машинный перевод, его точность не гарантируется. Полный исходный текст доступен по кнопке «Оригинал описания».
 
 У анонимного доступа MyMemory есть [лимит 5 000 символов в день на IP](https://mymemory.translated.net/doc/usagelimits.php). Число доступных переводов зависит от длины текста, повторных открытий и использования того же внешнего IP другими людьми. При исчерпании лимита или недоступности сервиса приложение сообщает об этом и оставляет оригинал. В MyMemory отправляется только публичный фрагмент описания, без ссылки доступа или конфига QLoader.
 
@@ -171,7 +188,7 @@ QCatalog — отдельное Android-приложение с обычным �
 
 Если проверенный архив уже есть, используй `fetch-engine.ps1 -ArchivePath 'C:\Path\To\linux-arm64.tar'`. Если поставщик изменит архив, проверка хэша остановит извлечение. Не отключай её без проверки нового файла.
 
-Результат: `build/QCatalog-0.3.0-preview.apk`. Сборка проверяет подпись APK и запускает тесты каталога, безопасного удаления файлов и форматирования описаний. Исходники модифицированного бинарного движка поставщика в репозиторий не входят; этот движок не пересобирается из исходников.
+Результат: `build/QCatalog-0.4.0-preview.apk`. Сборка проверяет подпись APK и запускает тесты каталога, безопасного удаления файлов и форматирования описаний. Исходники модифицированного бинарного движка поставщика в репозиторий не входят; этот движок не пересобирается из исходников.
 
 Для обновления поверх установленного APK нужен тот же ключ подписи. `build.ps1` создаёт локальный `build/debug.keystore`, если его ещё нет. Сохрани свой ключ отдельно; он исключён из Git. Самостоятельная сборка с новым ключом не установится как обновление готового APK из Releases.
 
@@ -231,7 +248,7 @@ You need a Quest with Developer Mode enabled, a USB data cable, and Android SDK 
 - In the phone's Meta Horizon app, select the headset icon → your Quest → Headset Settings → Developer Mode, and enable it.
 - On Windows, install [Oculus ADB Drivers](https://developers.meta.com/vr/downloads/package/oculus-adb-drivers/) if not already installed. Refer to Meta's guide for the current requirements and details.
 
-1. Download `QCatalog-0.3.0-preview.apk` from [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.3.0-preview).
+1. Download `QCatalog-0.4.0-preview.apk` from [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.4.0-preview).
 2. Connect the Quest over USB and allow USB debugging **inside the headset**. Seeing the headset's shared storage in Windows Explorer does not mean USB debugging has been authorized.
 3. Open PowerShell in the Platform Tools directory and run:
 
@@ -242,7 +259,7 @@ You need a Quest with Developer Mode enabled, a USB data cable, and Android SDK 
 4. Identify your Quest with the `device` status. For `unauthorized`, accept the debugging prompt inside the headset. Replace `QUEST_SERIAL` below with your Quest's serial, and adjust the APK path:
 
    ```powershell
-   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.3.0-preview.apk'
+   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.4.0-preview.apk'
    ```
 
 5. Open the Quest app library → **Unknown Sources** → **QCatalog**. The filter's location depends on the Quest software version.
@@ -283,7 +300,7 @@ Copy your `FFA_config` to the headset's shared `Download` folder via USB. Open *
 
 If the APK's package identifier differs from the catalogue, QCatalog shows both and requires explicit confirmation tied to the SHA-256 of that exact APK. A different version code blocks installation.
 
-For updates, press the top **«Обновить» (Refresh)** button to retrieve the latest catalogue, then select **«Есть обновления» (Updates available)**. The card shows installed and catalogue versions. Its **«Обновить» (Update)** button downloads the new release; installing it still requires Android confirmation.
+For updates, press the top **«Обновить» (Refresh)** button to retrieve the latest catalogue, then select **«Обновления» (Updates)**. The card shows installed and catalogue versions. Its **«Обновить» (Update)** button downloads the new release; installing it still requires Android confirmation.
 
 Before installation QCatalog checks available signing information. Clearly unrelated signing keys produce an explanation before opening the installer. Certificate rotation histories are considered; Android remains the final authority. Installer failures appear as **«Ошибка установки» (Installation error)** with the reason, instead of a misleading ready-to-install status and code 5. A retry reuses the downloaded APK.
 
@@ -300,7 +317,7 @@ Under **«Загрузки» → «Очистка файлов и истории
 | «Удалить скачанные файлы» / Delete downloaded files | Removes downloaded APKs and other release files from QCatalog's own downloads folder. Installed apps and their saves remain. |
 | «Очистить историю загрузок» / Clear download history | Removes list entries while keeping downloaded files. |
 
-For one item, open it → **«Ещё» (More)** → select the action. Cleanup asks for confirmation and is blocked during active downloads/installations. Bulk file cleanup also finds downloads whose history entries have already been removed. Files are not automatically deleted after installation.
+For one item, open it → **«Ещё» (More)** → select the action. Cleanup asks for confirmation and is blocked during active downloads/installations. Bulk file cleanup also finds downloads whose history entries have already been removed. New successful installs/updates automatically delete their staging files and leave the active download list. Failed installs retain source files; failed cleanup has a separate retry. Legacy completed tasks are not automatically migrated into deletion.
 
 ### Descriptions, Russian translation and images
 
@@ -308,7 +325,7 @@ Only opening a card triggers its metadata requests; there is no catalogue-wide p
 
 Anonymous MyMemory access has a [5,000-character daily limit per IP](https://mymemory.translated.net/doc/usagelimits.php). The number of translations depends on text length, repeated openings and other people sharing that external IP. If translation is unavailable or exhausted, the app explains this and retains access to the original. Only the public description fragment is sent to MyMemory, never the QLoader configuration or access URL.
 
-Covers are streamed from catalogue metadata into memory. Descriptions, translations and images are not written to a disk cache; closing the card cancels requests and releases content references. Reopening a card requests the content again. The catalogue list, queue/history and downloaded installation files are persisted separately.
+Visible covers are streamed from catalogue metadata into a bounded 16 MiB RAM cache. Descriptions, translations and images are not written to a disk cache; closing the card cancels requests and releases content references. Reopening a card requests the content again. The catalogue list, queue/history and downloaded installation files are persisted separately.
 
 This version has **covers**, not screenshot galleries or trailers. No verified screenshot list was found in the inspected source. Some entries may lack metadata. The description API is currently specific to dipVR.
 
@@ -340,7 +357,7 @@ Requirements: **Windows, PowerShell 7, JDK 21, Android SDK Build Tools 36.1.0, S
 
 Use `fetch-engine.ps1 -ArchivePath 'C:\Path\To\linux-arm64.tar'` for an existing archive. A changed provider archive fails the pinned hash check; review it before changing the expected hash.
 
-Output: `build/QCatalog-0.3.0-preview.apk`. The build verifies the APK signature and runs catalogue, download-containment/deletion and description-formatting tests. The provider's modified native engine source is not included or rebuilt here.
+Output: `build/QCatalog-0.4.0-preview.apk`. The build verifies the APK signature and runs catalogue, download-containment/deletion and description-formatting tests. The provider's modified native engine source is not included or rebuilt here.
 
 The build creates a local `build/debug.keystore` when absent. Keep your signing key privately: it is excluded from Git, and updates require the same key. Your own rebuild with a new key cannot update the APK distributed in Releases.
 

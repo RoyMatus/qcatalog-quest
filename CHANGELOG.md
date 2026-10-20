@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.0-preview — 2026-10-20
+
+- Реализованы #1 и #2 вместе: утверждённые Android-ресурсы Cards v1, светлая тема, боковое меню, адаптивная сетка и крупные действия.
+- Сортировки А–Я и по реальной популярности скачиваний QLoader за сутки/7/30 дней с честным состоянием ошибки и отсутствующих данных.
+- Структурированный прогресс скачивания, подготовки APK, копирования и SHA-256 проверки. Системная установка без ложного процента и кнопки паузы.
+- После проверенной новой установки/обновления автоматически очищается только её папка установочных файлов, завершённая задача исчезает из активных загрузок. Версии перечитываются из Android.
+- Ошибка установки сохраняет источники; ошибка очистки предлагает повтор только очистки. Восстановление прерванного копирования сохраняет загрузку.
+- Обложки только видимых карточек, ограниченный RAM-кеш 16 МиБ. Описания/переводы/обложки не сохраняются на диск.
+- Implements approved Cards v1 UI and phase progress/verified staging cleanup together. Includes QLoader popularity sorting, bounded memory-only visible covers and a cleanup-only retry.
+- Validation: 14 host copy/progress/verification checks, 24 isolated Android checks, 10 isolated UI checks on Quest, plus existing host parser/cleanup/description/signing/resume suites. UI fixture renders cover narrow and wide layouts; subjective VR/controller ergonomics remain for the headset owner to assess.
 ## 0.3.0-preview — 2026-10-19
 
 - Продолжение файлов по сохранённому байту, устойчивые checkpoints и автоматическое восстановление очереди после запуска приложения/шлема.

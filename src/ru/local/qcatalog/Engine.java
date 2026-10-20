@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 final class Engine {
-    interface Progress { void update(String message); }
+    interface Progress { void update(String message); default void bytes(long done, long total, double megabytesPerSecond) {} }
     final Context context;
     volatile Process process;
     final AtomicBoolean cancelled = new AtomicBoolean();
@@ -141,7 +141,7 @@ final class Engine {
             JSONObject row=listing.getJSONObject(i); String path=row.getString("Path"); long size=row.getLong("Size");
             try (ResumeFile file=new ResumeFile(ResumeFile.resolve(directory,path),size,downloadIdentity(row))) {
                 final long preceding=present+transferred, start=file.position(), began=android.os.SystemClock.elapsedRealtime(); final long[] last={0};
-                if (progress != null) progress.update(String.format(Locale.ROOT,"%.1f / %.1f ГБ · продолжение",preceding/1e9,total/1e9));
+                if (progress != null) { progress.update("Продолжаю с сохранённой позиции"); progress.bytes(preceding,total,0); }
                 if (!file.isComplete() && start < size) {
                     final long all=total;
                     OutputStream sink=new OutputStream() {
@@ -150,13 +150,14 @@ final class Engine {
                             file.write(data,offset,count); long now=android.os.SystemClock.elapsedRealtime();
                             if (progress != null && now-last[0] >= 1000) {
                                 last[0]=now; double speed=(file.position()-start)*1000.0/Math.max(1,now-began)/1e6;
-                                progress.update(String.format(Locale.ROOT,"%.1f / %.1f ГБ · %.1f МБ/с",(preceding+file.position()-start)/1e9,all/1e9,speed));
+                                progress.bytes(preceding+file.position()-start,all,speed);
                             }
                         }
                     };
                     runTo(Arrays.asList("cat",remote+"/"+path,"--offset",Long.toString(start),"--count",Long.toString(size-start)),null,sink,size-start);
                 }
                 file.finish(); transferred=Math.addExact(transferred,size-start);
+                if (progress != null) progress.bytes(present+transferred,total,0);
             }
         }
     }
