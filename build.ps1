@@ -48,7 +48,7 @@ if (!(Test-Path -LiteralPath $key)) {
     & "$JavaHome\bin\keytool.exe" -genkeypair -keystore $key -storepass android -keypass android -alias qcatalog -keyalg RSA -keysize 2048 -validity 10000 -dname 'CN=QCatalog Local Development' 2>&1 | ForEach-Object { $_.ToString() }
     Assert-Exit 'Local development key'
 }
-$apk = "$buildDir\QCatalog-0.4.1-preview.apk"
+$apk = "$buildDir\QCatalog-0.4.2-preview.apk"
 & "$toolsDir\apksigner.bat" sign --ks $key --ks-key-alias qcatalog --ks-pass pass:android --key-pass pass:android --out $apk "$buildDir\aligned.apk"
 Assert-Exit 'APK signing'
 & "$toolsDir\apksigner.bat" verify --verbose $apk

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.2-preview — 2026-10-20
+
+- Компактные карточки: обложки примерно в 1,5 раза ниже, меньше отступы, до пяти колонок; кнопки загрузок сохраняют размер.
+- Зелёная галочка «Есть обновление» в библиотеке по сравнению числовых версий. Текущая или более новая установленная версия не отмечается.
+- Compact cards, smaller covers and spacing, up to five columns. Download controls retain their size.
+- Green library update check based on numeric installed/catalogue versions; no check for current or newer installed versions.
+
 ## 0.4.1-preview — 2026-10-20
 
 - Выровнены кнопки «Пауза», «Установить» и «Подробнее»: единый отступ ряда, одинаковые верхняя/нижняя границы; перенос в колонку при нехватке места и крупном шрифте.
