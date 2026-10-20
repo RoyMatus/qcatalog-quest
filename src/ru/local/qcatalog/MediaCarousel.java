@@ -18,6 +18,28 @@ final class MediaCarousel extends LinearLayout implements AutoCloseable {
     private ViewGroup originalParent;private ViewGroup.LayoutParams originalParams;private int originalIndex;private View originalRoot,activityRoot;private float rootAlpha,activityAlpha;
     private Dialog hostDialog;private int hostFlags;private float hostDim,hostWindowAlpha,activityWindowAlpha;
     private final Runnable hideArrows=()->showArrows(false);
+    private int heldDirection,stickDirection,keyDirection;
+    private final Runnable repeatNavigation=new Runnable(){public void run(){if(closed||enlarged==null||heldDirection==0)return;select(position+heldDirection);frame.postDelayed(this,1000);}};
+    private void navigationDirection(int direction){if(heldDirection==direction)return;frame.removeCallbacks(repeatNavigation);heldDirection=direction;if(direction!=0){select(position+direction);frame.postDelayed(repeatNavigation,1000);}}
+    private void stopNavigation(){stickDirection=keyDirection=0;navigationDirection(0);}
+    private boolean navigateStick(MotionEvent event){
+        if(closed||enlarged==null||(!event.isFromSource(InputDevice.SOURCE_JOYSTICK)&&!event.isFromSource(InputDevice.SOURCE_GAMEPAD)))return false;
+        if(event.getActionMasked()==MotionEvent.ACTION_CANCEL){stopNavigation();return true;}
+        if(event.getActionMasked()!=MotionEvent.ACTION_MOVE)return false;
+        int[][] axes={{MotionEvent.AXIS_X,MotionEvent.AXIS_Y},{MotionEvent.AXIS_Z,MotionEvent.AXIS_RZ},{MotionEvent.AXIS_RX,MotionEvent.AXIS_RY},{MotionEvent.AXIS_HAT_X,MotionEvent.AXIS_HAT_Y}};
+        float x=0,y=0;for(int[] pair:axes){float value=event.getAxisValue(pair[0]);if(Math.abs(value)>Math.abs(x)){x=value;y=event.getAxisValue(pair[1]);}}
+        boolean wasHeld=stickDirection!=0;
+        if(Math.abs(x)<.25f||Math.abs(y)>Math.abs(x))stickDirection=0;
+        else if(Math.abs(x)>=.65f)stickDirection=x>0?1:-1;
+        navigationDirection(stickDirection!=0?stickDirection:keyDirection);return wasHeld||stickDirection!=0;
+    }
+    private boolean navigateKey(KeyEvent event){
+        if(closed||enlarged==null)return false;int code=event.getKeyCode();if(code!=KeyEvent.KEYCODE_DPAD_LEFT&&code!=KeyEvent.KEYCODE_DPAD_RIGHT)return false;
+        int direction=code==KeyEvent.KEYCODE_DPAD_RIGHT?1:-1;
+        if(event.getAction()==KeyEvent.ACTION_DOWN)keyDirection=direction;
+        else if(event.getAction()==KeyEvent.ACTION_UP&&keyDirection==direction)keyDirection=0;
+        navigationDirection(stickDirection!=0?stickDirection:keyDirection);return true;
+    }
     MediaCarousel(Activity c,String packageName){super(c);activity=c;pkg=packageName;setOrientation(VERTICAL);
         frame=new FrameLayout(c);addView(frame,new LayoutParams(-1,-2));
         image=new ImageView(c);image.setScaleType(ImageView.ScaleType.FIT_CENTER);image.setImageResource(R.drawable.qc_cover_placeholder);image.setContentDescription("Обложка игры");frame.addView(image,new FrameLayout.LayoutParams(-1,Cards.dp(c,360)));
@@ -43,11 +65,15 @@ final class MediaCarousel extends LinearLayout implements AutoCloseable {
     void setHostDialog(Dialog dialog){hostDialog=dialog;}
     void enlarge(){if(enlarged!=null){collapse();return;}if(closed||(!urls.get(position).startsWith("video:")&&bitmap==null))return;
         originalParent=(ViewGroup)frame.getParent();originalParams=frame.getLayoutParams();originalIndex=originalParent.indexOfChild(frame);originalRoot=frame.getRootView();activityRoot=activity.getWindow().getDecorView();rootAlpha=originalRoot.getAlpha();activityAlpha=activityRoot.getAlpha();
-        originalParent.removeView(frame);Dialog dialog=new Dialog(activity);dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);FrameLayout canvas=new FrameLayout(activity);canvas.setBackgroundColor(Color.TRANSPARENT);canvas.addView(frame,new FrameLayout.LayoutParams(-1,-2,Gravity.CENTER));dialog.setContentView(canvas);Window window=dialog.getWindow();window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);window.setDimAmount(0);window.getDecorView().setPadding(0,0,0,0);enlarged=dialog;
+        originalParent.removeView(frame);Dialog dialog=new Dialog(activity){
+            @Override public boolean dispatchGenericMotionEvent(MotionEvent event){return navigateStick(event)||super.dispatchGenericMotionEvent(event);}
+            @Override public boolean dispatchKeyEvent(KeyEvent event){return navigateKey(event)||super.dispatchKeyEvent(event);}
+            @Override public void onWindowFocusChanged(boolean focused){super.onWindowFocusChanged(focused);if(!focused)stopNavigation();}
+        };dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);FrameLayout canvas=new FrameLayout(activity);canvas.setBackgroundColor(Color.TRANSPARENT);canvas.addView(frame,new FrameLayout.LayoutParams(-1,-2,Gravity.CENTER));dialog.setContentView(canvas);Window window=dialog.getWindow();window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);window.setDimAmount(0);window.getDecorView().setPadding(0,0,0,0);enlarged=dialog;
         image.setLayoutParams(new FrameLayout.LayoutParams(-1,(int)(activity.getResources().getDisplayMetrics().heightPixels*.94)));video.setExpanded(true);dialog.setOnDismissListener(d->{if(enlarged!=null)collapse();});dialog.show();window.setLayout(-1,-1);frame.post(()->video.setExpanded(true));if(hostDialog!=null){Window host=hostDialog.getWindow();hostFlags=host.getAttributes().flags;hostDim=host.getAttributes().dimAmount;hostWindowAlpha=host.getAttributes().alpha;host.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);host.setDimAmount(0f);windowAlpha(host,0f);}activityWindowAlpha=activity.getWindow().getAttributes().alpha;windowAlpha(activity.getWindow(),0f);originalRoot.setAlpha(0f);activityRoot.setAlpha(0f);
     }
     private static void windowAlpha(Window window,float value){WindowManager.LayoutParams lp=window.getAttributes();lp.alpha=value;window.setAttributes(lp);}
-    void collapse(){Dialog dialog=enlarged;if(dialog==null)return;enlarged=null;ViewGroup parent=(ViewGroup)frame.getParent();if(parent!=null)parent.removeView(frame);image.setLayoutParams(new FrameLayout.LayoutParams(-1,Cards.dp(activity,360)));video.setExpanded(false);if(originalParent!=null)originalParent.addView(frame,Math.min(originalIndex,originalParent.getChildCount()),originalParams);if(originalRoot!=null)originalRoot.setAlpha(rootAlpha);if(activityRoot!=null)activityRoot.setAlpha(activityAlpha);if(hostDialog!=null){Window host=hostDialog.getWindow();host.setFlags(hostFlags,WindowManager.LayoutParams.FLAG_DIM_BEHIND);host.setDimAmount(hostDim);windowAlpha(host,hostWindowAlpha);}windowAlpha(activity.getWindow(),activityWindowAlpha);dialog.dismiss();originalParent=null;originalRoot=null;activityRoot=null;frame.post(()->video.setExpanded(false));}
-    void pause(){video.pause();}
+    void collapse(){stopNavigation();Dialog dialog=enlarged;if(dialog==null)return;enlarged=null;ViewGroup parent=(ViewGroup)frame.getParent();if(parent!=null)parent.removeView(frame);image.setLayoutParams(new FrameLayout.LayoutParams(-1,Cards.dp(activity,360)));video.setExpanded(false);if(originalParent!=null)originalParent.addView(frame,Math.min(originalIndex,originalParent.getChildCount()),originalParams);if(originalRoot!=null)originalRoot.setAlpha(rootAlpha);if(activityRoot!=null)activityRoot.setAlpha(activityAlpha);if(hostDialog!=null){Window host=hostDialog.getWindow();host.setFlags(hostFlags,WindowManager.LayoutParams.FLAG_DIM_BEHIND);host.setDimAmount(hostDim);windowAlpha(host,hostWindowAlpha);}windowAlpha(activity.getWindow(),activityWindowAlpha);dialog.dismiss();originalParent=null;originalRoot=null;activityRoot=null;frame.post(()->video.setExpanded(false));}
+    void pause(){stopNavigation();video.pause();}
     @Override public void close(){closed=true;collapse();removeCallbacks(hideArrows);generation++;if(request!=null)request.close();video.close();io.shutdownNow();image.setImageDrawable(null);bitmap=null;urls.clear();}
 }

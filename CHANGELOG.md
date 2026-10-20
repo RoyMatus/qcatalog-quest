@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.4-preview — 2026-10-20
+
+- В увеличенном просмотре карусель переключается стиком влево/вправо. Первый кадр меняется сразу; удержание повторяет переключение раз в секунду.
+- Поддержаны аналоговые оси стиков и события D-pad; небольшие отклонения и преимущественно вертикальные движения не листают карусель. Возврат в центр, потеря фокуса, закрытие просмотра и уход приложения в фон отменяют повтор.
+- Expanded carousel accepts horizontal stick input: immediate first step, then one step per second while held. Neutral input, focus loss, collapse and backgrounding cancel repetition.
+- Validation: 72 isolated UI checks on Quest 3S, including injected controller events and actual delayed repetition. Physical Touch-controller event delivery remains to be confirmed by the headset owner. Existing build suites passed.
+
 ## 0.5.3-preview — 2026-10-20
 
 - Убраны счётчик кадров, подписи карусели, кнопка оригинала описания и служебные сообщения о переводе.
