@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0-preview — 2026-10-20
+
+- Версия конкретного релиза и код на карточках каталога, библиотеки и обновлений.
+- Крупная карусель обложки, скриншотов и видео в одном блоке, стрелки, жесты и увеличение. Видео по кнопке с паузой и перемоткой.
+- Свежие ссылки на скриншоты из публичной страницы Meta по ID QLoader; трейлеры также читаются с зеркала QLoader. Ограниченный буфер в RAM, без файлов медиа и дискового кэша.
+- Per-release versions on game cards; a large cover/screenshot/video carousel with arrows, swipe, image enlargement and user-started playback with pause/seeking.
+- Fresh public store media scoped to the QLoader game ID, mirror trailers, RAM-only loading and cleanup on close.
+
 ## 0.4.3-preview — 2026-10-20
 
 - Поддержаны install.txt с одним APK и размещением данных adb push. Встроенная распаковка 7z с CRC-проверкой, ограничением путей, места и памяти, повторным запуском после прерывания.

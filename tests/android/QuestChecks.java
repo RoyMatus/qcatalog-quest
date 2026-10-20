@@ -51,7 +51,7 @@ public final class QuestChecks extends Instrumentation {
             require(!dir.exists(),"Release directory removed");
             InstalledApps local = InstalledApps.read(target);
             InstalledApps.Entry self = local.get(target.getPackageName());
-            require(self != null && self.version == 10,"Installed app version comes from PackageManager");
+            require(self != null && self.version == 11,"Installed app version comes from PackageManager");
             require(InstalledApps.isNewer(self.version + 1,self.version),"Newer code is an update");
             require(!InstalledApps.isNewer(self.version,self.version),"Equal code is current");
             require(!InstalledApps.isNewer(self.version - 1,self.version),"Older code is not an update");
@@ -60,6 +60,7 @@ public final class QuestChecks extends Instrumentation {
             Set<String> installed = new HashSet<>(), updates = new HashSet<>();
             for (Catalog.Game item : catalogue) { InstalledApps.Entry present = local.get(item.pkg); if (present != null) { installed.add(present.pkg); if (local.newer(item)) updates.add(present.pkg); } }
             require(catalogue.size() > 0,"Existing catalogue is readable");
+            boolean liveMedia=arguments!=null&&"true".equals(arguments.getString("liveMedia"));if(liveMedia)checks+=MediaChecks.run(target,true);
             String special=arguments.getString("specialReleaseId","");
             if(!special.isEmpty()) {
                 if(!special.matches("[a-f0-9]{64}"))throw new IOException("Invalid special-release identifier");
@@ -76,7 +77,7 @@ public final class QuestChecks extends Instrumentation {
             }
             require(Arrays.equals(before,realQueue.exists() ? Files.readAllBytes(realQueue.toPath()) : null),"Real download history is unchanged");
             result.putString("result","PASS " + checks + " checks; catalogue=" + catalogue.size() + "; installed=" + installed.size() + "; updates=" + updates.size());
-            result.putString("network","No description, translation, or image request was made.");
+            result.putString("network",liveMedia?"One game media checked on request; no translation requests.":"No description, translation, or image request was made.");
         } catch (Throwable e) { result.putString("result","FAIL: " + e.getClass().getSimpleName() + ": " + e.getMessage()); outcome = Activity.RESULT_CANCELED; }
         finally {
             try { DownloadFiles.delete(target.getCacheDir(),fixtureId); } catch (Exception ignored) { }

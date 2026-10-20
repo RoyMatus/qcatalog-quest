@@ -15,6 +15,11 @@ public final class Catalog {
             this.version = version; this.updated = updated; this.megabytes = megabytes;
             this.id = digest(release);
         }
+        public String versionLabel() {
+            java.util.regex.Matcher match=java.util.regex.Pattern.compile("(?:^|\\s)v([0-9][^\\s]*)",java.util.regex.Pattern.CASE_INSENSITIVE).matcher(release);
+            if(match.find()) {String value=match.group(1);int plus=value.indexOf('+');if(plus>=0)value=value.substring(plus+1);if(!value.isEmpty())return "v"+value+" · код "+version;}
+            return "Версия: код "+version;
+        }
     }
     public static String digest(String input) {
         try {

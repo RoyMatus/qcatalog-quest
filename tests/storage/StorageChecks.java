@@ -23,6 +23,7 @@ public final class StorageChecks extends Instrumentation {
         try {
             Context isolated = getTargetContext();
             checks+=SpecialInstallTest.run(new File(isolated.getFilesDir(),"special-install"));
+            checks+=MediaChecks.run(isolated,arguments!=null&&"true".equals(arguments.getString("liveMedia")));
             require(PrivateStore.loadUrl(isolated).isEmpty(),"Fresh storage has no URL");
             PrivateStore.saveUrl(isolated,"");
             require(PrivateStore.loadUrl(isolated).isEmpty(),"File import accepts an empty encrypted URL");

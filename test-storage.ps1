@@ -9,7 +9,8 @@ param(
     [string]$ResumeSha256,
     [string]$ResumePrefixSha256,
     [switch]$Ui,
-    [switch]$LivePopularity
+    [switch]$LivePopularity,
+    [switch]$LiveMedia
 )
 $ErrorActionPreference = 'Stop'
 if ([bool]$PreviousApk -xor [bool]$IncomingApk) { throw 'Provide both PreviousApk and IncomingApk, or neither.' }
@@ -31,6 +32,7 @@ Assert-Exit 'Storage resources'
 Assert-Exit 'Storage QA manifest'
 $sources=@(Get-ChildItem -LiteralPath "$PSScriptRoot\src" -Recurse -Filter '*.java' | ForEach-Object FullName)
 $sources+="$PSScriptRoot\tests\SpecialInstallTest.java"
+$sources+="$PSScriptRoot\tests\MediaChecks.java"
 $sources+=if($Ui){"$PSScriptRoot\tests\ui\UiChecks.java"}else{"$PSScriptRoot\tests\storage\StorageChecks.java"}
 $sources+=@(Get-ChildItem -LiteralPath "$qaDir\generated" -Recurse -Filter '*.java' | ForEach-Object FullName)
 & "$JavaHome\bin\javac.exe" --release 8 -encoding UTF-8 -cp $compileClasspath -d "$qaDir\classes" @sources
@@ -75,6 +77,7 @@ try {
         }
     }
     $instrumentArgs=@('-s',$Serial,'shell','am','instrument','-w')
+    if($LiveMedia){if($Ui){throw 'UI fixtures intentionally have no network permission.'};$instrumentArgs+=@('-e','liveMedia','true')}
     if($LivePopularity){if($Ui){throw 'UI fixtures intentionally have no network permission.'};$instrumentArgs+=@('-e','livePopularity','true')}
     if ($ResumeRemote) {
         if ($ResumeSize -lt 65536 -or $ResumeSha256 -notmatch '^[a-f0-9]{64}$' -or $ResumePrefixSha256 -notmatch '^[a-f0-9]{64}$') { throw 'Supply verified size, full SHA-256 and first-65536-byte SHA-256 for the resume probe.' }
@@ -86,6 +89,6 @@ try {
     $instrumentArgs+=if($Ui){"$testPackage/ru.local.qcatalog.UiChecks"}else{"$testPackage/ru.local.qcatalog.StorageChecks"}
     $result = (& $adb @instrumentArgs) -join "`n"
     $result
-    if($Ui){foreach($name in @('catalog','library','downloads','ready','installing','error','catalog-wide','theme-light','theme-dark')){& $adb -s $Serial shell "run-as $testPackage cat files/$name.png > /data/local/tmp/qcatalog-ui-$name.png"; & $adb -s $Serial pull "/data/local/tmp/qcatalog-ui-$name.png" "$qaDir\$name.png"; & $adb -s $Serial shell rm "/data/local/tmp/qcatalog-ui-$name.png"}}
+    if($Ui){foreach($name in @('catalog','library','downloads','ready','installing','error','catalog-wide','theme-light','theme-dark','carousel')){& $adb -s $Serial shell "run-as $testPackage cat files/$name.png > /data/local/tmp/qcatalog-ui-$name.png"; & $adb -s $Serial pull "/data/local/tmp/qcatalog-ui-$name.png" "$qaDir\$name.png"; & $adb -s $Serial shell rm "/data/local/tmp/qcatalog-ui-$name.png"}}
     if ($result -notmatch 'result=PASS ') { throw 'Storage checks failed.' }
 } finally { & $adb -s $Serial uninstall $testPackage | Out-Null }

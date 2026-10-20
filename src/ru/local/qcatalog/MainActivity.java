@@ -21,6 +21,7 @@ public final class MainActivity extends Activity {
     private int BG,PANEL,MINT,MUTED,INK;
     private final ExecutorService io=Executors.newSingleThreadExecutor(), detailIo=Executors.newFixedThreadPool(3);
     private final Set<GameDetails> openDetails=new HashSet<>();
+    private final Set<MediaCarousel> openCarousels=new HashSet<>();
     private final Handler handler=new Handler(Looper.getMainLooper());
     private final List<Catalog.Game> games=new ArrayList<>(),filtered=new ArrayList<>();
     private List<JSONObject> jobs=new ArrayList<>();
@@ -81,8 +82,8 @@ public final class MainActivity extends Activity {
     }
     @Override protected void onSaveInstanceState(Bundle out){out.putInt("section",section);out.putString("query",search==null?"":search.getText().toString());super.onSaveInstanceState(out);}
     @Override protected void onResume(){super.onResume();resumed=true;handler.post(tick);refreshInstalled();if(!DownloadService.RUNNING.get())for(JSONObject job:QueueStore.all(this))if(QueueStore.pending(job)){DownloadService.start(this);break;}}
-    @Override protected void onPause(){resumed=false;handler.removeCallbacks(tick);super.onPause();}
-    @Override protected void onDestroy(){handler.removeCallbacks(hideNotice);for(GameDetails d:openDetails)d.close();openDetails.clear();if(covers!=null)covers.close();detailIo.shutdownNow();io.shutdown();super.onDestroy();}
+    @Override protected void onPause(){resumed=false;for(MediaCarousel gallery:openCarousels)gallery.pause();handler.removeCallbacks(tick);super.onPause();}
+    @Override protected void onDestroy(){handler.removeCallbacks(hideNotice);for(GameDetails d:openDetails)d.close();openDetails.clear();for(MediaCarousel gallery:openCarousels)gallery.close();openCarousels.clear();if(covers!=null)covers.close();detailIo.shutdownNow();io.shutdown();super.onDestroy();}
     private int dp(int n){return Cards.dp(this,n);}
     private LinearLayout column(){LinearLayout v=new LinearLayout(this);v.setOrientation(LinearLayout.VERTICAL);return v;}
     private LinearLayout row(){LinearLayout v=new LinearLayout(this);v.setOrientation(LinearLayout.HORIZONTAL);v.setGravity(Gravity.CENTER_VERTICAL);return v;}
@@ -109,12 +110,12 @@ public final class MainActivity extends Activity {
         navigation.get(3).setText("Обновления"+(updates.isEmpty()?"":" · "+updates.size()));adapter.notifyDataSetChanged();}
     private void refreshInstalled(){if(checkingInstalled||isDestroyed())return;checkingInstalled=true;lastInstalledRead=SystemClock.elapsedRealtime();io.execute(()->{try{InstalledApps value=InstalledApps.read(this);runOnUiThread(()->{if(!isDestroyed()){boolean changed=installed==null||!installed.sameVersions(value);installed=value;if(changed)filter();}});}catch(Exception e){showStatus("Не удалось прочитать установленные версии.");}finally{runOnUiThread(()->checkingInstalled=false);}});}
     private final class Tile {
-        final LinearLayout card=column(),actions=new ActionRow(MainActivity.this);final ImageView cover=new ImageView(MainActivity.this);final TextView title=text("",22,INK),detail=text("",20,MUTED),amount=text("",20,INK);final ProgressBar bar=new ProgressBar(MainActivity.this,null,0,R.style.QCatalogProgress);
-        Tile(){card.setPadding(dp(12),dp(12),dp(12),dp(12));Cards.target(MainActivity.this,card,R.drawable.qc_bg_surface);title.setMaxLines(2);title.setEllipsize(TextUtils.TruncateAt.END);title.setTypeface(Typeface.DEFAULT,Typeface.BOLD);detail.setMaxLines(4);detail.setEllipsize(TextUtils.TruncateAt.END);cover.setScaleType(ImageView.ScaleType.CENTER_CROP);cover.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);cover.setImageResource(R.drawable.qc_cover_placeholder);card.addView(cover,new LinearLayout.LayoutParams(-1,dp(100)));card.addView(title);card.addView(detail);LinearLayout.LayoutParams bp=new LinearLayout.LayoutParams(-1,dp(12));bp.topMargin=dp(16);bp.bottomMargin=dp(12);card.addView(bar,bp);bar.setProgressTintList(android.content.res.ColorStateList.valueOf(MINT));bar.setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(getColor(R.color.qc_surface_alt)));bar.setIndeterminateTintList(android.content.res.ColorStateList.valueOf(MINT));card.addView(amount);card.addView(actions);card.setTag(this);cover.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener(){public void onViewAttachedToWindow(View v){}public void onViewDetachedFromWindow(View v){covers.release(cover);}});}
+        final LinearLayout card=column(),actions=new ActionRow(MainActivity.this);final ImageView cover=new ImageView(MainActivity.this);final TextView title=text("",22,INK),version=text("",20,MUTED),detail=text("",20,MUTED),amount=text("",20,INK);final ProgressBar bar=new ProgressBar(MainActivity.this,null,0,R.style.QCatalogProgress);
+        Tile(){card.setPadding(dp(12),dp(12),dp(12),dp(12));Cards.target(MainActivity.this,card,R.drawable.qc_bg_surface);title.setMaxLines(2);title.setEllipsize(TextUtils.TruncateAt.END);title.setTypeface(Typeface.DEFAULT,Typeface.BOLD);detail.setMaxLines(4);detail.setEllipsize(TextUtils.TruncateAt.END);cover.setScaleType(ImageView.ScaleType.CENTER_CROP);cover.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);cover.setImageResource(R.drawable.qc_cover_placeholder);card.addView(cover,new LinearLayout.LayoutParams(-1,dp(100)));card.addView(title);version.setMaxLines(2);version.setEllipsize(TextUtils.TruncateAt.END);card.addView(version);card.addView(detail);LinearLayout.LayoutParams bp=new LinearLayout.LayoutParams(-1,dp(12));bp.topMargin=dp(16);bp.bottomMargin=dp(12);card.addView(bar,bp);bar.setProgressTintList(android.content.res.ColorStateList.valueOf(MINT));bar.setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(getColor(R.color.qc_surface_alt)));bar.setIndeterminateTintList(android.content.res.ColorStateList.valueOf(MINT));card.addView(amount);card.addView(actions);card.setTag(this);cover.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener(){public void onViewAttachedToWindow(View v){}public void onViewDetachedFromWindow(View v){covers.release(cover);}});}
     }
     private final class Rows extends BaseAdapter {
         public int getCount(){return downloads?jobs.size():filtered.size();}public Object getItem(int p){return downloads?jobs.get(p):filtered.get(p);}public long getItemId(int p){return p;}
-        public View getView(int p,View recycled,ViewGroup parent){Tile tile=recycled==null?new Tile():(Tile)recycled.getTag();tile.actions.removeAllViews();tile.actions.setVisibility(downloads?View.VISIBLE:View.GONE);tile.bar.setVisibility(View.GONE);tile.amount.setVisibility(View.GONE);tile.card.setOnClickListener(null);tile.cover.setVisibility(downloads?View.GONE:View.VISIBLE);tile.detail.setTextColor(MUTED);tile.title.setTextSize(downloads?26:22);int inset=dp(downloads?16:12);tile.card.setPadding(inset,inset,inset,inset);
+        public View getView(int p,View recycled,ViewGroup parent){Tile tile=recycled==null?new Tile():(Tile)recycled.getTag();tile.actions.removeAllViews();tile.actions.setVisibility(downloads?View.VISIBLE:View.GONE);tile.bar.setVisibility(View.GONE);tile.amount.setVisibility(View.GONE);tile.card.setOnClickListener(null);tile.cover.setVisibility(downloads?View.GONE:View.VISIBLE);tile.version.setVisibility(downloads?View.GONE:View.VISIBLE);tile.detail.setTextColor(MUTED);tile.title.setTextSize(downloads?26:22);int inset=dp(downloads?16:12);tile.card.setPadding(inset,inset,inset,inset);
             if(downloads){covers.release(tile.cover);JSONObject job=jobs.get(p);String state=job.optString("state");tile.title.setText(job.optString("name"));tile.detail.setText(QueueStore.label(state)+"\n"+job.optString("message"));tile.card.setOnClickListener(v->jobDetails(job));
                 if(QueueStore.active(job)&&!state.equals("queued")){tile.bar.setVisibility(View.VISIBLE);long total=job.optLong("total"),done=job.optLong("done");tile.bar.setIndeterminate(total<=0);if(total>0){int percent=(int)Math.min(100,100.0*done/total);tile.bar.setMax(100);tile.bar.setProgress(percent);tile.amount.setText(percent+"% · "+DownloadFiles.format(done)+" / "+DownloadFiles.format(total));tile.amount.setVisibility(View.VISIBLE);}}
                 if(state.equals("queued")||state.equals("downloading"))action(tile,"Пауза",()->DownloadService.pause(MainActivity.this,job.optString("id")));
@@ -124,7 +125,7 @@ public final class MainActivity extends Activity {
                 else if(state.equals("cleanupError"))action(tile,"Повторить очистку",()->retryCleanup(job));
                 if(state.endsWith("Error")||state.equals("error"))tile.detail.setTextColor(getColor(R.color.qc_error));
                 Button more=button("Подробнее");tile.actions.addView(more);more.setOnClickListener(v->jobDetails(job));
-            }else{Catalog.Game game=filtered.get(p);InstalledApps.Entry current=installed==null?null:installed.get(game.pkg);tile.title.setText(game.name);tile.detail.setText(game.megabytes+" МБ"+(current==null?"":installed.newer(game)?(section==1?" · ✓ Есть обновление":" · Есть обновление"):" · Установлено")+(popularity!=null&&!sortMode.equals("name")?"\n"+popularity.label(game,sortMode,installed):""));if(section==1&&current!=null&&installed.newer(game)){android.text.SpannableString marked=new android.text.SpannableString(tile.detail.getText());int start=marked.toString().indexOf("✓");marked.setSpan(new android.text.style.ForegroundColorSpan(getColor(R.color.qc_success)),start,start+"✓ Есть обновление".length(),android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);tile.detail.setText(marked);}covers.bind(tile.cover,installed==null?game.pkg:installed.metadataPackage(game.pkg));tile.card.setOnClickListener(v->gameDetails(game));}
+            }else{Catalog.Game game=filtered.get(p);InstalledApps.Entry current=installed==null?null:installed.get(game.pkg);tile.title.setText(game.name);tile.version.setText(game.versionLabel());tile.detail.setText(game.megabytes+" МБ"+(current==null?"":installed.newer(game)?(section==1?" · ✓ Есть обновление":" · Есть обновление"):" · Установлено")+(popularity!=null&&!sortMode.equals("name")?"\n"+popularity.label(game,sortMode,installed):""));if(section==1&&current!=null&&installed.newer(game)){android.text.SpannableString marked=new android.text.SpannableString(tile.detail.getText());int start=marked.toString().indexOf("✓");marked.setSpan(new android.text.style.ForegroundColorSpan(getColor(R.color.qc_success)),start,start+"✓ Есть обновление".length(),android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);tile.detail.setText(marked);}covers.bind(tile.cover,installed==null?game.pkg:installed.metadataPackage(game.pkg));tile.card.setOnClickListener(v->gameDetails(game));}
             return tile.card;}
         private void action(Tile tile,String label,Runnable run){Button b=Cards.button(MainActivity.this,label,true);tile.actions.addView(b);b.setOnClickListener(v->{run.run();updateQueue();});}
     }
@@ -191,13 +192,14 @@ public final class MainActivity extends Activity {
     private void gameDetails(Catalog.Game game) {
         InstalledApps.Entry current = installed == null ? null : installed.get(game.pkg);
         boolean update = current != null && installed.newer(game);
-        String versionText = game.megabytes + " МБ · версия каталога: " + game.version;
+        String versionText = game.megabytes + " МБ · " + game.versionLabel();
         if (current != null) versionText += "\nНа шлеме: " + current.display() + "\n" + (update ? "Доступно обновление." : current.version == game.version ? "Эта версия уже установлена." : "На шлеме версия новее этого релиза.");
         LinearLayout layout = column(); layout.setPadding(dp(20),dp(8),dp(20),dp(12));
         layout.addView(text(versionText,16,MINT));
-        ImageView cover = new ImageView(this); cover.setAdjustViewBounds(true); cover.setScaleType(ImageView.ScaleType.FIT_CENTER); cover.setImageResource(R.drawable.qc_cover_placeholder); layout.addView(cover,new LinearLayout.LayoutParams(-1,dp(160)));
+        String pkg = installed == null ? game.pkg : installed.metadataPackage(game.pkg);
+        MediaCarousel gallery=new MediaCarousel(this,pkg);openCarousels.add(gallery);layout.addView(gallery);
         TextView description = text("Загружаю описание…",19,Color.WHITE); description.setPadding(0,dp(12),0,dp(8)); layout.addView(description);
-        TextView attribution = text("Описание и обложка загружаются при открытии карточки.",13,MUTED); layout.addView(attribution);
+        TextView attribution = text("Описание и медиа загружаются при открытии карточки.",13,MUTED); layout.addView(attribution);
         Button original = button("Оригинал описания"); original.setVisibility(View.GONE); layout.addView(original);
         TextView release = text(game.release,13,MUTED); release.setPadding(0,dp(12),0,0); layout.addView(release);
         ScrollView scroll = new ScrollView(this); scroll.addView(layout);
@@ -206,8 +208,8 @@ public final class MainActivity extends Activity {
         else { builder.setPositiveButton("Открыть",(d,w) -> launch(current.pkg)); builder.setNeutralButton("Скачать APK",(d,w) -> enqueue(game)); }
         AlertDialog dialog = builder.create(); Cards.dialog(dialog);
         GameDetails session = new GameDetails(this); openDetails.add(session);
-        dialog.setOnDismissListener(d -> { session.close(); openDetails.remove(session); cover.setImageDrawable(null); description.setText(""); original.setOnClickListener(null); }); dialog.show();
-        String pkg = installed == null ? game.pkg : installed.metadataPackage(game.pkg);
+        dialog.setOnDismissListener(d -> { session.close(); openDetails.remove(session); gallery.close();openCarousels.remove(gallery); description.setText(""); original.setOnClickListener(null); }); dialog.show();
+        dialog.getWindow().setLayout((int)(getResources().getDisplayMetrics().widthPixels*.90),(int)(getResources().getDisplayMetrics().heightPixels*.90));
         detailIo.execute(() -> {
             try {
                 GameDetails.Info info = session.description(pkg);
@@ -220,9 +222,9 @@ public final class MainActivity extends Activity {
             } catch (Exception e) { runOnUiThread(() -> { if (dialog.isShowing() && !isDestroyed()) description.setText("Не удалось загрузить описание. Открой карточку позже."); }); }
         });
         detailIo.execute(() -> {
-            try { android.graphics.Bitmap bitmap = session.cover(pkg);
-                runOnUiThread(() -> { if (dialog.isShowing() && !isDestroyed() && bitmap != null) { cover.setImageBitmap(bitmap); cover.setVisibility(View.VISIBLE); } });
-            } catch (Exception ignored) { }
+            try { MediaInfo info=session.media(game,pkg);
+                runOnUiThread(() -> { if(dialog.isShowing()&&!isDestroyed())gallery.configure(info); });
+            }catch(Exception ignored){runOnUiThread(()->{if(dialog.isShowing())gallery.origin.setText("Карусель временно недоступна. Открой карточку позже.");});}
         });
     }
     private void enqueue(Catalog.Game game) {

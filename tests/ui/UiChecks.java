@@ -29,6 +29,7 @@ public final class UiChecks extends Instrumentation {
         result.putString("window",activity.getResources().getConfiguration().screenWidthDp+"x"+activity.getResources().getConfiguration().screenHeightDp+" dp; night="+night);
         require(activity.getResources().getDimension(R.dimen.qc_touch_min)==Cards.dp(activity,64),"Approved minimum target token");
         capture("catalog");
+        require(find(activity.getWindow().getDecorView(),"v1 · код 1")!=null,"Catalogue cards expose release version and numeric code");
         runOnMainSync(()->{try{
             java.lang.reflect.Field gridField=MainActivity.class.getDeclaredField("grid");gridField.setAccessible(true);GridView grid=(GridView)gridField.get(activity);
             require(grid.getNumColumns()==5,"Expanded compact catalogue uses five columns");
@@ -39,7 +40,7 @@ public final class UiChecks extends Instrumentation {
             java.lang.reflect.Method select=MainActivity.class.getDeclaredMethod("selectSection",int.class);select.setAccessible(true);select.invoke(activity,1);
             require(grid.getAdapter().getCount()==3,"Library shows only installed fixture packages");
             int badges=0;View recycled=null;
-            for(int i=0;i<3;i++){recycled=grid.getAdapter().getView(i,recycled,grid);LinearLayout card=(LinearLayout)recycled;TextView detail=(TextView)card.getChildAt(2);String label=detail.getText().toString();
+            for(int i=0;i<3;i++){recycled=grid.getAdapter().getView(i,recycled,grid);LinearLayout card=(LinearLayout)recycled;TextView detail=(TextView)card.getChildAt(3);String label=detail.getText().toString();
                 if(label.contains("✓")){badges++;android.text.Spanned marked=(android.text.Spanned)detail.getText();android.text.style.ForegroundColorSpan[] spans=marked.getSpans(0,marked.length(),android.text.style.ForegroundColorSpan.class);require(spans.length==1&&spans[0].getForegroundColor()==activity.getColor(R.color.qc_success),"Update check and label use theme green");}
                 require(card.getMinimumHeight()>=Cards.dp(activity,64),"Compact game retains VR touch target");
             }
@@ -75,6 +76,21 @@ public final class UiChecks extends Instrumentation {
         android.content.pm.ActivityInfo info=c.getPackageManager().getActivityInfo(new ComponentName(c,MainActivity.class),0);
         require(info.screenOrientation==android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE,"Panel launches in landscape");
         require(activity.getResources().getConfiguration().screenWidthDp>=1920,"Panel opens at full declared width on Quest");
+        final MediaCarousel[] carousel={null};final AlertDialog[] mediaDialog={null};
+        runOnMainSync(()->{
+            carousel[0]=new MediaCarousel(activity,"org.qcatalog.fixture0");MediaInfo carouselInfo=new MediaInfo();carouselInfo.images.add("https://example.invalid/screen.png");carouselInfo.trailer="https://example.invalid/video.mp4";carousel[0].configure(carouselInfo);
+            mediaDialog[0]=new AlertDialog.Builder(activity).setTitle("Карусель игры · тест").setView(carousel[0]).setNegativeButton("Закрыть",null).create();mediaDialog[0].show();mediaDialog[0].getWindow().setLayout((int)(activity.getResources().getDisplayMetrics().widthPixels*.90),(int)(activity.getResources().getDisplayMetrics().heightPixels*.90));
+            require(!carousel[0].previous.isEnabled()&&carousel[0].next.isEnabled(),"Carousel navigation starts on cover");
+            require(carousel[0].image.getLayoutParams().height==Cards.dp(activity,360),"Details image is substantially larger than the old 160 dp cover");
+            carousel[0].select(1);require(carousel[0].image.getVisibility()==View.VISIBLE&&carousel[0].video.getVisibility()==View.GONE,"Image is the single visible carousel frame");
+            carousel[0].select(2);require(carousel[0].image.getVisibility()==View.GONE&&carousel[0].video.getVisibility()==View.VISIBLE,"Video is another frame of the same carousel");
+            require(!carousel[0].next.isEnabled()&&!carousel[0].zoom.isEnabled(),"Last video frame disables next and image zoom");
+            require(carousel[0].video.play.isEnabled()&&carousel[0].video.play.getText().toString().equals("Смотреть видео"),"Video never autoplays when selecting its frame");
+            carousel[0].select(0);require(carousel[0].video.getVisibility()==View.GONE,"Returning to cover hides the video frame");
+            android.view.MotionEvent down=android.view.MotionEvent.obtain(1,1,android.view.MotionEvent.ACTION_DOWN,Cards.dp(activity,200),Cards.dp(activity,100),0),up=android.view.MotionEvent.obtain(1,2,android.view.MotionEvent.ACTION_UP,Cards.dp(activity,20),Cards.dp(activity,100),0);
+            carousel[0].image.dispatchTouchEvent(down);carousel[0].image.dispatchTouchEvent(up);down.recycle();up.recycle();require(carousel[0].label.getText().toString().startsWith("Скриншот 1"),"Horizontal swipe advances the carousel");carousel[0].select(0);
+        });settle();runOnMainSync(()->{try{View view=mediaDialog[0].getWindow().getDecorView();Bitmap b=Bitmap.createBitmap(view.getWidth(),view.getHeight(),Bitmap.Config.ARGB_8888);view.draw(new Canvas(b));try(FileOutputStream out=new FileOutputStream(new File(c.getFilesDir(),"carousel.png"))){b.compress(Bitmap.CompressFormat.PNG,100,out);}b.recycle();}catch(Exception e){throw new RuntimeException(e);}});
+        runOnMainSync(()->{carousel[0].close();mediaDialog[0].dismiss();});
         result.putString("result","PASS "+checks+" isolated UI checks; synthetic data only, no network permission");
     }catch(Throwable e){result.putString("result","FAIL "+e.getClass().getSimpleName()+": "+e.getMessage());outcome=Activity.RESULT_CANCELED;}finally{if(activity!=null)runOnMainSync(()->activity.finish());DownloadService.RUNNING.set(false);}finish(outcome,result);}
 }
