@@ -27,6 +27,7 @@ final class MediaPerformanceChecks {
     @SuppressWarnings("unchecked") void run(String gameName)throws Exception {
         if(gameName.startsWith("inventory:")){inventory(gameName.substring(10));return;}
         if(gameName.startsWith("sources:")){sources(gameName.substring(8));return;}
+        boolean wall=gameName.startsWith("wall:");if(wall)gameName=gameName.substring(5);
         boolean cardOnly=gameName.startsWith("card:");if(cardOnly)gameName=gameName.substring(5);
         activity=(MainActivity)test.startActivitySync(new Intent(context,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         test.waitForIdleSync();if(!cardOnly){window("catalog cold");
@@ -36,11 +37,20 @@ final class MediaPerformanceChecks {
         List<Catalog.Game> games=new Engine(context).cached();Catalog.Game selected=null;
         for(Catalog.Game game:games)if((game.name.equalsIgnoreCase(gameName)||game.pkg.equals(gameName))){selected=game;break;}
         if(selected==null)throw new IllegalArgumentException("Game not found");
-        final Catalog.Game chosen=selected;long start=SystemClock.elapsedRealtime();
-        test.runOnMainSync(()->call(activity,"gameDetails",Catalog.Game.class,chosen));test.waitForIdleSync();
+        final Catalog.Game chosen=selected;long start;
+        if(wall){
+            test.runOnMainSync(()->{call(activity,"selectSection",int.class,0);List<Catalog.Game> list=(List<Catalog.Game>)field(activity,"filtered");int index=-1;for(int i=0;i<list.size();i++)if(list.get(i).pkg.equals(chosen.pkg)){index=i;break;}if(index<0)throw new AssertionError("Target tile missing");((GridView)field(activity,"grid")).setSelection(index);});
+            Thread.sleep(500);test.waitForIdleSync();start=SystemClock.elapsedRealtime();
+            final float[] point=new float[2];long down=SystemClock.uptimeMillis();
+            test.runOnMainSync(()->{GridView grid=(GridView)field(activity,"grid");List<Catalog.Game> list=(List<Catalog.Game>)field(activity,"filtered");View tile=null;for(int i=0;i<grid.getChildCount();i++)if(list.get(grid.getFirstVisiblePosition()+i).pkg.equals(chosen.pkg)){tile=grid.getChildAt(i);break;}if(tile==null)throw new AssertionError("Target tile not visible");int[] xy=new int[2],origin=new int[2];tile.getLocationOnScreen(xy);activity.getWindow().getDecorView().getLocationOnScreen(origin);point[0]=xy[0]-origin[0]+tile.getWidth()/2f;point[1]=xy[1]-origin[1]+Cards.dp(activity,50);MotionEvent event=MotionEvent.obtain(down,down,MotionEvent.ACTION_DOWN,point[0],point[1],0);activity.dispatchTouchEvent(event);event.recycle();});
+            Thread.sleep(150);
+            test.runOnMainSync(()->{MotionEvent event=MotionEvent.obtain(down,SystemClock.uptimeMillis(),MotionEvent.ACTION_UP,point[0],point[1],0);activity.dispatchTouchEvent(event);event.recycle();});test.waitForIdleSync();
+            final int[] opened={0};test.runOnMainSync(()->opened[0]=((Collection<?>)field(activity,"openCarousels")).size());if(opened[0]!=1)throw new AssertionError("Single pointer click did not open exactly one card");
+            report("one pointer click including 150ms hold="+(SystemClock.elapsedRealtime()-start)+"ms");
+        }else{start=SystemClock.elapsedRealtime();test.runOnMainSync(()->call(activity,"gameDetails",Catalog.Game.class,chosen));test.waitForIdleSync();}
         final MediaCarousel[] found={null};test.runOnMainSync(()->found[0]=((Collection<MediaCarousel>)field(activity,"openCarousels")).iterator().next());MediaCarousel gallery=found[0];
         report("card window="+(SystemClock.elapsedRealtime()-start)+"ms");
-        if(cardOnly){
+        if(cardOnly||wall){
             boolean browse=false;for(int i=0;i<180;i++){final boolean[] r={false};test.runOnMainSync(()->r[0]=gallery.next.isEnabled());if(r[0]){browse=true;break;}Thread.sleep(100);}
             report("first browsing="+(SystemClock.elapsedRealtime()-start)+"ms; cached="+gallery.images.size()+"; pending="+gallery.images.pending());
             if(!browse)throw new AssertionError("Card never enabled browsing");
@@ -49,6 +59,7 @@ final class MediaPerformanceChecks {
         boolean ready=false;for(int i=0;i<180;i++){final boolean[] r={false};test.runOnMainSync(()->r[0]=(Boolean)field(gallery,"configured")&&gallery.images.pending()==0);if(r[0]){ready=true;break;}Thread.sleep(250);}
         final int[] imageCount={0};test.runOnMainSync(()->imageCount[0]=((List<?>)field(gallery,"urls")).size());
         report("card media="+(SystemClock.elapsedRealtime()-start)+"ms; finished="+ready+"; slides="+imageCount[0]+"; cached photos="+gallery.images.size());
+        if(wall)test.runOnMainSync(()->{long slowest=0;for(int i=0;i<8;i++){long at=SystemClock.elapsedRealtime();gallery.next.performClick();gallery.previous.performClick();slowest=Math.max(slowest,SystemClock.elapsedRealtime()-at);}report("cached carousel next/previous max="+slowest+"ms");if(slowest>100)throw new AssertionError("Cached carousel blocks input");});
         final String[] videoUrl={""};test.runOnMainSync(()->videoUrl[0]=(String)field(gallery.video,"url"));
         if(!videoUrl[0].isEmpty()){
             test.runOnMainSync(()->{call(gallery,"select",int.class,((List<?>)field(gallery,"urls")).size()-1);gallery.video.toggle();});

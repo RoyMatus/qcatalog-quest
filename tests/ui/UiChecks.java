@@ -29,6 +29,7 @@ public final class UiChecks extends Instrumentation {
         // Do not start background service during this fixture run.
         DownloadService.RUNNING.set(true);
         Intent intent=new Intent(c,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);activity=(MainActivity)startActivitySync(intent);waitForIdleSync();
+        queueDuringTap(c,job,false);queueDuringTap(c,job,true);
         boolean night=(activity.getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES;
         require(activity.getColor(R.color.qc_background)==Color.parseColor(night?"#101823":"#F5F3EF"),"Background follows actual system night mode");
         result.putString("window",activity.getResources().getConfiguration().screenWidthDp+"x"+activity.getResources().getConfiguration().screenHeightDp+" dp; night="+night);
@@ -157,6 +158,7 @@ public final class UiChecks extends Instrumentation {
         checks+=ImageCacheChecks.run(c,this);
         checks+=ImageCacheChecks.covers(activity,this);
         checks+=ImageCacheChecks.coverWindow(activity,this);
+        checks+=ImageCacheChecks.gridRebinding(activity,this);
         checks+=ImageCacheChecks.carousel(activity,this);
         runOnMainSync(()->{try{
             @SuppressWarnings("unchecked") java.util.List<Catalog.Game> source=(java.util.List<Catalog.Game>)field(activity,"games");Catalog.Game latest=source.get(0);Catalog.Game old=new Catalog.Game(latest.name,latest.name+" Legacy v0",latest.pkg,0,"",123),variant=new Catalog.Game(latest.name,latest.release+" RUS",latest.pkg,latest.version,"",456);source.add(old);source.add(variant);
@@ -169,4 +171,23 @@ public final class UiChecks extends Instrumentation {
         }catch(Exception e){throw new RuntimeException(e);}});
         result.putString("result","PASS "+checks+" isolated UI checks; "+(arguments!=null&&"true".equals(arguments.getString("liveMedia"))?"one public game video checked; no personal configuration":"synthetic data only, no network permission"));
     }catch(Throwable e){result.putString("result","FAIL "+e.getClass().getSimpleName()+": "+e.getMessage());outcome=Activity.RESULT_CANCELED;}finally{if(activity!=null)runOnMainSync(()->{if(testCarousel!=null)testCarousel.close();if(testDialog!=null)testDialog.dismiss();activity.finish();});DownloadService.RUNNING.set(false);}finish(outcome,result);}
+    void queueDuringTap(Context c,Catalog.Game job,boolean pointer)throws Exception{
+        settle();java.util.concurrent.atomic.AtomicInteger changes=new java.util.concurrent.atomic.AtomicInteger();
+        GridView grid=(GridView)field(activity,"grid");android.database.DataSetObserver observer=new android.database.DataSetObserver(){public void onChanged(){changes.incrementAndGet();}};
+        final float[] point=new float[2];long down=android.os.SystemClock.uptimeMillis();
+        runOnMainSync(()->{
+            grid.getAdapter().registerDataSetObserver(observer);View tile=grid.getChildAt(0);int[] location=new int[2],window=new int[2];tile.getLocationOnScreen(location);activity.getWindow().getDecorView().getLocationOnScreen(window);point[0]=location[0]-window[0]+tile.getWidth()/2f;point[1]=location[1]-window[1]+Cards.dp(activity,50);
+            MotionEvent event=MotionEvent.obtain(down,down,MotionEvent.ACTION_DOWN,point[0],point[1],0);event.setSource(pointer?InputDevice.SOURCE_MOUSE:InputDevice.SOURCE_TOUCHSCREEN);activity.dispatchTouchEvent(event);event.recycle();
+            try{QueueStore.stage(c,job.id,"downloading","Скачивание",69*1024*1024,100*1024*1024,"Тестовый прогресс");java.lang.reflect.Method update=MainActivity.class.getDeclaredMethod("updateQueue");update.setAccessible(true);update.invoke(activity);}catch(Exception e){throw new RuntimeException(e);}
+        });
+        settle();
+        runOnMainSync(()->{MotionEvent event=MotionEvent.obtain(down,android.os.SystemClock.uptimeMillis(),MotionEvent.ACTION_UP,point[0],point[1],0);event.setSource(pointer?InputDevice.SOURCE_MOUSE:InputDevice.SOURCE_TOUCHSCREEN);activity.dispatchTouchEvent(event);event.recycle();grid.getAdapter().unregisterDataSetObserver(observer);});
+        settle();
+        runOnMainSync(()->{
+            @SuppressWarnings("unchecked") java.util.Set<MediaCarousel> open=(java.util.Set<MediaCarousel>)field(activity,"openCarousels");boolean single=open.size()==1;for(MediaCarousel carousel:new java.util.ArrayList<>(open))((Dialog)field(carousel,"hostDialog")).dismiss();
+            require(changes.get()==0,"Download progress must not rebind catalogue tiles during a press (observed "+changes.get()+" refreshes)");
+            require(single,"One down/up opens exactly one game card while a download progresses");
+        });
+        QueueStore.stage(c,job.id,"downloading","Скачивание",68*1024*1024,100*1024*1024,"Тестовый прогресс");
+    }
 }

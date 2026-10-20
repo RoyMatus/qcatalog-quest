@@ -17,17 +17,20 @@ final class CoverLoader implements AutoCloseable {
     private final Handler ui=new Handler(Looper.getMainLooper());
     private final Map<ImageView,String> bound=new WeakHashMap<>();
     private final Set<ImageView> observed=Collections.newSetFromMap(new WeakHashMap<ImageView,Boolean>());
-    private final Set<ImageView> detached=Collections.newSetFromMap(new WeakHashMap<ImageView,Boolean>());
     private final Map<String,Request> active=new LinkedHashMap<>();
     private final Set<String> ahead=new LinkedHashSet<>();
+    private final Set<String> viewport=new LinkedHashSet<>();
+    private boolean explicitViewport;
     private final Map<String,Integer> failures=new HashMap<>();
     private final Map<String,Long> retryAt=new HashMap<>();
     private final LruCache<String,Bitmap> cache=new LruCache<String,Bitmap>(16*1024*1024){protected int sizeOf(String key,Bitmap value){return value.getAllocationByteCount();}};
     private boolean closed,paused;
+    private final Runnable update=this::pump;
+    private void schedule(){if(!closed){ui.removeCallbacks(update);ui.post(update);}}
     private static final class Request {final CardImages.Source source;Future<?> future;Request(CardImages.Source source){this.source=source;}}
     private final View.OnAttachStateChangeListener attachment=new View.OnAttachStateChangeListener(){
-        public void onViewAttachedToWindow(View view){detached.remove(view);pump();}
-        public void onViewDetachedFromWindow(View view){detached.add((ImageView)view);pump();}
+        public void onViewAttachedToWindow(View view){schedule();}
+        public void onViewDetachedFromWindow(View view){schedule();}
     };
     CoverLoader(Context c){this(()->new CardImages.Source(){final GameDetails session=new GameDetails(c);public Bitmap load(String pkg,int pixels)throws Exception{return session.cover(pkg,pixels);}public void close(){session.close();}});}
     CoverLoader(CardImages.Factory factory){this.factory=factory;}
@@ -42,20 +45,26 @@ final class CoverLoader implements AutoCloseable {
         cancel(pkg);cache.put(pkg,owned);failures.remove(pkg);retryAt.remove(pkg);
         wanted();pump();
     }
-    void pause(boolean value){paused=value;if(paused){for(String pkg:new ArrayList<>(active.keySet()))cancel(pkg);}else pump();}
+    void pause(boolean value){paused=value;if(paused){for(String pkg:new ArrayList<>(active.keySet()))if(!viewport.contains(pkg))cancel(pkg);}else schedule();}
     void bind(ImageView view,String pkg){
         if(closed)return;String previous=bound.put(view,pkg);if(observed.add(view))view.addOnAttachStateChangeListener(attachment);
         if(!pkg.equals(previous))view.setImageResource(R.drawable.qc_cover_placeholder);
-        pump();
+        Bitmap ready=cache.get(pkg);if(ready!=null)view.setImageBitmap(ready);schedule();
     }
     void prefetch(Collection<String> packages){if(closed)return;ahead.clear();for(String pkg:packages){ahead.add(pkg);if(ahead.size()>=MAX_AHEAD)break;}pump();}
+    void viewport(Collection<String> visible,Collection<String> following){
+        if(closed)return;explicitViewport=true;viewport.clear();viewport.addAll(visible);ahead.clear();
+        for(String pkg:following){ahead.add(pkg);if(ahead.size()>=MAX_AHEAD)break;}schedule();
+    }
     private LinkedHashSet<String> wanted(){
         LinkedHashSet<String> wanted=new LinkedHashSet<>();
-        for(Map.Entry<ImageView,String> entry:bound.entrySet()){ImageView image=entry.getKey();if(!detached.contains(image)&&image.isAttachedToWindow()&&image.isShown()){String pkg=entry.getValue();Bitmap cached=cache.get(pkg);if(cached!=null&&(!(image.getDrawable() instanceof android.graphics.drawable.BitmapDrawable)||((android.graphics.drawable.BitmapDrawable)image.getDrawable()).getBitmap()!=cached))image.setImageBitmap(cached);wanted.add(pkg);}}
+        // GridView can reuse a child with a temporarily cleared attach flag. Its live parent/root
+        // and viewport, not a stale child callback, determine whether it needs the cached pixels.
+        for(Map.Entry<ImageView,String> entry:bound.entrySet()){ImageView image=entry.getKey();if(image.getParent()!=null&&image.getRootView().isAttachedToWindow()&&image.isShown()){String pkg=entry.getValue();Bitmap cached=cache.get(pkg);if(cached!=null&&(!(image.getDrawable() instanceof android.graphics.drawable.BitmapDrawable)||((android.graphics.drawable.BitmapDrawable)image.getDrawable()).getBitmap()!=cached))image.setImageBitmap(cached);wanted.add(pkg);}}
         return wanted;
     }
     private void pump(){
-        if(closed||paused)return;Set<String> visible=wanted(),wanted=new LinkedHashSet<>(visible);wanted.addAll(ahead);
+        if(closed)return;Set<String> boundVisible=wanted();if(paused)return;Set<String> visible=explicitViewport?new LinkedHashSet<>(viewport):boundVisible,wanted=new LinkedHashSet<>(visible);wanted.addAll(ahead);
         for(String pkg:new ArrayList<>(active.keySet()))if(!wanted.contains(pkg))cancel(pkg);
         boolean visibleWaiting=false;for(String pkg:visible)if(cache.get(pkg)==null&&!active.containsKey(pkg)&&failures.getOrDefault(pkg,0)<3&&SystemClock.uptimeMillis()>=retryAt.getOrDefault(pkg,0L)){visibleWaiting=true;break;}
         if(visibleWaiting)for(String pkg:new ArrayList<>(active.keySet()))if(!visible.contains(pkg))cancel(pkg);
@@ -69,6 +78,6 @@ final class CoverLoader implements AutoCloseable {
         }
     }
     private void cancel(String pkg){Request request=active.remove(pkg);if(request!=null){request.source.close();if(request.future!=null)request.future.cancel(true);}}
-    void release(ImageView view){bound.remove(view);pump();}
-    @Override public void close(){closed=true;ui.removeCallbacksAndMessages(null);for(String pkg:new ArrayList<>(active.keySet()))cancel(pkg);for(ImageView view:new ArrayList<>(observed))view.removeOnAttachStateChangeListener(attachment);observed.clear();detached.clear();bound.clear();ahead.clear();failures.clear();retryAt.clear();workers.shutdownNow();cache.evictAll();}
+    void release(ImageView view){bound.remove(view);schedule();}
+    @Override public void close(){closed=true;ui.removeCallbacksAndMessages(null);for(String pkg:new ArrayList<>(active.keySet()))cancel(pkg);for(ImageView view:new ArrayList<>(observed))view.removeOnAttachStateChangeListener(attachment);observed.clear();bound.clear();viewport.clear();ahead.clear();failures.clear();retryAt.clear();workers.shutdownNow();cache.evictAll();}
 }

@@ -29,7 +29,6 @@ public final class MainActivity extends Activity {
     private boolean downloads,resumed,checkingInstalled,loadingPopularity;
     private volatile boolean busy;
     private int section,columns=1;
-    private int coverFirst,coverDirection=1;
     private long lastInstalledRead,seenCompletion;
     private TextView status,empty,versions,heading,notice;
     private EditText search;
@@ -75,7 +74,7 @@ public final class MainActivity extends Activity {
         grid=new GridView(this);grid.setVerticalSpacing(dp(16));grid.setHorizontalSpacing(dp(16));grid.setStretchMode(GridView.STRETCH_COLUMN_WIDTH);grid.setClipToPadding(false);grid.setPadding(0,dp(8),0,dp(12));content.addView(grid);
         empty=text("Подключи QLoader в настройках.",26,MUTED);empty.setGravity(Gravity.CENTER);content.addView(empty,new FrameLayout.LayoutParams(-1,-1));grid.setEmptyView(empty);
         adapter=new Rows();grid.setAdapter(adapter);grid.setOnItemClickListener((p,v,position,id)->{if(downloads)jobDetails(jobs.get(position));else gameDetails(filtered.get(position));});
-        grid.setOnScrollListener(new AbsListView.OnScrollListener(){public void onScrollStateChanged(AbsListView view,int state){}public void onScroll(AbsListView view,int first,int count,int total){if(first!=coverFirst)coverDirection=first>coverFirst?1:-1;coverFirst=first;prefetchCovers(first,count);}});
+        grid.setOnScrollListener(new AbsListView.OnScrollListener(){public void onScrollStateChanged(AbsListView view,int state){}public void onScroll(AbsListView view,int first,int count,int total){prefetchCovers(first,count);}});
         notice=text("",22,getColor(R.color.qc_success));notice.setPadding(dp(24),dp(16),dp(24),dp(16));notice.setBackgroundColor(getColor(R.color.qc_success_surface));notice.setVisibility(View.GONE);body.addView(notice);
                 root.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->configureWidth(Math.round((r-l)/getResources().getDisplayMetrics().density)));
         configureWidth(getResources().getConfiguration().screenWidthDp);
@@ -97,13 +96,21 @@ public final class MainActivity extends Activity {
     private void networkApk(){if(busy){showStatus("Дождись завершения текущей операции.");return;}startActivityForResult(new Intent(this,NetworkApkActivity.class),42);}
     private void settings(){new AlertDialog.Builder(this).setTitle("Настройки QCatalog").setItems(new String[]{"Подключение QLoader","Разрешения установки","Обновить каталог","Очистка файлов и истории","Установить APK с компьютера"},(d,w)->{if(w==0)connection();else if(w==1)permissions();else if(w==2)refresh();else if(w==3)cleanupMenu(null);else networkApk();}).setNegativeButton("Закрыть",null).show();}
     private void selectTab(boolean value){selectSection(value?2:0);}
-    private void selectSection(int value){section=value;downloads=value==2;if(grid==null)return;covers.prefetch(Collections.emptyList());coverFirst=0;coverDirection=1;int width=Math.round(getWindow().getDecorView().getWidth()/getResources().getDisplayMetrics().density);columns=downloads?1:cardColumns(width);grid.setNumColumns(columns);search.setVisibility(downloads?View.GONE:View.VISIBLE);sort.setVisibility(downloads?View.GONE:View.VISIBLE);cleanup.setVisibility(downloads?View.VISIBLE:View.GONE);for(int i=0;i<navigation.size();i++)navigation.get(i).setBackground(Cards.background(this,i==section?R.drawable.qc_bg_selected:R.drawable.qc_bg_surface));heading.setText(new String[]{"Каталог","Библиотека","Загрузки","Обновления"}[section]);queueSignature="";updateQueue();filter();grid.smoothScrollToPosition(0);}
-    private void prefetchCovers(int first,int count){List<String> ahead=new ArrayList<>();if(!downloads&&count>0){int start=coverDirection>0?first+count:first-1;for(int step=0;step<Math.min(CoverLoader.MAX_AHEAD,columns*2);step++){int at=start+step*coverDirection;if(at<0||at>=filtered.size())break;Catalog.Game game=filtered.get(at);ahead.add(installed==null?game.pkg:installed.metadataPackage(game.pkg));}}covers.prefetch(ahead);}
+    private void selectSection(int value){section=value;downloads=value==2;if(grid==null)return;covers.viewport(Collections.emptyList(),Collections.emptyList());int width=Math.round(getWindow().getDecorView().getWidth()/getResources().getDisplayMetrics().density);columns=downloads?1:cardColumns(width);grid.setNumColumns(columns);search.setVisibility(downloads?View.GONE:View.VISIBLE);sort.setVisibility(downloads?View.GONE:View.VISIBLE);cleanup.setVisibility(downloads?View.VISIBLE:View.GONE);for(int i=0;i<navigation.size();i++)navigation.get(i).setBackground(Cards.background(this,i==section?R.drawable.qc_bg_selected:R.drawable.qc_bg_surface));heading.setText(new String[]{"Каталог","Библиотека","Загрузки","Обновления"}[section]);queueSignature="";updateQueue();filter();grid.smoothScrollToPosition(0);}
+    private void prefetchCovers(int first,int count){
+        List<String> visible=new ArrayList<>(),ahead=new ArrayList<>();
+        if(!downloads&&count>0){
+            int end=Math.min(filtered.size(),first+count);
+            for(int at=Math.max(0,first);at<end;at++){Catalog.Game game=filtered.get(at);visible.add(installed==null?game.pkg:installed.metadataPackage(game.pkg));}
+            for(int at=end;at<Math.min(filtered.size(),end+Math.min(CoverLoader.MAX_AHEAD,columns*2));at++){Catalog.Game game=filtered.get(at);ahead.add(installed==null?game.pkg:installed.metadataPackage(game.pkg));}
+        }
+        covers.viewport(visible,ahead);
+    }
     private void updateQueue(){try{
         List<JSONObject> all=QueueStore.all(this);jobs=new ArrayList<>();for(JSONObject job:all)if(!Arrays.asList("installed","removed").contains(job.optString("state")))jobs.add(job);
-        String signature=jobs.toString();navigation.get(2).setText("Загрузки"+(jobs.isEmpty()?"":" · "+jobs.size()));
-        if(!signature.equals(queueSignature)){queueSignature=signature;adapter.notifyDataSetChanged();refreshInstalled();}
-        long at=getSharedPreferences("state",0).getLong("completionAt",0);if(at>seenCompletion){seenCompletion=at;if(System.currentTimeMillis()-at<6000){notice.setText(getSharedPreferences("state",0).getString("completion",""));notice.setVisibility(View.VISIBLE);handler.removeCallbacks(hideNotice);handler.postDelayed(hideNotice,Math.max(1,6000-(System.currentTimeMillis()-at)));}}
+        String signature=jobs.toString(),label="Загрузки"+(jobs.isEmpty()?"":" · "+jobs.size());if(!label.contentEquals(navigation.get(2).getText()))navigation.get(2).setText(label);
+        if(!signature.equals(queueSignature)){queueSignature=signature;if(downloads)adapter.notifyDataSetChanged();}
+        long at=getSharedPreferences("state",0).getLong("completionAt",0);if(at>seenCompletion){seenCompletion=at;refreshInstalled();if(System.currentTimeMillis()-at<6000){notice.setText(getSharedPreferences("state",0).getString("completion",""));notice.setVisibility(View.VISIBLE);handler.removeCallbacks(hideNotice);handler.postDelayed(hideNotice,Math.max(1,6000-(System.currentTimeMillis()-at)));}}
     }catch(Exception e){showStatus(DownloadService.safeMessage(e));}}
     private String sortLabel(){return sortMode.equals("name")?"Сортировка: А–Я":"Популярные · "+(sortMode.equals("1D")?"сутки":sortMode.equals("7D")?"7 дней":"30 дней");}
     private void sorting(){new AlertDialog.Builder(this).setTitle("Сортировка игр").setItems(new String[]{"По названию · А–Я","По скачиваниям · 30 дней","По скачиваниям · 7 дней","По скачиваниям · сутки"},(d,w)->{sortMode=new String[]{"name","30D","7D","1D"}[w];getSharedPreferences("ui",0).edit().putString("sort",sortMode).apply();sort.setText(sortLabel());if(!sortMode.equals("name"))loadPopularity();filter();grid.smoothScrollToPosition(0);}).setNegativeButton("Закрыть",null).show();}
@@ -198,6 +205,7 @@ public final class MainActivity extends Activity {
         });
     }
     private void gameDetails(Catalog.Game game) {
+        if(!openCarousels.isEmpty())return;
         covers.pause(true);
         covers.prefetch(Collections.emptyList());
         InstalledApps.Entry current = installed == null ? null : installed.get(game.pkg);

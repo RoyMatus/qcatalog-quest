@@ -53,7 +53,8 @@ final class ImageCacheChecks {
         try{
             instrumentation.runOnMainSync(()->{host[0]=new android.widget.LinearLayout(activity);image[0]=new android.widget.ImageView(activity);loader.bind(image[0],"org.test.cover");require(opens.get()==0,"Binding before attachment does not start an invisible request");host[0].addView(image[0],new android.widget.LinearLayout.LayoutParams(100,100));dialog[0]=new android.app.AlertDialog.Builder(activity).setView(host[0]).create();dialog[0].show();});
             require(firstStarted.await(5,TimeUnit.SECONDS),"Attaching a prebound grid cover starts its load");
-            instrumentation.runOnMainSync(()->{host[0].removeView(image[0]);host[0].addView(image[0],new android.widget.LinearLayout.LayoutParams(100,100));});
+            instrumentation.runOnMainSync(()->host[0].removeView(image[0]));instrumentation.waitForIdleSync();
+            instrumentation.runOnMainSync(()->host[0].addView(image[0],new android.widget.LinearLayout.LayoutParams(100,100)));
             require(secondReady.await(5,TimeUnit.SECONDS),"Reattaching a recycled cover restarts its cancelled request");
             long deadline=System.currentTimeMillis()+5000;while(System.currentTimeMillis()<deadline&&(late.get()==null||!late.get().isRecycled())){Thread.sleep(20);instrumentation.waitForIdleSync();}
             instrumentation.runOnMainSync(()->{require(image[0].getDrawable() instanceof android.graphics.drawable.BitmapDrawable&&((android.graphics.drawable.BitmapDrawable)image[0].getDrawable()).getBitmap()==expected.get(),"Late cancelled cover cannot overwrite the currently bound bitmap");require(late.get()!=null&&late.get().isRecycled(),"Cancelled cover pixels are released");loader.release(image[0]);host[0].removeView(image[0]);host[0].addView(image[0]);require(opens.get()==2,"Explicit release removes the binding and prevents reattachment requests");});
@@ -83,6 +84,40 @@ final class ImageCacheChecks {
             instrumentation.runOnMainSync(()->{loader.pause(true);loader.prefetch(Collections.singletonList("resume"));require(opens.get()==CoverLoader.WORKERS+1,"Opening details pauses background grid requests");require(loader.peek("next")!=null,"The card can show the existing thumbnail immediately");loader.pause(false);});
             long deadline=System.currentTimeMillis()+3000;while(!loaded.contains("resume")&&System.currentTimeMillis()<deadline)Thread.sleep(20);require(loaded.contains("resume"),"Closing details resumes the small cover window");
         }finally{instrumentation.runOnMainSync(()->{loader.close();if(dialog[0]!=null)dialog[0].dismiss();});}
+        return checks;
+    }
+    static int gridRebinding(android.app.Activity activity,Instrumentation test)throws Exception{
+        checks=0;Map<String,AtomicInteger> fetched=new ConcurrentHashMap<>();AtomicInteger running=new AtomicInteger(),peak=new AtomicInteger();
+        CoverLoader loader=new CoverLoader(()->new CardImages.Source(){
+            public Bitmap load(String key,int pixels)throws Exception{fetched.computeIfAbsent(key,k->new AtomicInteger()).incrementAndGet();peak.accumulateAndGet(running.incrementAndGet(),Math::max);try{Thread.sleep(350);return Bitmap.createBitmap(40,40,Bitmap.Config.ARGB_8888);}finally{running.decrementAndGet();}}
+            public void close(){}
+        });
+        android.widget.GridView[] grid={null};android.app.Dialog[] dialog={null};android.widget.BaseAdapter[] adapter={null};
+        try{
+            test.runOnMainSync(()->{
+                grid[0]=new android.widget.GridView(activity);grid[0].setNumColumns(4);
+                adapter[0]=new android.widget.BaseAdapter(){
+                    public int getCount(){return 100;}public Object getItem(int p){return p;}public long getItemId(int p){return p;}
+                    public android.view.View getView(int p,android.view.View recycled,android.view.ViewGroup parent){android.widget.ImageView image=recycled==null?new android.widget.ImageView(activity):(android.widget.ImageView)recycled;image.setLayoutParams(new android.widget.AbsListView.LayoutParams(-1,Cards.dp(activity,150)));loader.bind(image,"grid-"+p);return image;}
+                };
+                grid[0].setAdapter(adapter[0]);grid[0].setOnScrollListener(new android.widget.AbsListView.OnScrollListener(){
+                    public void onScrollStateChanged(android.widget.AbsListView view,int state){}
+                    public void onScroll(android.widget.AbsListView view,int first,int count,int total){List<String> visible=new ArrayList<>(),ahead=new ArrayList<>();for(int i=first;i<first+count;i++)visible.add("grid-"+i);for(int i=first+count;i<Math.min(total,first+count+8);i++)ahead.add("grid-"+i);loader.viewport(visible,ahead);}
+                });
+                dialog[0]=new android.app.AlertDialog.Builder(activity).setView(grid[0]).create();dialog[0].show();dialog[0].getWindow().setLayout(Cards.dp(activity,800),Cards.dp(activity,550));
+            });
+            for(int i=0;i<24;i++){Thread.sleep(120);test.runOnMainSync(()->adapter[0].notifyDataSetChanged());}
+            Thread.sleep(300);test.waitForIdleSync();
+            test.runOnMainSync(()->{
+                int first=grid[0].getFirstVisiblePosition(),count=grid[0].getChildCount();require(count>0,"Real GridView has visible tiles");
+                for(int i=0;i<count;i++)require(((android.widget.ImageView)grid[0].getChildAt(i)).getDrawable() instanceof android.graphics.drawable.BitmapDrawable,"Every visible tile loads despite repeated GridView relayouts");
+                for(int i=first;i<first+count+8;i++){String key="grid-"+i;require(loader.peek(key)!=null,"Visible covers and exactly two following rows finish");require(fetched.get(key).get()==1,"Relayout does not restart an in-flight cover");}
+                require(fetched.keySet().stream().noneMatch(k->Integer.parseInt(k.substring(5))>=first+count+8),"No covers beyond the two-row window are fetched");require(peak.get()<=CoverLoader.WORKERS,"Real grid retains bounded network concurrency");
+                grid[0].setSelection(40);
+            });
+            Thread.sleep(2700);test.waitForIdleSync();
+            test.runOnMainSync(()->{int first=grid[0].getFirstVisiblePosition();require(first>=40,"Real grid scrolled to another window");for(int i=0;i<grid[0].getChildCount();i++){android.widget.ImageView view=(android.widget.ImageView)grid[0].getChildAt(i);require(view.getDrawable() instanceof android.graphics.drawable.BitmapDrawable,"Recycled tile "+(first+i)+" loads after scrolling; cached="+(loader.peek("grid-"+(first+i))!=null)+"; fetched="+fetched.keySet()+"; attached="+view.isAttachedToWindow()+"; shown="+view.isShown());}});
+        }finally{test.runOnMainSync(()->{loader.close();if(dialog[0]!=null)dialog[0].dismiss();});}
         return checks;
     }
     static int carousel(android.app.Activity activity,Instrumentation test)throws Exception{
