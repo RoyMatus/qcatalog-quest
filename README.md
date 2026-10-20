@@ -2,9 +2,9 @@
 
 Каталог QLoader прямо на шлеме: поиск, скачивание, установка APK и проверка обновлений.
 
-**[Скачать APK / Download APK](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.5.1-preview)** · [Issues](https://github.com/RoyMatus/qcatalog-quest/issues) · [Русский](#русский) · [English](#english)
+**[Скачать APK / Download APK](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.5.2-preview)** · [Issues](https://github.com/RoyMatus/qcatalog-quest/issues) · [Русский](#русский) · [English](#english)
 
-Версия / Version: **0.5.1-preview**. Проверено / Tested: **Quest 3S, ARM64, Android API 34**, 20 October 2026.
+Версия / Version: **0.5.2-preview**. Проверено / Tested: **Quest 3S, ARM64, Android API 34**, 20 October 2026.
 
 [История изменений / Changelog](CHANGELOG.md)
 
@@ -35,7 +35,7 @@ QCatalog — отдельное Android-приложение с обычным �
 
 Используется [набор Cards v1](design/cards-v1/README.md). Основной каталог открывается развёрнутым в горизонтальном формате 1920 × 1080 dp; в сетке 5 колонок при ширине 1920 dp и 4 при 1280 dp. В узкой области боковое меню заменяется кнопкой «Разделы». Фон, текст, кнопки и диалоги следуют системной светлой/тёмной теме. Минимальная цель нажатия — 64 dp; кнопки действий выровнены и при нехватке места переходят в колонку.
 
-Окно сведений об игре в 0.5.1 снова узкое: максимум 720 dp, с уменьшением под доступную область. Карусель показывает один крупный кадр. Стрелки «назад» и «вперёд» находятся по бокам изображения, занимают всю его высоту и появляются при наведении указателя; после ухода указателя скрываются. Они также доступны при навигации с фокусом. Можно листать горизонтальным жестом по изображению; под кадром виден счётчик. «Увеличить» открывает изображение почти на всю панель. Видео запускается по кнопке, поддерживает паузу и перемотку; смена кадра или сворачивание приложения приостанавливает воспроизведение.
+Окно сведений об игре узкое: максимум 720 dp, с уменьшением под доступную область. Карусель показывает один крупный кадр со счётчиком. По бокам — полупрозрачные стрелки без залитых полос; они появляются при наведении указателя или фокусе и скрываются после ухода. Изображения можно листать горизонтальным жестом. Нажатие на изображение или сам кадр видео увеличивает его почти на всю панель, повторное нажатие возвращает обратно. Отдельных кнопок увеличения, закрытия и подложки нет. Размер видео меняется с сохранением пропорций и текущего воспроизведения. Внизу видео — запуск/пауза, время, перемотка, выключение звука и громкость самого плеера. Видео запускается только кнопкой ▶; смена кадра или сворачивание приложения приостанавливает воспроизведение.
 
 Настройки подключения доступны через «Разделы → Настройки» или кнопку внизу бокового меню. Выбранная сортировка сохраняется; её статистика остаётся только в оперативной памяти. При недоступности рейтинга приложение явно переключается на А–Я; повторный выбор режима повторяет запрос. Личная история скачиваний в статистику не отправляется.
 
@@ -66,7 +66,7 @@ QCatalog — отдельное Android-приложение с обычным �
 - В Meta Horizon на телефоне выбери значок шлема → свой Quest → Headset Settings → Developer Mode и включи режим разработчика.
 - Для Windows установи [Oculus ADB Drivers](https://developers.meta.com/vr/downloads/package/oculus-adb-drivers/), если нужный драйвер ещё не установлен. Подробности и актуальные требования смотри в инструкции Meta.
 
-1. Скачай `QCatalog-0.5.1-preview.apk` из [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.5.1-preview).
+1. Скачай `QCatalog-0.5.2-preview.apk` из [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.5.2-preview).
 2. Подключи Quest по USB и разреши USB-отладку **внутри шлема**. Отображение «Внутреннего общего накопителя» в Проводнике означает доступ к файлам, но ещё не подтверждает разрешение отладки.
 3. В PowerShell, открытом в папке Platform Tools, проверь устройства:
 
@@ -77,7 +77,7 @@ QCatalog — отдельное Android-приложение с обычным �
 4. Найди именно свой Quest со статусом `device`. Если указано `unauthorized`, подтверди запрос в шлеме. В следующих командах замени `QUEST_SERIAL` на серийный номер своего Quest, а путь к APK — на путь скачанного файла:
 
    ```powershell
-   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.5.1-preview.apk'
+   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.5.2-preview.apk'
    ```
 
 5. Открой библиотеку приложений Quest → «Неизвестные источники» → **QCatalog**. Расположение фильтра зависит от версии интерфейса Quest.
@@ -191,7 +191,7 @@ MyMemory выбран как вариант без регистрации пол
 
 Если проверенный архив уже есть, используй `fetch-engine.ps1 -ArchivePath 'C:\Path\To\linux-arm64.tar'`. Если поставщик изменит архив, проверка хэша остановит извлечение. Не отключай её без проверки нового файла.
 
-Результат: `build/QCatalog-0.5.1-preview.apk`. Сборка проверяет подпись APK и запускает тесты каталога, безопасного удаления файлов и форматирования описаний. Исходники модифицированного бинарного движка поставщика в репозиторий не входят; этот движок не пересобирается из исходников.
+Результат: `build/QCatalog-0.5.2-preview.apk`. Сборка проверяет подпись APK и запускает тесты каталога, безопасного удаления файлов и форматирования описаний. Исходники модифицированного бинарного движка поставщика в репозиторий не входят; этот движок не пересобирается из исходников.
 
 Для обновления поверх установленного APK нужен тот же ключ подписи. `build.ps1` создаёт локальный `build/debug.keystore`, если его ещё нет. Сохрани свой ключ отдельно; он исключён из Git. Самостоятельная сборка с новым ключом не установится как обновление готового APK из Releases.
 
@@ -210,11 +210,11 @@ MyMemory выбран как вариант без регистрации пол
 
 ### Проверки текущей версии
 
-- 45 UI-проверок в 0.5.1: версии карточек, кадры карусели и жест листания, темы и выравнивание действий, узкое окно, высота и положение боковых стрелок, наведение и скрытие.
+- 67 изолированных UI-проверок в 0.5.2 на Quest 3S: карточки и темы, карусель и стрелки, увеличение/возврат по клику, отсутствие подложки и кнопки закрытия, громкость и выключение звука. На публичном видео проверены реальное увеличение, сохранение позиции и воспроизведения, возврат к исходному размеру, пауза и переключение кадра.
 - 72 изолированные проверки хранения/очереди/медиа и 36 проверок установленного приложения в 0.5.0 подтвердили настоящий скриншот, видео именно с настроенного зеркала QLoader, воспроизведение, паузу, перемотку, отсутствие новых файлов медиа и сохранность очереди.
 - Проверка скачанного Half-Life / XASH: 13 112 распакованных файлов, 4 368 536 271 байт, совпадение версии APK с каталогом. Эта проверка не устанавливала игру и не меняла её существующие данные.
 
-`test-storage.ps1 -Ui` запускает изолированные проверки интерфейса. `test-storage.ps1 -LiveMedia` проверяет медиа одной игры в отдельном приложении; `test-quest.ps1 -LiveMedia` использует установленное приложение и его зеркало. Эти скрипты принимают те же `-Serial`, `-JavaHome`, `-SdkPath`, что в примере выше. Сетевые проверки медиа включаются явно; без них описания, переводы и изображения не запрашиваются. Проверку установленного приложения запускай только при завершённых загрузках и установках.
+`test-storage.ps1 -Ui` запускает изолированные проверки интерфейса; добавление `-LiveMedia` включает проверку реального публичного видео без личного конфига. `test-storage.ps1 -LiveMedia` проверяет медиа одной игры в отдельном приложении; `test-quest.ps1 -LiveMedia` использует установленное приложение и его зеркало. Эти скрипты принимают те же `-Serial`, `-JavaHome`, `-SdkPath`, что в примере выше. Сетевые проверки медиа включаются явно; без них описания, переводы и изображения не запрашиваются. Проверку установленного приложения запускай только при завершённых загрузках и установках.
 
 Опция `test-quest.ps1 -SpecialReleaseId RELEASE_ID` распаковывает существующую загрузку и проверяет план установки внутри её папки. Распакованные файлы остаются для последующей установки; очередь и установленная игра не меняются. Это отличается от изолированных временных тестовых данных.
 
@@ -251,7 +251,7 @@ This is an independent experimental client, not an official Meta, QLoader or dip
 
 The app uses [Cards v1 resources](design/cards-v1/README.md). The main catalogue opens expanded at 1920 × 1080 dp in landscape, with five columns at 1920 dp or four at 1280 dp. Narrow layouts use the labelled Sections menu. System light/dark settings control surfaces, text, buttons and dialogs. Targets are at least 64 dp; action buttons align and stack when space is insufficient.
 
-In 0.5.1 the game-details dialog is narrow again: up to 720 dp, constrained by the available panel. The carousel displays one large frame. Previous/next arrows overlay opposite image edges at the full image height, appear on pointer hover and hide after it leaves; keyboard-focus navigation also reveals them. Images support horizontal swipes, a frame counter and near-panel-size enlargement. Video starts only after a button press, supports pause/seeking, and pauses when changing frames or backgrounding the app.
+The game-details dialog is narrow: up to 720 dp, constrained by the available panel. The carousel displays one large frame with a counter. Translucent edge chevrons have no filled side panels; hover or focus reveals them, and leaving hides them. Images support horizontal swipes. Click an image or the video picture to expand it to near-panel size; click again to return. There are no separate enlarge/close buttons or backdrop. Video keeps its aspect ratio and playback position while resizing. Bottom controls provide play/pause, elapsed time, seeking, mute and player volume. Video starts only after pressing ▶ and pauses when changing frames or backgrounding the app.
 
 Connection settings are under Sections → Settings or the sidebar Settings button. Only the selected sorting mode persists; statistics stay in RAM. Service failures explicitly fall back to A–Z, and reselecting a mode retries the request. No personal download reports are sent.
 
@@ -282,7 +282,7 @@ You need a Quest with Developer Mode enabled, a USB data cable, and Android SDK 
 - In the phone's Meta Horizon app, select the headset icon → your Quest → Headset Settings → Developer Mode, and enable it.
 - On Windows, install [Oculus ADB Drivers](https://developers.meta.com/vr/downloads/package/oculus-adb-drivers/) if not already installed. Refer to Meta's guide for the current requirements and details.
 
-1. Download `QCatalog-0.5.1-preview.apk` from [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.5.1-preview).
+1. Download `QCatalog-0.5.2-preview.apk` from [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.5.2-preview).
 2. Connect the Quest over USB and allow USB debugging **inside the headset**. Seeing the headset's shared storage in Windows Explorer does not mean USB debugging has been authorized.
 3. Open PowerShell in the Platform Tools directory and run:
 
@@ -293,7 +293,7 @@ You need a Quest with Developer Mode enabled, a USB data cable, and Android SDK 
 4. Identify your Quest with the `device` status. For `unauthorized`, accept the debugging prompt inside the headset. Replace `QUEST_SERIAL` below with your Quest's serial, and adjust the APK path:
 
    ```powershell
-   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.5.1-preview.apk'
+   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.5.2-preview.apk'
    ```
 
 5. Open the Quest app library → **Unknown Sources** → **QCatalog**. The filter's location depends on the Quest software version.
@@ -399,7 +399,7 @@ Requirements: **Windows, PowerShell 7, JDK 21, Android SDK Build Tools 36.1.0, S
 
 Use `fetch-engine.ps1 -ArchivePath 'C:\Path\To\linux-arm64.tar'` for an existing archive. A changed provider archive fails the pinned hash check; review it before changing the expected hash.
 
-Output: `build/QCatalog-0.5.1-preview.apk`. The build verifies the APK signature and runs catalogue, download-containment/deletion and description-formatting tests. The provider's modified native engine source is not included or rebuilt here.
+Output: `build/QCatalog-0.5.2-preview.apk`. The build verifies the APK signature and runs catalogue, download-containment/deletion and description-formatting tests. The provider's modified native engine source is not included or rebuilt here.
 
 The build creates a local `build/debug.keystore` when absent. Keep your signing key privately: it is excluded from Git, and updates require the same key. Your own rebuild with a new key cannot update the APK distributed in Releases.
 
@@ -418,11 +418,11 @@ The build runs `fetch-dependencies.ps1`; its first run requires network/Maven Ce
 
 ### Current validation
 
-- 45 isolated UI checks in 0.5.1 cover version labels, carousel frames/swipe, themes, action alignment, narrow-dialog width, side-arrow geometry and hover/hide behavior.
+- 67 isolated UI checks in 0.5.2 on Quest 3S cover cards/themes, carousel/arrows, click-to-expand/restore without a backdrop or close button, volume and mute. A public video verifies actual enlargement, retained playback/position, restored compact size, pause and frame switching.
 - 72 isolated storage/queue/media checks and 36 installed-app checks in 0.5.0 verified a real screenshot and configured-mirror video, playback, pause, seeking, no added media files and unchanged queue.
 - An existing Half-Life / XASH release expanded into 13,112 files (4,368,536,271 bytes), with a matching APK catalogue version. Validation did not install the game or change existing game data.
 
-`test-storage.ps1 -Ui` runs isolated UI checks. `test-storage.ps1 -LiveMedia` checks one game's media in a separate app; `test-quest.ps1 -LiveMedia` uses the installed app and configured mirror. Supply the same `-Serial`, `-JavaHome`, `-SdkPath` arguments as above. Network media checks are opt-in; without them, descriptions, translations and images are not requested. Run installed-app checks only while downloads and installations are idle.
+`test-storage.ps1 -Ui` runs isolated UI checks; adding `-LiveMedia` checks a real public video without personal configuration. `test-storage.ps1 -LiveMedia` checks one game's media in a separate app; `test-quest.ps1 -LiveMedia` uses the installed app and configured mirror. Supply the same `-Serial`, `-JavaHome`, `-SdkPath` arguments as above. Network media checks are opt-in; without them, descriptions, translations and images are not requested. Run installed-app checks only while downloads and installations are idle.
 
 Optional `test-quest.ps1 -SpecialReleaseId RELEASE_ID` expands an existing download inside its staging folder and validates its installation plan. Expanded files remain for later installation; the queue and installed game stay unchanged. This opt-in check is distinct from temporary isolated fixtures.
 

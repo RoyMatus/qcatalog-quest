@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.2-preview — 2026-10-20
+
+- Клик по изображению или кадру видео увеличивает его; повторный клик возвращает. Убраны отдельные кнопки увеличения, закрытия и подложка просмотра.
+- Исправлено увеличение самого видео с сохранением позиции воспроизведения. Прозрачные края вместо залитых боковых панелей, пропорции кадра сохраняются.
+- Нижняя панель видео: запуск/пауза, время, перемотка, звук и громкость плеера. Карусель использует полупрозрачные стрелки без фона.
+- Click an image or video picture to expand it, click again to restore. No separate enlarge/close buttons or viewing backdrop; playback position survives resizing.
+- Transparent video edges and carousel chevrons; bottom play/pause, time, seeking, mute and player-volume controls.
+- Validation: 67 isolated UI checks on Quest 3S, including a real public video and playback continuity across expansion/restoration.
+
 ## 0.5.1-preview — 2026-10-20
 
 - Узкое окно игры: максимум 720 dp вместо 90% ширины панели.

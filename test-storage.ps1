@@ -24,11 +24,12 @@ $dependencyJars=@((Get-Content (Join-Path $PSScriptRoot 'dependencies.json') -Ra
 $compileClasspath=(@($androidJar)+$dependencyJars) -join ';'
 $testPackage=if($Ui){'ru.local.qcatalog.uichecks'}else{'ru.local.qcatalog.storagechecks'}
 $testType=if($Ui){'ui'}else{'storage'}
+$manifestType=if($Ui -and $LiveMedia){'ui-live'}else{$testType}
 function Assert-Exit([string]$stage) { if ($LASTEXITCODE -ne 0) { throw "$stage failed (exit $LASTEXITCODE)" } }
 foreach ($dir in @($qaDir,"$qaDir\classes","$qaDir\dex","$qaDir\tmp","$qaDir\generated")) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
 & "$toolsDir\aapt2.exe" compile --dir "$PSScriptRoot\res" -o "$qaDir\resources.zip"
 Assert-Exit 'Storage resources'
-& "$toolsDir\aapt2.exe" link -I $androidJar --manifest "$PSScriptRoot\tests\$testType\AndroidManifest.xml" --custom-package ru.local.qcatalog --java "$qaDir\generated" -o "$qaDir\unsigned.apk" "$qaDir\resources.zip"
+& "$toolsDir\aapt2.exe" link -I $androidJar --manifest "$PSScriptRoot\tests\$manifestType\AndroidManifest.xml" --custom-package ru.local.qcatalog --java "$qaDir\generated" -o "$qaDir\unsigned.apk" "$qaDir\resources.zip"
 Assert-Exit 'Storage QA manifest'
 $sources=@(Get-ChildItem -LiteralPath "$PSScriptRoot\src" -Recurse -Filter '*.java' | ForEach-Object FullName)
 $sources+="$PSScriptRoot\tests\SpecialInstallTest.java"
@@ -77,7 +78,7 @@ try {
         }
     }
     $instrumentArgs=@('-s',$Serial,'shell','am','instrument','-w')
-    if($LiveMedia){if($Ui){throw 'UI fixtures intentionally have no network permission.'};$instrumentArgs+=@('-e','liveMedia','true')}
+    if($LiveMedia){$instrumentArgs+=@('-e','liveMedia','true')}
     if($LivePopularity){if($Ui){throw 'UI fixtures intentionally have no network permission.'};$instrumentArgs+=@('-e','livePopularity','true')}
     if ($ResumeRemote) {
         if ($ResumeSize -lt 65536 -or $ResumeSha256 -notmatch '^[a-f0-9]{64}$' -or $ResumePrefixSha256 -notmatch '^[a-f0-9]{64}$') { throw 'Supply verified size, full SHA-256 and first-65536-byte SHA-256 for the resume probe.' }
@@ -90,5 +91,6 @@ try {
     $result = (& $adb @instrumentArgs) -join "`n"
     $result
     if($Ui){foreach($name in @('catalog','library','downloads','ready','installing','error','catalog-wide','theme-light','theme-dark','carousel')){& $adb -s $Serial shell "run-as $testPackage cat files/$name.png > /data/local/tmp/qcatalog-ui-$name.png"; & $adb -s $Serial pull "/data/local/tmp/qcatalog-ui-$name.png" "$qaDir\$name.png"; & $adb -s $Serial shell rm "/data/local/tmp/qcatalog-ui-$name.png"}}
+    if($Ui -and $LiveMedia){foreach($name in @('video','video-expanded')){& $adb -s $Serial shell "run-as $testPackage cat files/$name.png > /data/local/tmp/qcatalog-ui-$name.png"; & $adb -s $Serial pull "/data/local/tmp/qcatalog-ui-$name.png" "$qaDir\$name.png"; & $adb -s $Serial shell rm "/data/local/tmp/qcatalog-ui-$name.png"}}
     if ($result -notmatch 'result=PASS ') { throw 'Storage checks failed.' }
 } finally { & $adb -s $Serial uninstall $testPackage | Out-Null }

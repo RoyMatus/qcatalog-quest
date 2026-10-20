@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="ru.local.qcatalog.uichecks">
+    <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="32" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <application android:label="QCatalog live UI checks" android:theme="@style/QCatalogTheme" android:debuggable="true" android:extractNativeLibs="true" android:usesCleartextTraffic="false">
+        <activity android:name="ru.local.qcatalog.MainActivity" android:exported="true" android:resizeableActivity="false" android:screenOrientation="landscape">
+            <layout android:defaultWidth="1920dp" android:defaultHeight="1080dp" android:gravity="center" />
+        </activity>
+    </application>
+    <instrumentation android:name="ru.local.qcatalog.UiChecks" android:targetPackage="ru.local.qcatalog.uichecks" />
+</manifest>

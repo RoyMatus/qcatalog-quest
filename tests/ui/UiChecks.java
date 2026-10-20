@@ -11,13 +11,16 @@ import org.json.JSONObject;
 
 /** Synthetic catalogue, no network permission, isolated UID; never reads personal configuration. */
 public final class UiChecks extends Instrumentation {
-    int checks;MainActivity activity;
+    int checks;MainActivity activity;Bundle arguments;MediaCarousel testCarousel;Dialog testDialog;
     void require(boolean ok,String message){checks++;if(!ok)throw new AssertionError(message);}
-    @Override public void onCreate(Bundle args){super.onCreate(args);start();}
+    @Override public void onCreate(Bundle args){super.onCreate(args);arguments=args;start();}
     View find(View view,String text){if(!view.isShown())return null;if(view instanceof TextView && ((TextView)view).getText().toString().equals(text))return view;if(view instanceof ViewGroup){ViewGroup g=(ViewGroup)view;for(int i=0;i<g.getChildCount();i++){View found=find(g.getChildAt(i),text);if(found!=null)return found;}}return null;}
     void click(String label){runOnMainSync(()->{View v=find(activity.getWindow().getDecorView(),label);require(v!=null,"Visible action: "+label);v.performClick();});waitForIdleSync();}
     void capture(String name){settle();runOnMainSync(()->{try{View view=activity.getWindow().getDecorView();Bitmap b=Bitmap.createBitmap(view.getWidth(),view.getHeight(),Bitmap.Config.ARGB_8888);view.draw(new Canvas(b));try(FileOutputStream out=new FileOutputStream(new File(getTargetContext().getFilesDir(),name+".png"))){b.compress(Bitmap.CompressFormat.PNG,100,out);}b.recycle();}catch(Exception e){throw new RuntimeException(e);}});}
     void settle(){java.util.concurrent.CountDownLatch ready=new java.util.concurrent.CountDownLatch(1);runOnMainSync(()->activity.getWindow().getDecorView().postOnAnimation(()->activity.getWindow().getDecorView().postOnAnimation(ready::countDown)));try{if(!ready.await(5,java.util.concurrent.TimeUnit.SECONDS))throw new AssertionError("No UI frame");}catch(InterruptedException e){throw new RuntimeException(e);}}
+    Object field(Object target,String name){try{java.lang.reflect.Field f=target.getClass().getDeclaredField(name);f.setAccessible(true);return f.get(target);}catch(Exception e){throw new RuntimeException(e);}}
+    void waitPrepared(VideoPane video)throws Exception{long deadline=System.currentTimeMillis()+45000;while(System.currentTimeMillis()<deadline){final boolean[] ready={false};runOnMainSync(()->ready[0]=(Boolean)field(video,"prepared"));if(ready[0])return;Thread.sleep(100);}throw new AssertionError("Player did not prepare");}
+    void captureScreen(String name)throws Exception{Bitmap screenshot=getUiAutomation().takeScreenshot();if(screenshot==null)throw new AssertionError("No compositor screenshot");try(FileOutputStream out=new FileOutputStream(new File(getTargetContext().getFilesDir(),name+".png"))){screenshot.compress(Bitmap.CompressFormat.PNG,100,out);}screenshot.recycle();}
     @Override public void onStart(){Bundle result=new Bundle();int outcome=Activity.RESULT_OK;try{
         Context c=getTargetContext();String header="Game Name;Release Name;Package Name;Version Code;Last Updated;Size (MB)\n";String[] names={"Beat Saber","Maestro","Metro Awakening","Walkabout Mini Golf","Puzzling Places","Moss"};StringBuilder catalogue=new StringBuilder(header);for(int i=0;i<names.length;i++)catalogue.append(names[i]+";"+names[i]+" v1;org.qcatalog.fixture"+i+";1;2026-10-20;512\n");Files.write(new File(c.getFilesDir(),"catalog.txt").toPath(),catalogue.toString().getBytes("UTF-8"));
         Catalog.Game job=new Catalog.Game("Beat Saber","Fixture download","org.qcatalog.fixture0",1,"test",512);QueueStore.add(c,job);QueueStore.update(c,job.id,"downloading","fixture");QueueStore.stage(c,job.id,"downloading","Скачивание",68*1024*1024,100*1024*1024,"Тестовый прогресс");
@@ -79,15 +82,17 @@ public final class UiChecks extends Instrumentation {
         final MediaCarousel[] carousel={null};final AlertDialog[] mediaDialog={null};
         runOnMainSync(()->{
             carousel[0]=new MediaCarousel(activity,"org.qcatalog.fixture0");MediaInfo carouselInfo=new MediaInfo();carouselInfo.images.add("https://example.invalid/screen.png");carouselInfo.trailer="https://example.invalid/video.mp4";carousel[0].configure(carouselInfo);
+            testCarousel=carousel[0];
             require(carousel[0].next.getAlpha()==0f,"Side arrows start hidden before hover or keyboard focus");
-            mediaDialog[0]=new AlertDialog.Builder(activity).setTitle("Карусель игры · тест").setView(carousel[0]).setNegativeButton("Закрыть",null).create();mediaDialog[0].show();Cards.sizeGameDialog(activity,mediaDialog[0]);
+            mediaDialog[0]=new AlertDialog.Builder(activity).setTitle("Карусель игры · тест").setView(carousel[0]).setNegativeButton("Закрыть",null).create();carousel[0].setHostDialog(mediaDialog[0]);mediaDialog[0].show();Cards.sizeGameDialog(activity,mediaDialog[0]);
+            testDialog=mediaDialog[0];
             require(!carousel[0].previous.isEnabled()&&carousel[0].next.isEnabled(),"Carousel navigation starts on cover");
             require(carousel[0].image.getLayoutParams().height==Cards.dp(activity,360),"Details image is substantially larger than the old 160 dp cover");
             carousel[0].select(1);require(carousel[0].image.getVisibility()==View.VISIBLE&&carousel[0].video.getVisibility()==View.GONE,"Image is the single visible carousel frame");
             carousel[0].select(2);require(carousel[0].image.getVisibility()==View.GONE&&carousel[0].video.getVisibility()==View.VISIBLE,"Video is another frame of the same carousel");
-            require(!carousel[0].next.isEnabled()&&!carousel[0].zoom.isEnabled(),"Last video frame disables next and image zoom");
-            require(carousel[0].previous.getLayoutParams().height==Cards.dp(activity,64),"Video navigation avoids covering playback and seek controls");
-            require(carousel[0].video.play.isEnabled()&&carousel[0].video.play.getText().toString().equals("Смотреть видео"),"Video never autoplays when selecting its frame");
+            require(!carousel[0].next.isEnabled(),"Last video frame disables next");
+            require(carousel[0].previous.getLayoutParams().height<=carousel[0].video.getHeight()+Cards.dp(activity,64),"Video navigation avoids covering playback and seek controls");
+            require(carousel[0].video.play.isEnabled()&&carousel[0].video.play.getContentDescription().toString().equals("Воспроизвести"),"Video never autoplays when selecting its frame");
             carousel[0].select(0);require(carousel[0].video.getVisibility()==View.GONE,"Returning to cover hides the video frame");
             android.view.MotionEvent down=android.view.MotionEvent.obtain(1,1,android.view.MotionEvent.ACTION_DOWN,Cards.dp(activity,200),Cards.dp(activity,100),0),up=android.view.MotionEvent.obtain(1,2,android.view.MotionEvent.ACTION_UP,Cards.dp(activity,20),Cards.dp(activity,100),0);
             carousel[0].image.dispatchTouchEvent(down);carousel[0].image.dispatchTouchEvent(up);down.recycle();up.recycle();require(carousel[0].label.getText().toString().startsWith("Скриншот 1"),"Horizontal swipe advances the carousel");carousel[0].select(0);
@@ -101,7 +106,25 @@ public final class UiChecks extends Instrumentation {
             android.view.MotionEvent exit=android.view.MotionEvent.obtain(4,4,android.view.MotionEvent.ACTION_HOVER_EXIT,0,0,0);exit.setSource(android.view.InputDevice.SOURCE_MOUSE);carousel[0].image.dispatchGenericMotionEvent(exit);exit.recycle();
         }catch(Exception e){throw new RuntimeException(e);}});
         Thread.sleep(300);waitForIdleSync();runOnMainSync(()->require(carousel[0].next.getAlpha()==0f,"Leaving the image hides side navigation"));
+        runOnMainSync(()->{
+            try{java.lang.reflect.Field bitmap=MediaCarousel.class.getDeclaredField("bitmap");bitmap.setAccessible(true);Bitmap fixtureImage=Bitmap.createBitmap(640,360,Bitmap.Config.ARGB_8888);fixtureImage.eraseColor(Color.BLUE);bitmap.set(carousel[0],fixtureImage);carousel[0].image.setImageBitmap(fixtureImage);}catch(Exception e){throw new RuntimeException(e);}
+            require(find(mediaDialog[0].getWindow().getDecorView(),"Увеличить")==null,"No Enlarge button in the carousel");
+            require(carousel[0].next.getBackground() instanceof android.graphics.drawable.ColorDrawable&&((android.graphics.drawable.ColorDrawable)carousel[0].next.getBackground()).getColor()==Color.TRANSPARENT,"Side arrows have no opaque bars");
+            carousel[0].image.performClick();require(carousel[0].isExpanded(),"Image click expands media");Dialog enlarged=(Dialog)field(carousel[0],"enlarged");require((enlarged.getWindow().getAttributes().flags&WindowManager.LayoutParams.FLAG_DIM_BEHIND)==0,"Expanded view has no dim backing");require(find(enlarged.getWindow().getDecorView(),"Закрыть")==null,"Expanded image has no Close button");require(mediaDialog[0].getWindow().getAttributes().alpha==0f&&activity.getWindow().getAttributes().alpha==0f,"Underlying windows are hidden while expanded");
+            carousel[0].image.performClick();require(!carousel[0].isExpanded()&&carousel[0].frame.getParent()==carousel[0],"Second image click restores its original parent");
+            carousel[0].select(2);carousel[0].video.surface.performClick();require(carousel[0].isExpanded(),"Video click expands without a separate button");carousel[0].video.surface.performClick();require(!carousel[0].isExpanded(),"Second video click collapses");
+            require(!carousel[0].video.surface.isOpaque(),"Video texture leaves aspect-ratio margins transparent");
+            carousel[0].video.volume.setProgress(27);carousel[0].video.mute.performClick();require(carousel[0].video.volume.getProgress()==0,"Mute sets application video volume to zero");carousel[0].video.mute.performClick();require(carousel[0].video.volume.getProgress()==27,"Unmute restores the chosen volume");
+            carousel[0].select(0);
+        });settle();
+        if(arguments!=null&&"true".equals(arguments.getString("liveMedia"))){
+            MediaInfo real;try(GameDetails session=new GameDetails(c)){real=session.media(new Catalog.Game("Beat Saber","Live media fixture","com.beatgames.beatsaber",1,"",1),"com.beatgames.beatsaber");}
+            final MediaInfo source=real;runOnMainSync(()->{carousel[0].configure(source);carousel[0].select(source.images.size()+3);carousel[0].video.play.performClick();});waitPrepared(carousel[0].video);Thread.sleep(1200);settle();captureScreen("video");
+            final int[] at={0},smallHeight={0};final Object[] memory={null};runOnMainSync(()->{android.media.MediaPlayer p=(android.media.MediaPlayer)field(carousel[0].video,"player");require(p.isPlaying()&&p.getCurrentPosition()>0,"Texture player renders actual video");at[0]=p.getCurrentPosition();smallHeight[0]=carousel[0].video.getHeight();memory[0]=field(carousel[0].video,"source");carousel[0].video.surface.performClick();});settle();Thread.sleep(500);captureScreen("video-expanded");
+            runOnMainSync(()->{android.media.MediaPlayer p=(android.media.MediaPlayer)field(carousel[0].video,"player");require(carousel[0].isExpanded()&&p.isPlaying(),"Expanding live video resumes on the new texture");require(carousel[0].video.getHeight()>smallHeight[0]*1.5,"Actual video content grows, not just the containing window");require(field(carousel[0].video,"source")==memory[0]&&p.getCurrentPosition()>=at[0]-500,"Expansion preserves source and playback position");carousel[0].video.surface.performClick();});settle();Thread.sleep(500);
+            runOnMainSync(()->{android.media.MediaPlayer p=(android.media.MediaPlayer)field(carousel[0].video,"player");require(!carousel[0].isExpanded()&&p.isPlaying(),"Collapsing live video preserves playback");require(carousel[0].video.getHeight()<=smallHeight[0]+Cards.dp(activity,4),"Video returns to compact dimensions");carousel[0].video.play.performClick();require(!p.isPlaying(),"Bottom play button pauses video");carousel[0].video.play.performClick();require(p.isPlaying(),"Bottom play button resumes video");require(carousel[0].video.controls.getBottom()==carousel[0].video.getHeight(),"Playback controls sit at the bottom");carousel[0].select(0);require(!p.isPlaying(),"Switching away pauses the active video");});
+        }
         runOnMainSync(()->{carousel[0].close();mediaDialog[0].dismiss();});
-        result.putString("result","PASS "+checks+" isolated UI checks; synthetic data only, no network permission");
-    }catch(Throwable e){result.putString("result","FAIL "+e.getClass().getSimpleName()+": "+e.getMessage());outcome=Activity.RESULT_CANCELED;}finally{if(activity!=null)runOnMainSync(()->activity.finish());DownloadService.RUNNING.set(false);}finish(outcome,result);}
+        result.putString("result","PASS "+checks+" isolated UI checks; "+(arguments!=null&&"true".equals(arguments.getString("liveMedia"))?"one public game video checked; no personal configuration":"synthetic data only, no network permission"));
+    }catch(Throwable e){result.putString("result","FAIL "+e.getClass().getSimpleName()+": "+e.getMessage());outcome=Activity.RESULT_CANCELED;}finally{if(activity!=null)runOnMainSync(()->{if(testCarousel!=null)testCarousel.close();if(testDialog!=null)testDialog.dismiss();activity.finish();});DownloadService.RUNNING.set(false);}finish(outcome,result);}
 }

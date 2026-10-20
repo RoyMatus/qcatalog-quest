@@ -207,7 +207,7 @@ public final class MainActivity extends Activity {
         if (current == null || update) builder.setPositiveButton(update ? "Обновить" : "Установить",(d,w) -> enqueue(game));
         else { builder.setPositiveButton("Открыть",(d,w) -> launch(current.pkg)); builder.setNeutralButton("Скачать APK",(d,w) -> enqueue(game)); }
         AlertDialog dialog = builder.create(); Cards.dialog(dialog);
-        GameDetails session = new GameDetails(this); openDetails.add(session);
+        gallery.setHostDialog(dialog);GameDetails session = new GameDetails(this); openDetails.add(session);
         dialog.setOnDismissListener(d -> { session.close(); openDetails.remove(session); gallery.close();openCarousels.remove(gallery); description.setText(""); original.setOnClickListener(null); }); dialog.show();
         Cards.sizeGameDialog(this,dialog);
         detailIo.execute(() -> {
