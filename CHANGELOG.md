@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.5-preview — 2026-10-20
+
+- Исправлена причина отсутствия реакции Touch-стиков: Horizon OS передаёт горизонтальный стик в 2D-окно как ACTION_SCROLL / AXIS_HSCROLL, а не как обычный геймпад. Добавлена обработка этих событий.
+- Листание работает также в карточке игры, когда указатель находится над медиа. При удержании кадры меняются раз в секунду; завершение потока прокрутки не оставляет работающий таймер.
+- Ссылки и email в описании кликабельны. Адреса именованных HTML-ссылок сохраняются при очистке текста; замена оригинала переводом обновляет ссылки.
+- Handles Horizon OS pointer-scroll events from Touch thumbsticks in expanded media and hovered game-card media, throttled to one frame per second while scrolling continues. No timer continues after scroll pulses stop.
+- Clickable web/email links in descriptions; named HTML destinations survive text cleanup and links refresh when translation replaces the source.
+- Validation: 88 isolated UI checks on Quest 3S, including scroll-event routing in both layouts, repeat/cancellation, link destinations and browser intents; 11 offline description checks and existing build suites passed. The headset owner confirmed physical Touch-stick navigation in both layouts.
+
 ## 0.5.4-preview — 2026-10-20
 
 - В увеличенном просмотре карусель переключается стиком влево/вправо. Первый кадр меняется сразу; удержание повторяет переключение раз в секунду.

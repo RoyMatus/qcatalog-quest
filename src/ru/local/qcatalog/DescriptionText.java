@@ -10,6 +10,7 @@ final class DescriptionText {
     }
     static String plain(String value) {
         return value.replaceAll("(?is)<(script|style)[^>]*>.*?</\\1>", " ")
+            .replaceAll("(?is)<a\\b[^>]*?\\bhref\\s*=\\s*([\"'])(https?://[^\"']+)\\1[^>]*>(.*?)</a>", "$3 ($2)")
             .replaceAll("(?i)<br\\s*/?>|</p>", "\n").replaceAll("<[^>]*>", "")
             .replace("&amp;", "&").replace("&quot;", "\"").replace("&#39;", "'")
             .replace("&nbsp;", " ").replace("&lt;", "<").replace("&gt;", ">")

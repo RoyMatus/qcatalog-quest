@@ -201,7 +201,10 @@ public final class MainActivity extends Activity {
         TextView description = text("",19,getColor(R.color.qc_text)); description.setPadding(0,dp(12),0,dp(8)); layout.addView(description);
         TextView developer = text("",13,MUTED); developer.setVisibility(View.GONE); layout.addView(developer);
         TextView release = text(game.release,13,MUTED); release.setPadding(0,dp(12),0,0); layout.addView(release);
-        ScrollView scroll = new ScrollView(this); scroll.addView(layout);
+        ScrollView scroll = new ScrollView(this){
+            @Override public boolean dispatchGenericMotionEvent(MotionEvent event){return gallery.navigateMotion(event)||super.dispatchGenericMotionEvent(event);}
+            @Override public boolean dispatchKeyEvent(KeyEvent event){return gallery.navigateKey(event)||super.dispatchKeyEvent(event);}
+        }; scroll.addView(layout);
         AlertDialog.Builder builder = new AlertDialog.Builder(this).setTitle(game.name).setView(scroll).setNegativeButton("Закрыть",null);
         if (current == null || update) builder.setPositiveButton(update ? "Обновить" : "Установить",(d,w) -> enqueue(game));
         else { builder.setPositiveButton("Открыть",(d,w) -> launch(current.pkg)); builder.setNeutralButton("Скачать APK",(d,w) -> enqueue(game)); }
@@ -215,7 +218,7 @@ public final class MainActivity extends Activity {
                     String content=DescriptionText.preferred(info.original,info.russian),author=info.developer;
                     runOnUiThread(() -> {
                         if (!dialog.isShowing() || isDestroyed()) return;
-                        description.setText(content);
+                        DescriptionLinks.bind(description,content);
                         developer.setText(author.isEmpty()?"":"Разработчик: "+author);developer.setVisibility(author.isEmpty()?View.GONE:View.VISIBLE);
                     });
                 };

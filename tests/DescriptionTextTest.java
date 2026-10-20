@@ -14,6 +14,8 @@ public final class DescriptionTextTest {
         require(DescriptionText.preferred("English source.","").equals("English source."),"Unavailable translation shows English directly");
         require(DescriptionText.preferred("English source.","  ").equals("English source."),"Empty translation cannot hide the source");
         require(DescriptionText.preferred("","").isEmpty(),"Absent description stays empty without service notices");
-        System.out.println("Description formatting tests passed (9 checks; no network requests)");
+        require(DescriptionText.plain("<a href=\"https://example.com/help?a=1&amp;b=2\"><b>Help</b></a>").equals("Help (https://example.com/help?a=1&b=2)"),"HTML link destinations survive cleanup");
+        require(DescriptionText.plain("<a href='javascript:alert(1)'>Label</a>").equals("Label"),"Non-web HTML targets are not preserved");
+        System.out.println("Description formatting tests passed (11 checks; no network requests)");
     }
 }
