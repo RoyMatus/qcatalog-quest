@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.1-preview — 2026-10-20
+
+- Компьютеры в сетевом выборе APK показаны адаптивной сеткой плиток. Имя крупно сверху, IP ниже; при отсутствии сетевого имени показан только IP.
+- Network computer picker uses responsive tiles with the resolved name above the IP address; unknown names fall back to the IP alone.
+- Проверки не запускались по просьбе пользователя. / Tests not run at the user's request.
+
+
 ## 0.6.0-preview — 2026-10-20
 
 - Кнопка «APK с компьютера»: поиск локальных компьютеров, вход в SMB2/SMB3, список общих папок, переход по вложенным папкам и выбор APK. Доступ на чтение; пароли только в памяти соединения.
