@@ -8,13 +8,14 @@ import java.util.regex.*;
 /** Public gallery references only. No HTML execution, cookies or local cache. */
 final class MediaInfo {
     final List<String> images=new ArrayList<>();
-    String trailer="",cover="",storeId="",note="QLoader";long trailerSize=-1;
+    String trailer="",fallbackTrailer="",cover="",storeId="",note="QLoader";long trailerSize=-1;
     static String https(String value) {
         try{URI uri=Engine.validateUrl(value);String host=uri.getHost().toLowerCase(Locale.ROOT);
             if(host.equals("oculuscdn.com")||host.endsWith(".oculuscdn.com")||host.equals("fbcdn.net")||host.endsWith(".fbcdn.net")||host.equals("meta.com")||host.endsWith(".meta.com")||host.equals("cloud.dipvr.ru"))return uri.toString();
         }catch(Exception ignored){}return "";
     }
     static String reference(Object value){if(value instanceof String)return (String)value;if(value instanceof JSONObject){JSONObject j=(JSONObject)value;return j.optString("contentUrl",j.optString("url",j.optString("@id","")));}return "";}
+    static String imageKey(String value){try{URI uri=new URI(value);String host=uri.getHost();if(host!=null&&(host.endsWith(".oculuscdn.com")||host.endsWith(".fbcdn.net"))&&uri.getPath().matches("(?i).+\\.(jpg|jpeg|png|webp)"))return uri.getPath();}catch(Exception ignored){}return value;}
     void addImage(String url){url=https(url);if(!url.isEmpty()&&!images.contains(url)&&images.size()<16)images.add(url);}
     static MediaInfo provider(JSONObject json){MediaInfo result=new MediaInfo();result.storeId=json.optString("id","");if(!result.storeId.matches("[0-9]{5,30}"))result.storeId="";
         result.cover=https(json.optString("cover_url"));result.addImage(result.cover);for(String field:Arrays.asList("screenshots","screenshot_urls")){JSONArray shots=json.optJSONArray(field);if(shots!=null)for(int i=0;i<shots.length();i++)result.addImage(reference(shots.opt(i)));}

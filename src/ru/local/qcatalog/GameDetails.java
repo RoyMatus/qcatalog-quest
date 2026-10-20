@@ -93,15 +93,13 @@ final class GameDetails implements AutoCloseable {
     MediaInfo media(Catalog.Game game,String pkg)throws Exception {
         pkg=originalPackage(pkg);if(!Catalog.safePackage(pkg))throw new IOException("Некорректное имя приложения.");
         MediaInfo info=publicMedia(pkg);
-        // Do not hold a usable gallery behind slow/unavailable mirror directory scans.
-        if(info.note.equals("QLoader → галерея Meta")&&!info.images.isEmpty()&&!info.trailer.isEmpty())return info;
         String mirror=context.getSharedPreferences("state",0).getString("mirror","");
         if(mirror.matches("FFA-\\d+")) {
+            // QLoader's small MP4 is the primary source. Resolve it only when Play is pressed.
+            info.fallbackTrailer=info.trailer;
+            info.trailer="ffa:"+mirror+":Quest Games/.meta/videos/"+pkg+".mp4";info.trailerSize=-1;
+            if(info.note.equals("QLoader → галерея Meta")&&!info.images.isEmpty())return info;
             Engine engine=new Engine(context);imageEngine=engine;
-            try {
-                JSONArray videos=Engine.fileListing(engine.run(Arrays.asList("lsjson",mirror+":Quest Games/.meta/videos/","--files-only"),null));
-                for(int i=0;i<videos.length();i++){JSONObject row=videos.getJSONObject(i);if(row.getString("Path").equalsIgnoreCase(pkg+".mp4")&&row.getLong("Size")>0){info.trailer="ffa:"+mirror+":Quest Games/.meta/videos/"+row.getString("Path");info.trailerSize=row.getLong("Size");break;}}
-            }catch(Exception ignored){}
             if(Catalog.safeRelease(game.release))try {
                 JSONArray files=Engine.fileListing(engine.run(Arrays.asList("lsjson",mirror+":Quest Games/"+game.release,"--files-only"),null));
                 for(int i=0;i<files.length()&&info.images.size()<16;i++){String path=files.getJSONObject(i).getString("Path");if(!path.contains("/")&&!path.contains("\\")&&path.toLowerCase(Locale.ROOT).matches(".+\\.(jpg|jpeg|png|webp)"))info.images.add("ffa:"+mirror+":Quest Games/"+game.release+"/"+path);}
@@ -126,18 +124,22 @@ final class GameDetails implements AutoCloseable {
     }
     Bitmap cover(String pkg,int maxPixels) throws Exception {
         pkg = originalPackage(pkg); if (!Catalog.safePackage(pkg)) throw new IOException("Некорректное имя приложения.");
+        Bitmap local=mirrorCover(pkg,maxPixels);if(local!=null)return local;
         // List thumbnails never discover a gallery or trailer. Refresh only a failed cover URL.
         try{JSONObject info=metadata(pkg);String cover=MediaInfo.https(info.optString("cover_url"));if(!cover.isEmpty())try{Bitmap bitmap=image(cover,maxPixels);if(bitmap!=null)return bitmap;}catch(Exception ignored){if(closed)throw new InterruptedIOException();}
             String id=info.optString("id");if(id.matches("[0-9]{5,30}")){String page=new String(get("https://www.meta.com/experiences/quest/"+id+"/",4*1024*1024),StandardCharsets.UTF_8);cover=MediaInfo.coverFromPage(page);if(!cover.isEmpty()){Bitmap bitmap=image(cover,maxPixels);if(bitmap!=null)return bitmap;}}
         }catch(Exception ignored){if(closed)throw new InterruptedIOException();}
+        return null;
+    }
+    private Bitmap mirrorCover(String pkg,int maxPixels)throws Exception {
+        String mirror = context.getSharedPreferences("state",0).getString("mirror","");
+        if (!mirror.matches("FFA-\\d+"))return null;
         Engine engine = new Engine(context); imageEngine = engine;
         if (closed) { engine.cancel(); throw new InterruptedIOException(); }
-        String mirror = context.getSharedPreferences("state",0).getString("mirror","");
-        if (!mirror.matches("FFA-\\d+")) throw new IOException("Обнови каталог для загрузки обложек.");
         for (String extension : Arrays.asList("jpg","png")) {
             if (closed) throw new InterruptedIOException();
             try {
-                byte[] data = engine.runBytes(Arrays.asList("cat",mirror + ":Quest Games/.meta/thumbnails/" + pkg + "." + extension),null,8 * 1024 * 1024);
+                byte[] data = engine.mediaBytes(Arrays.asList("cat",mirror + ":Quest Games/.meta/thumbnails/" + pkg + "." + extension),8 * 1024 * 1024);
                 BitmapFactory.Options options = new BitmapFactory.Options(); options.inJustDecodeBounds = true;
                 BitmapFactory.decodeByteArray(data,0,data.length,options);
                 if (options.outWidth < 1 || options.outHeight < 1) continue;
@@ -154,5 +156,11 @@ final class GameDetails implements AutoCloseable {
         double scale=Math.sqrt((double)Math.max(1,maxPixels)/((long)bitmap.getWidth()*bitmap.getHeight()));
         Bitmap scaled=Bitmap.createScaledBitmap(bitmap,Math.max(1,(int)(bitmap.getWidth()*scale)),Math.max(1,(int)(bitmap.getHeight()*scale)),true);if(scaled!=bitmap)bitmap.recycle();return scaled;
     }
-    @Override public void close() { closed = true; synchronized(requests){for(HttpURLConnection http:requests)http.disconnect();requests.clear();} Engine engine = imageEngine; if (engine != null) engine.cancel();metadata=null; }
+    @Override public void close() {
+        closed=true;List<HttpURLConnection> pending;
+        synchronized(requests){pending=new ArrayList<>(requests);requests.clear();}
+        Engine engine=imageEngine;metadata=null;
+        // Disconnect may wait for a socket read. Never hold the request-set lock or block VR input.
+        MediaCleanup.run(()->{for(HttpURLConnection http:pending)http.disconnect();if(engine!=null)engine.cancel();});
+    }
 }

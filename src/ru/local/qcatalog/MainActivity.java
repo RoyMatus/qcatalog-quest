@@ -198,13 +198,14 @@ public final class MainActivity extends Activity {
         });
     }
     private void gameDetails(Catalog.Game game) {
+        covers.pause(true);
         covers.prefetch(Collections.emptyList());
         InstalledApps.Entry current = installed == null ? null : installed.get(game.pkg);
         List<Catalog.Game> releases=Catalog.releases(games,game.pkg);if(releases.isEmpty())releases.add(game);final Catalog.Game[] selected={game};
         LinearLayout layout = column(); layout.setPadding(dp(20),dp(8),dp(20),dp(12));
         TextView versionInfo=text("",16,MINT);layout.addView(versionInfo);
         String pkg = installed == null ? game.pkg : installed.metadataPackage(game.pkg);
-        MediaCarousel gallery=new MediaCarousel(this,pkg);openCarousels.add(gallery);layout.addView(gallery);
+        MediaCarousel gallery=new MediaCarousel(this,pkg);android.graphics.Bitmap preview=covers.peek(pkg);if(preview!=null)gallery.image.setImageBitmap(preview);openCarousels.add(gallery);layout.addView(gallery);
         TextView description = text("",19,getColor(R.color.qc_text)); description.setPadding(0,dp(12),0,dp(8)); layout.addView(description);
         TextView developer = text("",13,MUTED); developer.setVisibility(View.GONE); layout.addView(developer);
         TextView release = text(game.release,13,MUTED); release.setPadding(0,dp(12),0,0); layout.addView(release);
@@ -217,7 +218,7 @@ public final class MainActivity extends Activity {
         builder.setPositiveButton("Установить",null);if(current!=null)builder.setNeutralButton("Скачать APK",null);
         AlertDialog dialog = builder.create(); Cards.dialog(dialog);
         gallery.setHostDialog(dialog);GameDetails session = new GameDetails(this); openDetails.add(session);
-        dialog.setOnDismissListener(d -> { if(releaseDialog!=null)releaseDialog.dismiss();session.close(); openDetails.remove(session); gallery.close();openCarousels.remove(gallery); description.setText("");grid.post(()->{if(!isDestroyed())prefetchCovers(grid.getFirstVisiblePosition(),grid.getChildCount());}); }); dialog.show();
+        dialog.setOnDismissListener(d -> { if(releaseDialog!=null)releaseDialog.dismiss();session.close(); openDetails.remove(session); gallery.close();openCarousels.remove(gallery); description.setText("");grid.post(()->{if(!isDestroyed()){covers.pause(!openCarousels.isEmpty());prefetchCovers(grid.getFirstVisiblePosition(),grid.getChildCount());}}); }); dialog.show();
         Cards.sizeGameDialog(this,dialog);
         Runnable selectionChanged=()->{Catalog.Game chosen=selected[0];boolean update=current!=null&&chosen.version>current.version;String versionText=chosen.megabytes+" МБ · "+chosen.versionLabel();if(current!=null)versionText+="\nНа шлеме: "+current.display()+"\n"+(update?"Доступно обновление.":current.version==chosen.version?"Эта версия уже установлена.":"На шлеме версия новее этого релиза.");versionInfo.setText(versionText);release.setText(chosen.release);releaseChoice.setText(chosen.versionLabel()+" · "+chosen.megabytes+" МБ\n"+chosen.release+"  ▾");Button install=dialog.getButton(AlertDialog.BUTTON_POSITIVE);install.setTag(chosen);install.setText(current!=null&&current.version==chosen.version?"Открыть":update?"Обновить":"Установить");Button download=dialog.getButton(AlertDialog.BUTTON_NEUTRAL);if(download!=null)download.setTag(chosen);};
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{Catalog.Game chosen=(Catalog.Game)v.getTag();dialog.dismiss();if(current!=null&&current.version==chosen.version)launch(current.pkg);else enqueue(chosen);});

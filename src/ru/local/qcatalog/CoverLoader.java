@@ -23,7 +23,7 @@ final class CoverLoader implements AutoCloseable {
     private final Map<String,Integer> failures=new HashMap<>();
     private final Map<String,Long> retryAt=new HashMap<>();
     private final LruCache<String,Bitmap> cache=new LruCache<String,Bitmap>(16*1024*1024){protected int sizeOf(String key,Bitmap value){return value.getAllocationByteCount();}};
-    private boolean closed;
+    private boolean closed,paused;
     private static final class Request {final CardImages.Source source;Future<?> future;Request(CardImages.Source source){this.source=source;}}
     private final View.OnAttachStateChangeListener attachment=new View.OnAttachStateChangeListener(){
         public void onViewAttachedToWindow(View view){detached.remove(view);pump();}
@@ -31,6 +31,8 @@ final class CoverLoader implements AutoCloseable {
     };
     CoverLoader(Context c){this(()->new CardImages.Source(){final GameDetails session=new GameDetails(c);public Bitmap load(String pkg,int pixels)throws Exception{return session.cover(pkg,pixels);}public void close(){session.close();}});}
     CoverLoader(CardImages.Factory factory){this.factory=factory;}
+    Bitmap peek(String pkg){return cache.get(pkg);}
+    void pause(boolean value){paused=value;if(paused){for(String pkg:new ArrayList<>(active.keySet()))cancel(pkg);}else pump();}
     void bind(ImageView view,String pkg){
         if(closed)return;String previous=bound.put(view,pkg);if(observed.add(view))view.addOnAttachStateChangeListener(attachment);
         if(!pkg.equals(previous))view.setImageResource(R.drawable.qc_cover_placeholder);
@@ -43,7 +45,7 @@ final class CoverLoader implements AutoCloseable {
         return wanted;
     }
     private void pump(){
-        if(closed)return;Set<String> visible=wanted(),wanted=new LinkedHashSet<>(visible);wanted.addAll(ahead);
+        if(closed||paused)return;Set<String> visible=wanted(),wanted=new LinkedHashSet<>(visible);wanted.addAll(ahead);
         for(String pkg:new ArrayList<>(active.keySet()))if(!wanted.contains(pkg))cancel(pkg);
         boolean visibleWaiting=false;for(String pkg:visible)if(cache.get(pkg)==null&&!active.containsKey(pkg)&&failures.getOrDefault(pkg,0)<3&&SystemClock.uptimeMillis()>=retryAt.getOrDefault(pkg,0L)){visibleWaiting=true;break;}
         if(visibleWaiting)for(String pkg:new ArrayList<>(active.keySet()))if(!visible.contains(pkg))cancel(pkg);

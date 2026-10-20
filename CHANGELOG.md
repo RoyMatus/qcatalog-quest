@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.6.7-preview — 2026-10-20
+
+- Восстановлен приоритет обложек и небольших MP4 с настроенного зеркала QLoader. Публичные источники остаются запасными; галерея не ждёт обхода каталога видео. Таймауты медиа отделены от скачивания APK.
+- Отмена HTTP-запросов не блокирует UI и не удерживает замок списка соединений. Открытая карточка приостанавливает запросы обложек сетки и сразу использует готовую обложку как превью.
+- Фото загружаются по одному; следующий нужный кадр получает приоритет среди ещё не начатых запросов. Два разных готовых фото включают листание и скрывают индикатор, остальные загружаются в фоне. Повторы обложки исключаются по ссылке и консервативному сравнению декодированных изображений. Не загруженный следующий кадр не заменяет готовое фото пустой заглушкой. Правила одинаковы для стрелок, жестов и стиков.
+- Видео поддерживает проверенные HTTPS-перенаправления и запасной источник до получения первых байтов; разные частичные MP4 не склеиваются. Закрытие карточки отменяет чтение и освобождает RAM. Дискового кэша медиа нет.
+- Quest: публичный источник Blade & Sorcery: Nomad не отдал ни байта до таймаута; трейлер QLoader (4,74 МБ) загрузился за 1,52 с. После исправления видео в настоящей карточке подготовилось за 2,03 с, позиция воспроизведения увеличивалась. Первые холодные обложки: 2,0–3,5 с против 4,7 с; 90% видимых обложек после прокрутки — около 3 с. Отдельные утилиты/системные пакеты остаются с заглушкой.
+- Финальная карточка Blade & Sorcery: окно 0,16 с; листание при двух готовых и шести ожидающих фото — 6,44 с; завершение галереи — 7,21 с. Второй кадр отличается от первого. Это разовые замеры текущего соединения, не гарантия скорости для всех игр.
+- Проверки: 199 изолированных UI/кэш-проверок, 73 проверки хранения/видеобуфера, 51 проверка установленного приложения с настоящими фото/видео, паузой, перемоткой, сохранением очереди и отсутствием новых медиафайлов. Существующие проверки сборки пройдены. Добавлен явный режим `test-quest.ps1 -MeasureMedia PACKAGE` (`card:PACKAGE` — только карточка).
+
+- Restores the configured QLoader mirror as the primary thumbnail/trailer source, with public fallback. Ready galleries no longer wait for video-directory scans; media timeouts are separate from APK transfers.
+- Socket cancellation runs off the UI thread, outside the connection-set lock. Open details pause grid requests and reuse the existing cover preview.
+- Photos load sequentially, prioritizing the next queued frame. Two distinct ready photos unlock browsing while the rest continue loading. Duplicate cover references and near-identical decoded frames are omitted; unfinished frames cannot replace ready photos with placeholders. The same behavior applies to expanded view and controller sticks.
+- Video follows validated HTTPS redirects and can fall back before receiving bytes; partial MP4s from different sources are never spliced. Closing details releases RAM and cancels reads; no media disk cache.
+- Real Quest measurements reproduced the public Blade & Sorcery timeout and a successful 1.52 s mirror transfer. Fixed in-card video prepared in 2.03 s and advanced during playback. Cold first thumbnails improved from 4.7 s to 2.0–3.5 s; 90% visible thumbnails after scrolling took about 3 s. Some utilities/system packages still have placeholders.
+- Final Blade & Sorcery card: window 0.16 s; browsing with 2 ready / 6 pending photos at 6.44 s; all photo attempts completed at 7.21 s. Second frame confirmed distinct. Observations on the current connection, not universal latency guarantees.
+- Validation: 199 isolated UI/cache checks, 73 storage/video-buffer checks, 51 installed-app/live-media checks, existing build suites. Real playback, pause, seek, preserved queue and no new media files verified. Opt-in measurements: `test-quest.ps1 -MeasureMedia PACKAGE` or `card:PACKAGE`.
+
 ## 0.6.6-preview — 2026-10-20
 
 - В каталоге и библиотеке загружаются только обложки видимых плиток и максимум две строки / 10 игр по направлению прокрутки. Видимые игры имеют приоритет, дальние запросы отменяются, дубли одного пакета объединяются.

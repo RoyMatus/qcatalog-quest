@@ -13,7 +13,7 @@ import java.util.*;
 final class VideoPane extends FrameLayout implements AutoCloseable,TextureView.SurfaceTextureListener {
     final TextureView surface;final Button play,mute;final SeekBar seek,volume;final TextView status,time;final LinearLayout controls;
     private final Handler ui=new Handler(Looper.getMainLooper());private MediaPlayer player;private RamVideo source;private Surface output;
-    private String url="";private long bytes=-1;private boolean prepared,closed,expanded,resumeSurface,wantPlay;private float level=.8f;
+    private String url="",fallbackUrl="";private long bytes=-1;private boolean prepared,closed,expanded,resumeSurface,wantPlay;private float level=.8f;
     private int videoWidth=16,videoHeight=9,lastVolume=80;private View.OnHoverListener navigationHover;
     private final Runnable hideControls=this::hideIfPlaying;
     private final Runnable progress=new Runnable(){public void run(){if(closed)return;if(prepared&&player!=null)try{int at=player.getCurrentPosition();seek.setProgress(at);time.setText(clock(at)+" / "+clock(player.getDuration()));}catch(IllegalStateException ignored){}ui.postDelayed(this,500);}};
@@ -40,6 +40,7 @@ final class VideoPane extends FrameLayout implements AutoCloseable,TextureView.S
     void setContentClick(Runnable click){surface.setOnClickListener(v->click.run());surface.setFocusable(true);}
     void setNavigationHover(View.OnHoverListener listener){navigationHover=listener;}
     void configure(String address,long size){url=address;bytes=size;setVisibility(url.isEmpty()?GONE:VISIBLE);updateHeight();}
+    void configure(String address,long size,String fallback){configure(address,size);fallbackUrl=fallback;}
     void setExpanded(boolean value){expanded=value;updateHeight();}
     private void updateHeight(){int width=getWidth()>0?getWidth():Cards.dp(getContext(),680);int max=expanded?(int)(getResources().getDisplayMetrics().heightPixels*.94):Cards.dp(getContext(),420);int h=Math.max(Cards.dp(getContext(),240),Math.min(max,width*videoHeight/videoWidth));ViewGroup.LayoutParams lp=getLayoutParams();if(lp!=null&&lp.height!=h){lp.height=h;setLayoutParams(lp);}post(this::fit);}
     private void fit(){int w=surface.getWidth(),h=surface.getHeight();if(w<=0||h<=0)return;float scale=Math.min((float)w/videoWidth,(float)h/videoHeight);Matrix matrix=new Matrix();matrix.setScale(videoWidth*scale/w,videoHeight*scale/h,w/2f,h/2f);surface.setTransform(matrix);}
@@ -50,8 +51,8 @@ final class VideoPane extends FrameLayout implements AutoCloseable,TextureView.S
         active.setOnVideoSizeChangedListener((p,w,h)->{if(w>0&&h>0&&!closed){videoWidth=w;videoHeight=h;updateHeight();}});
         active.setOnPreparedListener(p->{if(closed||player!=p)return;prepared=true;seek.setMax(p.getDuration());play.setEnabled(true);status.setVisibility(GONE);p.setVolume(level,level);if(wantPlay&&getVisibility()==VISIBLE){play.setText("Ⅱ");play.setContentDescription("Пауза");p.start();}else{play.setText("▶");play.setContentDescription("Воспроизвести");}ui.post(progress);});
         active.setOnCompletionListener(p->{if(!closed){wantPlay=false;play.setText("▶");play.setContentDescription("Смотреть ещё раз");p.seekTo(0);revealControls();}});
-        active.setOnErrorListener((p,what,extra)->{if(!closed)failed();return true;});
-        source=new RamVideo(getContext(),url,bytes);RamVideo input=source;
+        active.setOnErrorListener((p,what,extra)->{if(!closed&&player==p)failed();return true;});
+        source=new RamVideo(getContext(),url,bytes,fallbackUrl);RamVideo input=source;
         new Thread(()->{try{active.setDataSource(input);if(!closed&&player==active)active.prepareAsync();}catch(Exception e){post(()->{if(!closed&&player==active)failed();});}},"qcatalog-video-prepare").start();
     }
     private void failed(){releasePlayer();play.setEnabled(true);play.setText("▶");play.setContentDescription("Повторить видео");status.setText("Не удалось открыть видео. Попробуй позже.");status.setVisibility(VISIBLE);revealControls();}

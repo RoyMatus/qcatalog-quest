@@ -20,8 +20,8 @@ final class MediaCarousel extends LinearLayout implements AutoCloseable {
     private boolean mediaHovered;private int scrollDirection;private long scrollStepAt,scrollEventAt;
     private final Runnable hideArrows=()->{mediaHovered=false;showArrows(false);if(enlarged==null)stopNavigation();};
     private int heldDirection,stickDirection,keyDirection;
-    private final Runnable repeatNavigation=new Runnable(){public void run(){if(closed||!navigationActive()||heldDirection==0)return;select(position+heldDirection);frame.postDelayed(this,1000);}};
-    private void navigationDirection(int direction){if(heldDirection==direction)return;frame.removeCallbacks(repeatNavigation);heldDirection=direction;if(direction!=0){select(position+direction);frame.postDelayed(repeatNavigation,1000);}}
+    private final Runnable repeatNavigation=new Runnable(){public void run(){if(closed||!navigationActive()||heldDirection==0)return;move(heldDirection);frame.postDelayed(this,1000);}};
+    private void navigationDirection(int direction){if(heldDirection==direction)return;frame.removeCallbacks(repeatNavigation);heldDirection=direction;if(direction!=0){move(direction);frame.postDelayed(repeatNavigation,1000);}}
     private void stopNavigation(){stickDirection=keyDirection=scrollDirection=0;navigationDirection(0);}
     private boolean navigationActive(){return enlarged!=null||mediaHovered;}
     private boolean pointerOnMedia(MotionEvent event){android.graphics.Rect bounds=new android.graphics.Rect();if(!frame.getLocalVisibleRect(bounds))return false;int[] screen=new int[2];frame.getLocationOnScreen(screen);bounds.offset(screen[0],screen[1]);return bounds.contains((int)event.getRawX(),(int)event.getRawY());}
@@ -35,7 +35,7 @@ final class MediaCarousel extends LinearLayout implements AutoCloseable {
             stickDirection=keyDirection=0;navigationDirection(0);
             long now=event.getEventTime();int direction=x>0?1:-1;
             // Pointer scroll has no release event: a quiet gap ends the previous stick gesture.
-            if(direction!=scrollDirection||now-scrollEventAt>150||now-scrollStepAt>=1000){select(position+direction);scrollStepAt=now;}
+            if(direction!=scrollDirection||now-scrollEventAt>150||now-scrollStepAt>=1000){move(direction);scrollStepAt=now;}
             scrollDirection=direction;scrollEventAt=now;return true;
         }
         if(!navigationActive()||(!event.isFromSource(InputDevice.SOURCE_JOYSTICK)&&!event.isFromSource(InputDevice.SOURCE_GAMEPAD)))return false;
@@ -55,10 +55,11 @@ final class MediaCarousel extends LinearLayout implements AutoCloseable {
         else if(event.getAction()==KeyEvent.ACTION_UP&&keyDirection==direction)keyDirection=0;
         navigationDirection(stickDirection!=0?stickDirection:keyDirection);return true;
     }
-    MediaCarousel(Activity c,String packageName){super(c);activity=c;pkg=packageName;setOrientation(VERTICAL);
+    MediaCarousel(Activity c,String packageName){this(c,packageName,null);}
+    MediaCarousel(Activity c,String packageName,CardImages.Factory factory){super(c);activity=c;pkg=packageName;setOrientation(VERTICAL);
         frame=new FrameLayout(c){@Override public boolean dispatchGenericMotionEvent(MotionEvent event){return navigateMotion(event)||super.dispatchGenericMotionEvent(event);}};addView(frame,new LayoutParams(-1,-2));
         image=new ImageView(c);image.setScaleType(ImageView.ScaleType.FIT_CENTER);image.setImageResource(R.drawable.qc_cover_placeholder);image.setContentDescription("Обложка игры");frame.addView(image,new FrameLayout.LayoutParams(-1,Cards.dp(c,360)));
-        image.setOnTouchListener((v,event)->{if(event.getAction()==MotionEvent.ACTION_DOWN){touchX=event.getX();touchY=event.getY();return true;}if(event.getAction()==MotionEvent.ACTION_UP){float dx=event.getX()-touchX,dy=event.getY()-touchY;if(Math.abs(dx)>Cards.dp(c,80)&&Math.abs(dx)>Math.abs(dy))select(position+(dx<0?1:-1));else v.performClick();return true;}return false;});
+        image.setOnTouchListener((v,event)->{if(event.getAction()==MotionEvent.ACTION_DOWN){touchX=event.getX();touchY=event.getY();return true;}if(event.getAction()==MotionEvent.ACTION_UP){float dx=event.getX()-touchX,dy=event.getY()-touchY;if(Math.abs(dx)>Cards.dp(c,80)&&Math.abs(dx)>Math.abs(dy))move(dx<0?1:-1);else v.performClick();return true;}return false;});
         video=new VideoPane(c);video.setVisibility(GONE);frame.addView(video,new FrameLayout.LayoutParams(-1,-2));
         loading=new PhotoLoading(c);frame.addView(loading,new FrameLayout.LayoutParams(-2,-2,Gravity.CENTER));
         previous=Cards.button(c,"‹",false);next=Cards.button(c,"›",false);previous.setTextSize(48);next.setTextSize(48);previous.setPadding(0,0,0,0);next.setPadding(0,0,0,0);previous.setContentDescription("Предыдущий кадр");next.setContentDescription("Следующий кадр");for(Button arrow:Arrays.asList(previous,next)){arrow.setBackgroundColor(Color.TRANSPARENT);arrow.setTextColor(0xBBFFFFFF);arrow.setShadowLayer(Cards.dp(c,2),0,0,0x99000000);arrow.setStateListAnimator(null);}
@@ -67,15 +68,31 @@ final class MediaCarousel extends LinearLayout implements AutoCloseable {
         View.OnHoverListener hover=(v,event)->{if(event.getAction()==MotionEvent.ACTION_HOVER_ENTER||event.getAction()==MotionEvent.ACTION_HOVER_MOVE){mediaHovered=true;removeCallbacks(hideArrows);showArrows(true);}else if(event.getAction()==MotionEvent.ACTION_HOVER_EXIT)postDelayed(hideArrows,180);return false;};
         for(View target:Arrays.asList(frame,image,previous,next))target.setOnHoverListener(hover);video.setNavigationHover(hover);
         View.OnFocusChangeListener focus=(v,hasFocus)->{removeCallbacks(hideArrows);if(hasFocus)showArrows(true);else postDelayed(hideArrows,180);};previous.setOnFocusChangeListener(focus);next.setOnFocusChangeListener(focus);
-        previous.setOnClickListener(v->select(position-1));next.setOnClickListener(v->select(position+1));image.setOnClickListener(v->enlarge());image.setFocusable(true);video.setContentClick(this::enlarge);
-        images=new CardImages(c,pkg,(key,loaded)->{if(!closed&&!urls.isEmpty()&&urls.get(position).equals(key)){bitmap=loaded;if(loaded!=null)image.setImageBitmap(loaded);}updateLoading();});
+        previous.setOnClickListener(v->move(-1));next.setOnClickListener(v->move(1));image.setOnClickListener(v->enlarge());image.setFocusable(true);video.setContentClick(this::enlarge);
+        images=factory==null?new CardImages(c,pkg,this::imageReady):new CardImages(factory,this::imageReady);
         urls.add("");select(0);
     }
-    void configure(MediaInfo info){if(closed)return;for(String url:info.images)if(!urls.contains(url)&&urls.size()<CardImages.MAX_IMAGES)urls.add(url);images.prefetch(urls);if(!info.trailer.isEmpty())urls.add("video:"+info.trailer);video.configure(info.trailer,info.trailerSize);video.setVisibility(position==urls.size()-1&&!info.trailer.isEmpty()?VISIBLE:GONE);configured=true;updateControls();updateLoading();}
-    private void updateLoading(){if(closed)return;loading.showLoading(!urls.isEmpty()&&!urls.get(position).startsWith("video:")&&(!configured||images.pending()>0));}
+    void configure(MediaInfo info){if(closed)return;Set<String> known=new HashSet<>();known.add(MediaInfo.imageKey(info.cover));for(String url:urls)known.add(MediaInfo.imageKey(url));for(String url:info.images)if(known.add(MediaInfo.imageKey(url))&&urls.size()<CardImages.MAX_IMAGES)urls.add(url);images.prefetch(urls);if(!info.trailer.isEmpty())urls.add("video:"+info.trailer);video.configure(info.trailer,info.trailerSize,info.fallbackTrailer);video.setVisibility(position==urls.size()-1&&!info.trailer.isEmpty()?VISIBLE:GONE);configured=true;updateControls();updateLoading();}
+    private int readyPhotos(){int count=0;for(String url:urls)if(images.get(url)!=null)count++;return count;}
+    private boolean browsingReady(){return configured&&(readyPhotos()>=2||images.pending()==0);}
+    private void updateLoading(){if(closed)return;loading.showLoading(!urls.isEmpty()&&!urls.get(position).startsWith("video:")&&!browsingReady());}
+    private void imageReady(String key,Bitmap loaded){
+        if(closed||urls.isEmpty())return;String selected=urls.get(position);
+        // Keep the first occurrence, including the mirror cover, even if another URL/size decodes identically.
+        for(int i=0;i<urls.size();i++)for(int j=urls.size()-1;j>i;j--)if(images.same(urls.get(i),urls.get(j))){if(selected.equals(urls.get(j)))selected=urls.get(i);urls.remove(j);}
+        position=Math.max(0,urls.indexOf(selected));
+        if(!selected.startsWith("video:")&&(selected.equals(key)||images.get(selected)!=null))select(position);
+        updateControls();
+    }
+    private int adjacent(int direction){
+        if(!browsingReady())return -1;
+        for(int i=position+direction;i>=0&&i<urls.size();i+=direction){String key=urls.get(i);if(images.pending(key)&&images.get(key)==null)return -1;if(key.startsWith("video:")||images.get(key)!=null)return i;}return -1;
+    }
+    private void prioritizeNext(int direction){for(int i=position+direction;i>=0&&i<urls.size();i+=direction)if(images.pending(urls.get(i))){images.prioritize(urls.get(i));return;}}
+    private void move(int direction){prioritizeNext(direction);int index=adjacent(direction);if(index>=0){select(index);prioritizeNext(direction);}}
     private void showArrows(boolean visible){navigationVisible=visible;previous.setAlpha(visible&&previous.isEnabled()?1f:0f);next.setAlpha(visible&&next.isEnabled()?1f:0f);}
     private void alignArrowHeight(){if(closed||urls.isEmpty())return;boolean movie=urls.get(position).startsWith("video:");int height=movie?Math.max(Cards.dp(activity,64),video.getHeight()-Cards.dp(activity,128)):-1;for(Button button:Arrays.asList(previous,next)){FrameLayout.LayoutParams lp=(FrameLayout.LayoutParams)button.getLayoutParams();if(lp.height!=height){lp.height=height;button.setLayoutParams(lp);}}}
-    private void updateControls(){previous.setEnabled(position>0);next.setEnabled(position<urls.size()-1);showArrows(navigationVisible);updateLoading();}
+    private void updateControls(){previous.setEnabled(adjacent(-1)>=0);next.setEnabled(adjacent(1)>=0);showArrows(navigationVisible);updateLoading();}
     void select(int value){if(closed||value<0||value>=urls.size())return;position=value;video.pause();updateControls();String url=urls.get(value);boolean movie=url.startsWith("video:");image.setVisibility(movie?GONE:VISIBLE);video.setVisibility(movie?VISIBLE:GONE);alignArrowHeight();if(movie)return;bitmap=images.get(url);if(bitmap!=null)image.setImageBitmap(bitmap);else{image.setImageResource(R.drawable.qc_cover_placeholder);images.request(url);}image.setContentDescription(value==0?"Обложка игры":"Скриншот игры "+value);
     }
     boolean isExpanded(){return enlarged!=null;}

@@ -73,12 +73,19 @@ final class Engine {
         runTo(args,progress,result,maxBytes); return result.toByteArray();
     }
     long runTo(List<String> args, Progress progress, OutputStream output, long maxBytes) throws Exception {
+        return runTo(args,progress,output,maxBytes,false);
+    }
+    byte[] mediaBytes(List<String> args,int maxBytes)throws Exception {
+        ByteArrayOutputStream out=new ByteArrayOutputStream();mediaTo(args,out,maxBytes);return out.toByteArray();
+    }
+    long mediaTo(List<String> args,OutputStream output,long maxBytes)throws Exception {return runTo(args,null,output,maxBytes,true);}
+    private long runTo(List<String> args,Progress progress,OutputStream output,long maxBytes,boolean media)throws Exception {
         if (cancelled.get()) throw new InterruptedIOException("Загрузка приостановлена.");
         File binary = new File(context.getApplicationInfo().nativeLibraryDir, "librclone.so");
         if (!binary.isFile()) throw new IOException("Загрузчик ARM64 недоступен на этом устройстве.");
         List<String> command = new ArrayList<>(); command.add(binary.getAbsolutePath()); command.addAll(args);
         Collections.addAll(command, "--config", config().getAbsolutePath(), "--ask-password=false", "--ca-cert", certificates().getAbsolutePath(),
-            "--contimeout", "10s", "--timeout", "30s", "--retries", "1", "--low-level-retries", "2", "--use-json-log");
+            "--contimeout", media?"4s":"10s", "--timeout", media?"8s":"30s", "--retries", "1", "--low-level-retries", media?"1":"2", "--use-json-log");
         ProcessBuilder builder = new ProcessBuilder(command).directory(context.getFilesDir());
         builder.environment().put("HOME", context.getFilesDir().getAbsolutePath()); builder.environment().put("TMPDIR", context.getCacheDir().getAbsolutePath());
         builder.environment().put("SSL_CERT_FILE", certificates().getAbsolutePath());

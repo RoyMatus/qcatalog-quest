@@ -19,6 +19,7 @@ public final class QuestChecks extends Instrumentation {
         String fixtureId = Catalog.digest("qcatalog-tests-" + System.nanoTime());
         Set<String> preferences = new HashSet<>(); int outcome = Activity.RESULT_OK;
         try {
+            if(arguments!=null&&arguments.containsKey("measureMedia")){new MediaPerformanceChecks(this).run(arguments.getString("measureMedia"));result.putString("result","PASS measurements completed");finish(outcome,result);return;}
             File realQueue = new File(target.getFilesDir(),"queue.json");
             byte[] before = realQueue.exists() ? Files.readAllBytes(realQueue.toPath()) : null;
             File fixture = DownloadFiles.path(target.getCacheDir(),fixtureId); fixture.mkdirs();
@@ -51,7 +52,7 @@ public final class QuestChecks extends Instrumentation {
             require(!dir.exists(),"Release directory removed");
             InstalledApps local = InstalledApps.read(target);
             InstalledApps.Entry self = local.get(target.getPackageName());
-            require(self != null && self.version == 24,"Installed app version comes from PackageManager");
+            require(self != null && self.version == 25,"Installed app version comes from PackageManager");
             require(InstalledApps.isNewer(self.version + 1,self.version),"Newer code is an update");
             require(!InstalledApps.isNewer(self.version,self.version),"Equal code is current");
             require(!InstalledApps.isNewer(self.version - 1,self.version),"Older code is not an update");
