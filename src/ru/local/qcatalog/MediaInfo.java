@@ -20,10 +20,12 @@ final class MediaInfo {
         result.cover=https(json.optString("cover_url"));result.addImage(result.cover);for(String field:Arrays.asList("screenshots","screenshot_urls")){JSONArray shots=json.optJSONArray(field);if(shots!=null)for(int i=0;i<shots.length();i++)result.addImage(reference(shots.opt(i)));}
         result.trailer=https(json.optString("trailer_url"));return result;
     }
-    void metaPage(String html) throws Exception {
-        if(storeId.isEmpty())return;
+    static String coverFromPage(String html){
         Matcher tags=Pattern.compile("(?is)<meta\\b[^>]*>").matcher(html);
-        while(tags.find()){Map<String,String> attributes=new HashMap<>();Matcher attr=Pattern.compile("(?is)([\\w:]+)\\s*=\\s*([\"'])(.*?)\\2").matcher(tags.group());while(attr.find())attributes.put(attr.group(1).toLowerCase(Locale.ROOT),attr.group(3));String property=attributes.containsKey("property")?attributes.get("property"):attributes.get("name");if("og:image".equalsIgnoreCase(property)){String refreshedCover=https(DescriptionText.plain(attributes.getOrDefault("content","")));if(!refreshedCover.isEmpty())cover=refreshedCover;}}
+        while(tags.find()){Map<String,String> attributes=new HashMap<>();Matcher attr=Pattern.compile("(?is)([\\w:]+)\\s*=\\s*([\"'])(.*?)\\2").matcher(tags.group());while(attr.find())attributes.put(attr.group(1).toLowerCase(Locale.ROOT),attr.group(3));String property=attributes.containsKey("property")?attributes.get("property"):attributes.get("name");if("og:image".equalsIgnoreCase(property)){String refreshedCover=https(DescriptionText.plain(attributes.getOrDefault("content","")));if(!refreshedCover.isEmpty())return refreshedCover;}}return "";
+    }
+    void metaPage(String html) throws Exception {
+        if(storeId.isEmpty())return;String refreshedCover=coverFromPage(html);if(!refreshedCover.isEmpty())cover=refreshedCover;
         Matcher scripts=Pattern.compile("(?is)<script\\b[^>]*type=[\"']application/ld\\+json[\"'][^>]*>(.*?)</script>").matcher(html);
         List<String> refreshed=new ArrayList<>();String video="";
         while(scripts.find()) {

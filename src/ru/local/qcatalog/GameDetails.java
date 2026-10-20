@@ -126,7 +126,10 @@ final class GameDetails implements AutoCloseable {
     }
     Bitmap cover(String pkg,int maxPixels) throws Exception {
         pkg = originalPackage(pkg); if (!Catalog.safePackage(pkg)) throw new IOException("Некорректное имя приложения.");
-        try{MediaInfo info=publicMedia(pkg);if(!info.cover.isEmpty()){Bitmap cover=image(info.cover,maxPixels);if(cover!=null)return cover;}}catch(Exception ignored){if(closed)throw new InterruptedIOException();}
+        // List thumbnails never discover a gallery or trailer. Refresh only a failed cover URL.
+        try{JSONObject info=metadata(pkg);String cover=MediaInfo.https(info.optString("cover_url"));if(!cover.isEmpty())try{Bitmap bitmap=image(cover,maxPixels);if(bitmap!=null)return bitmap;}catch(Exception ignored){if(closed)throw new InterruptedIOException();}
+            String id=info.optString("id");if(id.matches("[0-9]{5,30}")){String page=new String(get("https://www.meta.com/experiences/quest/"+id+"/",4*1024*1024),StandardCharsets.UTF_8);cover=MediaInfo.coverFromPage(page);if(!cover.isEmpty()){Bitmap bitmap=image(cover,maxPixels);if(bitmap!=null)return bitmap;}}
+        }catch(Exception ignored){if(closed)throw new InterruptedIOException();}
         Engine engine = new Engine(context); imageEngine = engine;
         if (closed) { engine.cancel(); throw new InterruptedIOException(); }
         String mirror = context.getSharedPreferences("state",0).getString("mirror","");

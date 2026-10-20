@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.6-preview — 2026-10-20
+
+- В каталоге и библиотеке загружаются только обложки видимых плиток и максимум две строки / 10 игр по направлению прокрутки. Видимые игры имеют приоритет, дальние запросы отменяются, дубли одного пакета объединяются.
+- Обложки декодируются в бюджет 360×240 пикселей, до четырёх запросов параллельно; RAM-кэш 16 МиБ повторно используется при появлении плитки на экране. Скриншоты и видео из списков не запрашиваются.
+- Рабочая ссылка обложки из QLoader используется сразу. При её ошибке обновляется только обложка со страницы Meta; обнаружение полной галереи остаётся отдельной операцией карточки игры.
+- Все фотографии конкретной игры предзагружаются только после открытия её карточки и освобождаются при закрытии. Запас обложек при открытии карточки отключается, после закрытия восстанавливается. Медиа не сохраняются на диск.
+- Catalogue/library load visible thumbnails first, then up to two rows / ten covers ahead. Shared package requests, cancelled distant work, four bounded workers and a 16 MiB RAM cache; thumbnail pixel budget 360×240.
+- Working QLoader cover URLs bypass Meta; failed URLs refresh only the cover. Full photo prefetch remains scoped to the open game card; no media disk cache.
+- Validation: 180 isolated Quest UI/cache checks, including bounded lookahead/concurrency, cancellation of obsolete requests and shared prefetched covers; 79 isolated live-media/storage checks; existing build suites passed.
+
+
 ## 0.6.5-preview — 2026-10-20
 
 - Одна плитка на точный пакет приложения в каталоге, библиотеке и обновлениях. Внизу открытой карточки — выбор релиза с версией, размером и полным именем. Старые и равные по коду версии остаются доступны; поиск учитывает все релизы. Установка и скачивание используют именно выбранный релиз.
