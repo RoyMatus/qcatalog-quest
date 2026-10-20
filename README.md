@@ -410,3 +410,9 @@ Legacy `uninstall` / `rm -rf` commands are not executed. Existing files outside 
 The old unsupported-install.txt error becomes a ready-to-install task on launch. Files are rechecked before installation. Do not delete or redownload the game merely to clear this old error.
 
 Build dependencies are pinned by SHA-256 in `dependencies.json`. `build.ps1` and `test-storage.ps1` run `fetch-dependencies.ps1`; the first build requires Maven Central access. Libraries are embedded in the APK, so headset extraction needs neither a PC nor a library download. Original licenses are bundled under `assets/licenses/`.
+
+Проверка 0.4.3 на Quest 3S: 53 изолированных проверки хранения/очереди/распаковки и 29 host-проверок дополнительных инструкций/архивов. Реальный скачанный релиз Half-Life / XASH успешно распакован: 13 112 файлов, 4 368 536 271 байт; версия APK совпала с каталогом. Проверка не устанавливала игру и не меняла её существующие данные.
+
+0.4.3 validation on Quest 3S: 53 isolated storage/queue/archive checks and 29 host special-install/archive checks. An existing Half-Life / XASH download was successfully expanded into 13,112 files (4,368,536,271 bytes); its APK version matched the catalogue. This validation neither installed the game nor changed its existing data.
+
+Optional `test-quest.ps1 -SpecialReleaseId RELEASE_ID` expands an existing downloaded release inside QCatalog's staging folder and validates its installation plan, preserving the queue and installed games. Run only while idle. Unlike the default isolated fixtures, this opt-in check retains the expanded release for subsequent installation.

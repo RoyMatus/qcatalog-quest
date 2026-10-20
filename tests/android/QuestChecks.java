@@ -8,7 +8,7 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 
-/** Creates isolated fixtures only. Does not fetch cards, remove user downloads, or install games. */
+/** Isolated fixtures by default; optional special-release validation expands an existing download. Never installs or deletes games. */
 public final class QuestChecks extends Instrumentation {
     private int checks;
     private Bundle arguments;
