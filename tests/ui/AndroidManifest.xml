@@ -2,7 +2,7 @@
   <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="32"/>
   <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
   <application android:label="QCatalog UI checks" android:debuggable="true" android:theme="@style/QCatalogTheme" android:allowBackup="false">
-    <activity android:name="ru.local.qcatalog.MainActivity" android:exported="false" android:resizeableActivity="true"/>
+    <activity android:name="ru.local.qcatalog.MainActivity" android:exported="false" android:resizeableActivity="false" android:screenOrientation="landscape"><layout android:defaultWidth="1920dp" android:defaultHeight="1080dp" android:gravity="center" /></activity>
   </application>
   <instrumentation android:name="ru.local.qcatalog.UiChecks" android:targetPackage="ru.local.qcatalog.uichecks"/>
 </manifest>

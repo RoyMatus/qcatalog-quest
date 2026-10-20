@@ -1,5 +1,6 @@
 <resources>
     <style name="QCatalogTheme" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:forceDarkAllowed">false</item>
         <item name="android:fontFamily">sans</item>
         <item name="android:colorAccent">@color/qc_primary</item>
         <item name="android:windowBackground">@color/qc_background</item>

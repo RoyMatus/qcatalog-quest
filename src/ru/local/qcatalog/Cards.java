@@ -18,7 +18,7 @@ final class Cards {
         states.addState(new int[]{android.R.attr.state_hovered},new LayerDrawable(new Drawable[]{c.getDrawable(resource),c.getDrawable(R.drawable.qc_focus_ring)}));
         states.addState(new int[]{android.R.attr.state_focused},new LayerDrawable(new Drawable[]{c.getDrawable(resource),c.getDrawable(R.drawable.qc_focus_ring)}));
         states.addState(new int[]{},base);
-        return new RippleDrawable(ColorStateList.valueOf(0x22000000),states,null);
+        return new RippleDrawable(ColorStateList.valueOf(c.getColor(R.color.qc_ripple)),states,null);
     }
     static void target(Context c,View view,int background) {
         view.setBackground(Cards.background(c,background)); view.setFocusable(true); view.setClickable(true);

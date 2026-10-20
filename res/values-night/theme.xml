@@ -1,0 +1,21 @@
+<resources>
+    <style name="QCatalogTheme" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:forceDarkAllowed">false</item>
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">@color/qc_primary</item>
+        <item name="android:windowBackground">@color/qc_background</item>
+        <item name="android:textColorPrimary">@color/qc_text</item>
+        <item name="android:textColorSecondary">@color/qc_text_secondary</item>
+        <item name="android:textSize">22sp</item>
+        <item name="android:buttonStyle">@style/QCatalogButton</item>
+    </style>
+    <style name="QCatalogButton" parent="android:style/Widget.Material.Button">
+        <item name="android:minHeight">64dp</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+    <style name="QCatalogProgress" parent="android:style/Widget.Material.ProgressBar.Horizontal">
+        <item name="android:minHeight">12dp</item>
+        <item name="android:maxHeight">12dp</item>
+    </style>
+</resources>

@@ -2,18 +2,18 @@
 
 Каталог QLoader прямо на шлеме: поиск, скачивание, установка APK и проверка обновлений.
 
-**[Скачать APK / Download APK](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.4.0-preview)** · [Issues](https://github.com/RoyMatus/qcatalog-quest/issues) · [Русский](#русский) · [English](#english)
+**[Скачать APK / Download APK](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.4.1-preview)** · [Issues](https://github.com/RoyMatus/qcatalog-quest/issues) · [Русский](#русский) · [English](#english)
 
-Версия / Version: **0.4.0-preview**. Проверено / Tested: **Quest 3S, ARM64, Android API 34**, 20 October 2026.
+Версия / Version: **0.4.1-preview**. Проверено / Tested: **Quest 3S, ARM64, Android API 34**, 20 October 2026.
 
 
-### Интерфейс 0.4 и сортировка / Interface 0.4 and sorting
+### Интерфейс и сортировка / Interface and sorting
 
-Используется утверждённый [набор Cards v1](design/cards-v1/README.md), импортированный в `res/` без подмены цветов и иконок. В узком окне разделы открываются кнопкой «Разделы»; в широком видны боковое меню и сетка. Разверни окно на Quest для двух или трёх колонок. Настройки подключения доступны через «Разделы → Настройки» либо нижнюю кнопку бокового меню.
+Используется утверждённый [набор Cards v1](design/cards-v1/README.md), импортированный в `res/` без подмены цветов и иконок. В узком окне разделы открываются кнопкой «Разделы»; в широком видны боковое меню и сетка. С версии 0.4.1 окно сразу открывается развёрнутым в горизонтальном формате 1920 × 1080 dp; ручное растягивание не требуется. Фоновый цвет, кнопки и диалоги автоматически следуют системной светлой/тёмной теме. Ряд действий имеет одинаковые границы кнопок и при необходимости переносится в колонку. Настройки подключения доступны через «Разделы → Настройки» либо нижнюю кнопку бокового меню.
 
 Сортировка рядом с поиском: А–Я или популярность скачиваний за сутки / 7 / 30 дней. Источник — [публичная статистика QLoader](https://qloader.5698452.xyz/api/v1/popularity), а не рейтинг магазина Meta или точное число всех скачиваний. Выбранный режим сохраняется; сами данные статистики — только в RAM. Никакая личная история скачиваний этому сервису не передаётся. Повторный выбор сортировки позволяет повторить запрос после ошибки. Обложки видимых карточек используют ограниченный кеш RAM 16 МиБ, описания по-прежнему загружаются только по запросу; изображения/описания не сохраняются на диск.
 
-Approved [Cards v1 resources](design/cards-v1/README.md) are imported into `res/`. Narrow windows use the labelled Sections menu; wider windows show the sidebar and a two/three-column grid. Enlarge the Quest window for the desktop-like layout. Connection settings are under Sections → Settings or the sidebar Settings button.
+Approved [Cards v1 resources](design/cards-v1/README.md) are imported into `res/`. Narrow windows use the labelled Sections menu; wider windows show the sidebar and a two/three-column grid. From 0.4.1 the panel opens fully expanded at 1920 × 1080 dp in fixed landscape format, without manual stretching. System light/dark mode controls surfaces, text, buttons and dialogs. Action buttons share equal bounds and stack when large text cannot fit. Connection settings are under Sections → Settings or the sidebar Settings button.
 
 Sorting beside search supports A–Z and QLoader download popularity for 1/7/30 days, using its public API. This is not Meta store star ratings or an exact global download total. Missing statistics sort last; service failures explicitly fall back to alphabetical order. Only the selected sort setting persists; the data stays in RAM. No personal download reports are sent. Visible covers use a bounded 16 MiB RAM cache, with no disk media/description cache.
 
@@ -71,7 +71,7 @@ QCatalog — отдельное Android-приложение с обычным �
 - В Meta Horizon на телефоне выбери значок шлема → свой Quest → Headset Settings → Developer Mode и включи режим разработчика.
 - Для Windows установи [Oculus ADB Drivers](https://developers.meta.com/vr/downloads/package/oculus-adb-drivers/), если нужный драйвер ещё не установлен. Подробности и актуальные требования смотри в инструкции Meta.
 
-1. Скачай `QCatalog-0.4.0-preview.apk` из [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.4.0-preview).
+1. Скачай `QCatalog-0.4.1-preview.apk` из [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.4.1-preview).
 2. Подключи Quest по USB и разреши USB-отладку **внутри шлема**. Отображение «Внутреннего общего накопителя» в Проводнике означает доступ к файлам, но ещё не подтверждает разрешение отладки.
 3. В PowerShell, открытом в папке Platform Tools, проверь устройства:
 
@@ -82,7 +82,7 @@ QCatalog — отдельное Android-приложение с обычным �
 4. Найди именно свой Quest со статусом `device`. Если указано `unauthorized`, подтверди запрос в шлеме. В следующих командах замени `QUEST_SERIAL` на серийный номер своего Quest, а путь к APK — на путь скачанного файла:
 
    ```powershell
-   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.4.0-preview.apk'
+   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.4.1-preview.apk'
    ```
 
 5. Открой библиотеку приложений Quest → «Неизвестные источники» → **QCatalog**. Расположение фильтра зависит от версии интерфейса Quest.
@@ -188,7 +188,7 @@ QCatalog — отдельное Android-приложение с обычным �
 
 Если проверенный архив уже есть, используй `fetch-engine.ps1 -ArchivePath 'C:\Path\To\linux-arm64.tar'`. Если поставщик изменит архив, проверка хэша остановит извлечение. Не отключай её без проверки нового файла.
 
-Результат: `build/QCatalog-0.4.0-preview.apk`. Сборка проверяет подпись APK и запускает тесты каталога, безопасного удаления файлов и форматирования описаний. Исходники модифицированного бинарного движка поставщика в репозиторий не входят; этот движок не пересобирается из исходников.
+Результат: `build/QCatalog-0.4.1-preview.apk`. Сборка проверяет подпись APK и запускает тесты каталога, безопасного удаления файлов и форматирования описаний. Исходники модифицированного бинарного движка поставщика в репозиторий не входят; этот движок не пересобирается из исходников.
 
 Для обновления поверх установленного APK нужен тот же ключ подписи. `build.ps1` создаёт локальный `build/debug.keystore`, если его ещё нет. Сохрани свой ключ отдельно; он исключён из Git. Самостоятельная сборка с новым ключом не установится как обновление готового APK из Releases.
 
@@ -248,7 +248,7 @@ You need a Quest with Developer Mode enabled, a USB data cable, and Android SDK 
 - In the phone's Meta Horizon app, select the headset icon → your Quest → Headset Settings → Developer Mode, and enable it.
 - On Windows, install [Oculus ADB Drivers](https://developers.meta.com/vr/downloads/package/oculus-adb-drivers/) if not already installed. Refer to Meta's guide for the current requirements and details.
 
-1. Download `QCatalog-0.4.0-preview.apk` from [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.4.0-preview).
+1. Download `QCatalog-0.4.1-preview.apk` from [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.4.1-preview).
 2. Connect the Quest over USB and allow USB debugging **inside the headset**. Seeing the headset's shared storage in Windows Explorer does not mean USB debugging has been authorized.
 3. Open PowerShell in the Platform Tools directory and run:
 
@@ -259,7 +259,7 @@ You need a Quest with Developer Mode enabled, a USB data cable, and Android SDK 
 4. Identify your Quest with the `device` status. For `unauthorized`, accept the debugging prompt inside the headset. Replace `QUEST_SERIAL` below with your Quest's serial, and adjust the APK path:
 
    ```powershell
-   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.4.0-preview.apk'
+   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.4.1-preview.apk'
    ```
 
 5. Open the Quest app library → **Unknown Sources** → **QCatalog**. The filter's location depends on the Quest software version.
@@ -357,7 +357,7 @@ Requirements: **Windows, PowerShell 7, JDK 21, Android SDK Build Tools 36.1.0, S
 
 Use `fetch-engine.ps1 -ArchivePath 'C:\Path\To\linux-arm64.tar'` for an existing archive. A changed provider archive fails the pinned hash check; review it before changing the expected hash.
 
-Output: `build/QCatalog-0.4.0-preview.apk`. The build verifies the APK signature and runs catalogue, download-containment/deletion and description-formatting tests. The provider's modified native engine source is not included or rebuilt here.
+Output: `build/QCatalog-0.4.1-preview.apk`. The build verifies the APK signature and runs catalogue, download-containment/deletion and description-formatting tests. The provider's modified native engine source is not included or rebuilt here.
 
 The build creates a local `build/debug.keystore` when absent. Keep your signing key privately: it is excluded from Git, and updates require the same key. Your own rebuild with a new key cannot update the APK distributed in Releases.
 
@@ -375,3 +375,10 @@ This temporarily installs a test package with the same signing key and removes i
 ### Repository access and issues
 
 Source and releases are public to read and download; issues are open for bug reports. Repository writes and releases are controlled by the owner. GitHub also permits forks and pull-request proposals, which do not grant write access to this repository. Include the app version, headset model, reproduction steps and sanitized error text in reports; never attach personal configuration files.
+
+
+### Проверки 0.4.1 / 0.4.1 validation
+
+22 изолированные UI-проверки: совпадение верхних/нижних границ «Пауза»/«Установить» с соседней кнопкой, обе системные темы, шрифт 160%, перенос в узкой области и фактический запуск панели 1920 × 1080 dp на Quest 3S. Глобальная тема шлема в тестах не менялась.
+
+22 isolated UI checks cover button bounds, both resource night modes, 160% font scale, narrow fallback and actual 1920 × 1080 dp launch on Quest 3S. Tests did not change the headset's global theme. Horizon OS still controls the panel's placement and physical/angular size in VR; the application fills its assigned panel. Sources: [Meta panel sizing](https://developers.meta.com/vr/essentials/horizon-os-panel-sizing/), [Android activity layout](https://developer.android.com/guide/topics/manifest/layout-element).
