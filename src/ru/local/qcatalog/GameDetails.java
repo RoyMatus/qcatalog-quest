@@ -129,7 +129,18 @@ final class GameDetails implements AutoCloseable {
         try{JSONObject info=metadata(pkg);String cover=MediaInfo.https(info.optString("cover_url"));if(!cover.isEmpty())try{Bitmap bitmap=image(cover,maxPixels);if(bitmap!=null)return bitmap;}catch(Exception ignored){if(closed)throw new InterruptedIOException();}
             String id=info.optString("id");if(id.matches("[0-9]{5,30}")){String page=new String(get("https://www.meta.com/experiences/quest/"+id+"/",4*1024*1024),StandardCharsets.UTF_8);cover=MediaInfo.coverFromPage(page);if(!cover.isEmpty()){Bitmap bitmap=image(cover,maxPixels);if(bitmap!=null)return bitmap;}}
         }catch(Exception ignored){if(closed)throw new InterruptedIOException();}
-        return null;
+        return installedIcon(pkg,maxPixels);
+    }
+    Bitmap installedIcon(String pkg,int maxPixels){
+        try{
+            android.graphics.drawable.Drawable icon=context.getPackageManager().getApplicationIcon(pkg);
+            int width=Math.max(1,icon.getIntrinsicWidth()),height=Math.max(1,icon.getIntrinsicHeight());
+            double scale=Math.min(1d,Math.sqrt((double)Math.max(1,maxPixels)/((long)width*height)));
+            Bitmap bitmap=Bitmap.createBitmap(Math.max(1,(int)(width*scale)),Math.max(1,(int)(height*scale)),Bitmap.Config.ARGB_8888);
+            android.graphics.Rect previous=new android.graphics.Rect(icon.getBounds());
+            try{icon.setBounds(0,0,bitmap.getWidth(),bitmap.getHeight());icon.draw(new android.graphics.Canvas(bitmap));}finally{icon.setBounds(previous);}
+            return bitmap;
+        }catch(android.content.pm.PackageManager.NameNotFoundException e){return null;}
     }
     private Bitmap mirrorCover(String pkg,int maxPixels)throws Exception {
         String mirror = context.getSharedPreferences("state",0).getString("mirror","");

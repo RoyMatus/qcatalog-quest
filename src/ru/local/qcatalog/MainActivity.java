@@ -205,7 +205,7 @@ public final class MainActivity extends Activity {
         LinearLayout layout = column(); layout.setPadding(dp(20),dp(8),dp(20),dp(12));
         TextView versionInfo=text("",16,MINT);layout.addView(versionInfo);
         String pkg = installed == null ? game.pkg : installed.metadataPackage(game.pkg);
-        MediaCarousel gallery=new MediaCarousel(this,pkg);android.graphics.Bitmap preview=covers.peek(pkg);if(preview!=null)gallery.image.setImageBitmap(preview);openCarousels.add(gallery);layout.addView(gallery);
+        MediaCarousel gallery=new MediaCarousel(this,pkg);gallery.setCoverReady(ready->covers.accept(pkg,ready));android.graphics.Bitmap preview=covers.peek(pkg);if(preview!=null)gallery.image.setImageBitmap(preview);openCarousels.add(gallery);layout.addView(gallery);
         TextView description = text("",19,getColor(R.color.qc_text)); description.setPadding(0,dp(12),0,dp(8)); layout.addView(description);
         TextView developer = text("",13,MUTED); developer.setVisibility(View.GONE); layout.addView(developer);
         TextView release = text(game.release,13,MUTED); release.setPadding(0,dp(12),0,0); layout.addView(release);

@@ -25,6 +25,7 @@ final class MediaPerformanceChecks {
         test.runOnMainSync(()->{CoverLoader loader=(CoverLoader)field(activity,"covers");@SuppressWarnings("unchecked") Map<ImageView,String> bound=(Map<ImageView,String>)field(loader,"bound");List<String> missing=new ArrayList<>();for(Map.Entry<ImageView,String> e:bound.entrySet())if(e.getKey().isShown()&&e.getKey().isAttachedToWindow()&&!(e.getKey().getDrawable() instanceof BitmapDrawable))missing.add(e.getValue());report("missing visible covers="+missing);});
     }
     @SuppressWarnings("unchecked") void run(String gameName)throws Exception {
+        if(gameName.startsWith("inventory:")){inventory(gameName.substring(10));return;}
         if(gameName.startsWith("sources:")){sources(gameName.substring(8));return;}
         boolean cardOnly=gameName.startsWith("card:");if(cardOnly)gameName=gameName.substring(5);
         activity=(MainActivity)test.startActivitySync(new Intent(context,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
@@ -62,6 +63,25 @@ final class MediaPerformanceChecks {
         // Compare direct QLoader thumbnail independently of the current public fallback chain.
         String mirror=context.getSharedPreferences("state",0).getString("mirror","");String pkg=GameDetails.originalPackage(chosen.pkg);
         if(mirror.matches("FFA-\\d+")){Engine engine=new Engine(context);long at=SystemClock.elapsedRealtime();try{byte[] b=engine.runBytes(Arrays.asList("cat",mirror+":Quest Games/.meta/thumbnails/"+pkg+".jpg"),null,8*1024*1024);Bitmap bitmap=BitmapFactory.decodeByteArray(b,0,b.length);report("direct mirror thumbnail="+(SystemClock.elapsedRealtime()-at)+"ms; bytes="+b.length+"; decoded="+(bitmap!=null));if(bitmap!=null)bitmap.recycle();}catch(Exception e){report("direct mirror thumbnail failed after "+(SystemClock.elapsedRealtime()-at)+"ms; type="+e.getClass().getSimpleName());}finally{engine.cancel();}}
+    }
+    void inventory(String pkg)throws Exception {
+        String actual=InstalledApps.read(context).metadataPackage(pkg);report("catalogue package="+pkg+"; metadata package="+actual);
+        String mirror=context.getSharedPreferences("state",0).getString("mirror","");
+        if(mirror.matches("FFA-\\d+"))for(String directory:Arrays.asList("thumbnails","videos")){
+            Engine engine=new Engine(context);long at=SystemClock.elapsedRealtime();try{
+                org.json.JSONArray list=Engine.fileListing(new String(engine.mediaBytes(Arrays.asList("lsjson",mirror+":Quest Games/.meta/"+directory+"/","--files-only"),4*1024*1024),java.nio.charset.StandardCharsets.UTF_8));
+                String family=pkg.substring(0,pkg.lastIndexOf('.')+1);int matches=0;
+                for(int i=0;i<list.length();i++){org.json.JSONObject row=list.getJSONObject(i);String path=row.getString("Path");if(path.toLowerCase(Locale.ROOT).startsWith(family.toLowerCase(Locale.ROOT))){report(directory+" asset="+path+"; bytes="+row.getLong("Size"));matches++;if(directory.equals("videos")&&path.equalsIgnoreCase(actual+".mp4"))probeVideo("ffa:"+mirror+":Quest Games/.meta/videos/"+path,row.getLong("Size"));}}
+                report(directory+" lookup="+(SystemClock.elapsedRealtime()-at)+"ms; matching family files="+matches);
+            }catch(Exception e){report(directory+" lookup failed: "+e.getClass().getSimpleName());}finally{engine.cancel();}
+        }
+        for(Catalog.Game game:new Engine(context).cached())if(game.pkg.equals(pkg)||game.pkg.equals(actual))try(GameDetails session=new GameDetails(context)){
+            MediaInfo info=session.media(game,actual);report("release package="+game.pkg+"; photo references="+info.images.size()+"; video reference="+!info.trailer.isEmpty());
+        }
+        for(String candidate:new LinkedHashSet<>(Arrays.asList(pkg,actual))){try(GameDetails session=new GameDetails(context)){
+            long at=SystemClock.elapsedRealtime();Bitmap cover=session.cover(candidate,CoverLoader.PIXELS);report("cover "+candidate+": decoded="+(cover!=null)+"; elapsed="+(SystemClock.elapsedRealtime()-at)+"ms");if(cover!=null)cover.recycle();
+            try{org.json.JSONObject meta=new org.json.JSONObject(new String(session.get(GameDetails.STORE_BASE+GameDetails.originalPackage(candidate),2*1024*1024),java.nio.charset.StandardCharsets.UTF_8));String coverUrl=meta.optString("cover_url");report("public metadata "+candidate+": fields="+meta.names()+"; numeric store id="+meta.optString("id").matches("[0-9]{5,30}")+"; cover chars="+coverUrl.length()+"; cover host="+(coverUrl.isEmpty()?"none":new java.net.URI(coverUrl).getHost())+"; allowed="+!MediaInfo.https(coverUrl).isEmpty());if(!MediaInfo.https(coverUrl).isEmpty())try{byte[] bytes=session.get(coverUrl,8*1024*1024);report("API cover response bytes="+bytes.length);}catch(Exception e){report("API cover error="+e.getClass().getSimpleName()+": "+e.getMessage());}}catch(Exception e){report("public metadata "+candidate+": "+e.getClass().getSimpleName());}
+        }}
     }
     void sources(String pkg)throws Exception {
         Catalog.Game chosen=null;for(Catalog.Game game:new Engine(context).cached())if(game.pkg.equals(pkg)){chosen=game;break;}if(chosen==null)throw new IllegalArgumentException("Game not found");

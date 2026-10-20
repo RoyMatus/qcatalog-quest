@@ -32,6 +32,16 @@ final class CoverLoader implements AutoCloseable {
     CoverLoader(Context c){this(()->new CardImages.Source(){final GameDetails session=new GameDetails(c);public Bitmap load(String pkg,int pixels)throws Exception{return session.cover(pkg,pixels);}public void close(){session.close();}});}
     CoverLoader(CardImages.Factory factory){this.factory=factory;}
     Bitmap peek(String pkg){return cache.get(pkg);}
+    void accept(String pkg,Bitmap cover){
+        if(closed||cover==null||cover.isRecycled())return;
+        double scale=Math.min(1d,Math.sqrt((double)PIXELS/((long)cover.getWidth()*cover.getHeight())));
+        Bitmap small=Bitmap.createScaledBitmap(cover,Math.max(1,(int)(cover.getWidth()*scale)),Math.max(1,(int)(cover.getHeight()*scale)),true);
+        // CardImages recycles its pixels on close. The list must own an independent thumbnail.
+        Bitmap owned=small==cover?cover.copy(Bitmap.Config.ARGB_8888,false):small;
+        if(owned==null)return;
+        cancel(pkg);cache.put(pkg,owned);failures.remove(pkg);retryAt.remove(pkg);
+        wanted();pump();
+    }
     void pause(boolean value){paused=value;if(paused){for(String pkg:new ArrayList<>(active.keySet()))cancel(pkg);}else pump();}
     void bind(ImageView view,String pkg){
         if(closed)return;String previous=bound.put(view,pkg);if(observed.add(view))view.addOnAttachStateChangeListener(attachment);

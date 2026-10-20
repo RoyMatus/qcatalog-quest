@@ -38,6 +38,7 @@ public final class MediaChecks {
     public static int run(Context c,boolean live)throws Exception {
         checks=0;
         videoBufferChecks();
+        try(GameDetails details=new GameDetails(c)){Bitmap icon=details.installedIcon(c.getPackageName(),32*32);require(icon!=null&&(long)icon.getWidth()*icon.getHeight()<=32*32,"Installed app icon supplies a bounded fallback without a network request");icon.recycle();Bitmap again=details.installedIcon(c.getPackageName(),32*32);require(again!=null&&!again.isRecycled(),"Releasing a fallback never recycles PackageManager-owned pixels");again.recycle();require(details.installedIcon("org.qcatalog.not.installed.fixture",32*32)==null,"An absent app does not receive another application's icon");}
         require(new Catalog.Game("A","A v1716+1.40.8_7379 -Uploader","org.test.a",1716,"",1).versionLabel().equals("v1.40.8_7379 · код 1716"),"Marketing version and code come from this release");
         require(new Catalog.Game("A","A v2.1.3","org.test.a",99,"",1).versionLabel().equals("v2.1.3 · код 99"),"Unsplit release version remains visible");
         require(new Catalog.Game("A","No version","org.test.a",99,"",1).versionLabel().equals("Версия: код 99"),"Missing marketing version is not invented");

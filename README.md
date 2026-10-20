@@ -2,11 +2,15 @@
 
 Каталог QLoader прямо на шлеме: поиск, скачивание, установка APK и проверка обновлений.
 
-**[Скачать APK / Download APK](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.6.7-preview)** · [Issues](https://github.com/RoyMatus/qcatalog-quest/issues) · [Русский](#русский) · [English](#english)
+**[Скачать APK / Download APK](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.6.8-preview)** · [Issues](https://github.com/RoyMatus/qcatalog-quest/issues) · [Русский](#русский) · [English](#english)
 
-Версия / Version: **0.6.7-preview**. Целевая платформа / Target: **Quest 3S, ARM64, Android API 34**. Проверки медиа и карточек описаны в CHANGELOG / See CHANGELOG for media and card checks.
+Версия / Version: **0.6.8-preview**. Целевая платформа / Target: **Quest 3S, ARM64, Android API 34**. Проверки медиа и карточек описаны в CHANGELOG / See CHANGELOG for media and card checks.
 
 [История изменений / Changelog](CHANGELOG.md)
+
+В 0.6.8 успешно загруженная обложка открытой карточки сразу передаётся плиткам каталога и библиотеки. Повторный запрос не нужен; прежние ошибки загрузки для неё сбрасываются. Сетка хранит отдельную маленькую копию в RAM, поэтому закрытие карточки не повреждает обложку плитки. Если удалённой обложки нет, используется иконка установленного приложения; для неустановленной игры без изображения в источнике остаётся заглушка.
+
+Version 0.6.8 shares a successfully loaded detail cover with catalogue/library tiles and clears previous thumbnail failures. The grid owns a separate small RAM copy, so closing details safely releases full-size media. Missing remote covers fall back to the installed app icon; uninstalled games without source artwork retain a placeholder.
 
 В 0.6.7 восстановлен приоритет небольших обложек и трейлеров с настроенного зеркала QLoader. Публичные ссылки — запасной источник. Каталог и библиотека загружают только видимые обложки и запас на две строки по направлению прокрутки (не больше 10 игр), до четырёх запросов параллельно, с RAM-кэшем 16 МиБ. Открытая карточка приостанавливает загрузки сетки. Отмена сетевых запросов выполняется вне потока интерфейса.
 
@@ -90,7 +94,7 @@ QCatalog — отдельное Android-приложение с обычным �
 - В Meta Horizon на телефоне выбери значок шлема → свой Quest → Headset Settings → Developer Mode и включи режим разработчика.
 - Для Windows установи [Oculus ADB Drivers](https://developers.meta.com/vr/downloads/package/oculus-adb-drivers/), если нужный драйвер ещё не установлен. Подробности и актуальные требования смотри в инструкции Meta.
 
-1. Скачай `QCatalog-0.6.7-preview.apk` из [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.6.7-preview).
+1. Скачай `QCatalog-0.6.8-preview.apk` из [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.6.8-preview).
 2. Подключи Quest по USB и разреши USB-отладку **внутри шлема**. Отображение «Внутреннего общего накопителя» в Проводнике означает доступ к файлам, но ещё не подтверждает разрешение отладки.
 3. В PowerShell, открытом в папке Platform Tools, проверь устройства:
 
@@ -101,7 +105,7 @@ QCatalog — отдельное Android-приложение с обычным �
 4. Найди именно свой Quest со статусом `device`. Если указано `unauthorized`, подтверди запрос в шлеме. В следующих командах замени `QUEST_SERIAL` на серийный номер своего Quest, а путь к APK — на путь скачанного файла:
 
    ```powershell
-   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.6.7-preview.apk'
+   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.6.8-preview.apk'
    ```
 
 5. Открой библиотеку приложений Quest → «Неизвестные источники» → **QCatalog**. Расположение фильтра зависит от версии интерфейса Quest.
@@ -230,7 +234,7 @@ MyMemory выбран как вариант без регистрации пол
 
 Если проверенный архив уже есть, используй `fetch-engine.ps1 -ArchivePath 'C:\Path\To\linux-arm64.tar'`. Если поставщик изменит архив, проверка хэша остановит извлечение. Не отключай её без проверки нового файла.
 
-Результат: `build/QCatalog-0.6.7-preview.apk`. Сборка проверяет подпись APK и по умолчанию запускает тесты каталога, безопасного удаления файлов и форматирования описаний. Исходники модифицированного бинарного движка поставщика в репозиторий не входят; этот движок не пересобирается из исходников.
+Результат: `build/QCatalog-0.6.8-preview.apk`. Сборка проверяет подпись APK и по умолчанию запускает тесты каталога, безопасного удаления файлов и форматирования описаний. Исходники модифицированного бинарного движка поставщика в репозиторий не входят; этот движок не пересобирается из исходников.
 
 Для обновления поверх установленного APK нужен тот же ключ подписи. `build.ps1` создаёт локальный `build/debug.keystore`, если его ещё нет. Сохрани свой ключ отдельно; он исключён из Git. Самостоятельная сборка с новым ключом не установится как обновление готового APK из Releases.
 
@@ -327,7 +331,7 @@ You need a Quest with Developer Mode enabled, a USB data cable, and Android SDK 
 - In the phone's Meta Horizon app, select the headset icon → your Quest → Headset Settings → Developer Mode, and enable it.
 - On Windows, install [Oculus ADB Drivers](https://developers.meta.com/vr/downloads/package/oculus-adb-drivers/) if not already installed. Refer to Meta's guide for the current requirements and details.
 
-1. Download `QCatalog-0.6.7-preview.apk` from [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.6.7-preview).
+1. Download `QCatalog-0.6.8-preview.apk` from [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.6.8-preview).
 2. Connect the Quest over USB and allow USB debugging **inside the headset**. Seeing the headset's shared storage in Windows Explorer does not mean USB debugging has been authorized.
 3. Open PowerShell in the Platform Tools directory and run:
 
@@ -338,7 +342,7 @@ You need a Quest with Developer Mode enabled, a USB data cable, and Android SDK 
 4. Identify your Quest with the `device` status. For `unauthorized`, accept the debugging prompt inside the headset. Replace `QUEST_SERIAL` below with your Quest's serial, and adjust the APK path:
 
    ```powershell
-   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.6.7-preview.apk'
+   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.6.8-preview.apk'
    ```
 
 5. Open the Quest app library → **Unknown Sources** → **QCatalog**. The filter's location depends on the Quest software version.
@@ -459,7 +463,7 @@ Requirements: **Windows, PowerShell 7, JDK 21, Android SDK Build Tools 36.1.0, S
 
 Use `fetch-engine.ps1 -ArchivePath 'C:\Path\To\linux-arm64.tar'` for an existing archive. A changed provider archive fails the pinned hash check; review it before changing the expected hash.
 
-Output: `build/QCatalog-0.6.7-preview.apk`. Pass `-SkipTests` to build without tests. The build verifies the APK signature and by default runs catalogue, download-containment/deletion and description-formatting tests. The provider's modified native engine source is not included or rebuilt here.
+Output: `build/QCatalog-0.6.8-preview.apk`. Pass `-SkipTests` to build without tests. The build verifies the APK signature and by default runs catalogue, download-containment/deletion and description-formatting tests. The provider's modified native engine source is not included or rebuilt here.
 
 The build creates a local `build/debug.keystore` when absent. Keep your signing key privately: it is excluded from Git, and updates require the same key. Your own rebuild with a new key cannot update the APK distributed in Releases.
 

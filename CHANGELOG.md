@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.8-preview — 2026-10-20
+
+- Готовая обложка открытой карточки обновляет плитки каталога/библиотеки и сбрасывает ошибки предыдущих попыток. Старая незавершённая загрузка отменяется; повторный сетевой запрос не требуется.
+- Сетка получает отдельную уменьшенную копию в RAM. Закрытие карточки освобождает полные изображения, не повреждая миниатюру; скриншот не подменяет обложку.
+- Если зеркало, API и страница Meta не дали обложку, используется иконка установленного приложения. Если приложение не установлено и в источнике нет обложки, остаётся заглушка. Отсутствующие фотографии не создаются и не скачиваются со сторонних сайтов.
+- Headless-проверки двух указанных пользователем пакетов: доступная обложка декодирована за 0,81 с, MP4 размером 1,27 и 2,08 МБ полностью прочитаны в RAM за 1,12 и 1,32 с. Это проверки передачи на текущем соединении, не подтверждение воспроизведения этих двух роликов или отсутствия периодических сетевых ошибок. Источники не вернули дополнительных фотографий.
+- Проверки: 206 изолированных UI/кэш, 54 установленного приложения/реальных медиа и штатные проверки сборки. Очередь, каталог и настройки сохранены; проверены отдельная копия миниатюры, закрытие карточки, локальная иконка и отсутствие повторного запроса.
+- Passed 206 isolated UI/cache checks, 54 installed-app/live-media checks and existing build suites. Checks cover independent thumbnail ownership, safe card close, installed-icon fallback, replacing a failed thumbnail and avoiding another request. Quest queue, catalogue and configuration preserved.
+- Successfully loaded detail covers update catalogue/library tiles, cancel stale requests and clear previous failures. The grid owns an independent bounded thumbnail; closing details does not recycle it, and screenshots never replace it.
+- Remote cover failures fall back to the installed app icon. Uninstalled apps without source artwork retain a placeholder. Media remain RAM-only; full-size card media are released on close.
+
 ## 0.6.7-preview — 2026-10-20
 
 - Восстановлен приоритет обложек и небольших MP4 с настроенного зеркала QLoader. Публичные источники остаются запасными; галерея не ждёт обхода каталога видео. Таймауты медиа отделены от скачивания APK.

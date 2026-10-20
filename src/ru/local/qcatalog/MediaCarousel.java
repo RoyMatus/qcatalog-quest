@@ -18,6 +18,7 @@ final class MediaCarousel extends LinearLayout implements AutoCloseable {
     private ViewGroup originalParent;private ViewGroup.LayoutParams originalParams;private int originalIndex;private View originalRoot,activityRoot;private float rootAlpha,activityAlpha;
     private Dialog hostDialog;private int hostFlags;private float hostDim,hostWindowAlpha,activityWindowAlpha;
     private boolean mediaHovered;private int scrollDirection;private long scrollStepAt,scrollEventAt;
+    private java.util.function.Consumer<Bitmap> coverReady;
     private final Runnable hideArrows=()->{mediaHovered=false;showArrows(false);if(enlarged==null)stopNavigation();};
     private int heldDirection,stickDirection,keyDirection;
     private final Runnable repeatNavigation=new Runnable(){public void run(){if(closed||!navigationActive()||heldDirection==0)return;move(heldDirection);frame.postDelayed(this,1000);}};
@@ -77,6 +78,7 @@ final class MediaCarousel extends LinearLayout implements AutoCloseable {
     private boolean browsingReady(){return configured&&(readyPhotos()>=2||images.pending()==0);}
     private void updateLoading(){if(closed)return;loading.showLoading(!urls.isEmpty()&&!urls.get(position).startsWith("video:")&&!browsingReady());}
     private void imageReady(String key,Bitmap loaded){
+        if(!closed&&key.isEmpty()&&loaded!=null&&coverReady!=null)coverReady.accept(loaded);
         if(closed||urls.isEmpty())return;String selected=urls.get(position);
         // Keep the first occurrence, including the mirror cover, even if another URL/size decodes identically.
         for(int i=0;i<urls.size();i++)for(int j=urls.size()-1;j>i;j--)if(images.same(urls.get(i),urls.get(j))){if(selected.equals(urls.get(j)))selected=urls.get(i);urls.remove(j);}
@@ -96,6 +98,7 @@ final class MediaCarousel extends LinearLayout implements AutoCloseable {
     void select(int value){if(closed||value<0||value>=urls.size())return;position=value;video.pause();updateControls();String url=urls.get(value);boolean movie=url.startsWith("video:");image.setVisibility(movie?GONE:VISIBLE);video.setVisibility(movie?VISIBLE:GONE);alignArrowHeight();if(movie)return;bitmap=images.get(url);if(bitmap!=null)image.setImageBitmap(bitmap);else{image.setImageResource(R.drawable.qc_cover_placeholder);images.request(url);}image.setContentDescription(value==0?"Обложка игры":"Скриншот игры "+value);
     }
     boolean isExpanded(){return enlarged!=null;}
+    void setCoverReady(java.util.function.Consumer<Bitmap> listener){coverReady=listener;Bitmap cover=images.get("");if(cover!=null&&listener!=null)listener.accept(cover);}
     void setHostDialog(Dialog dialog){hostDialog=dialog;}
     void enlarge(){if(enlarged!=null){collapse();return;}if(closed||(!urls.get(position).startsWith("video:")&&bitmap==null))return;
         originalParent=(ViewGroup)frame.getParent();originalParams=frame.getLayoutParams();originalIndex=originalParent.indexOfChild(frame);originalRoot=frame.getRootView();activityRoot=activity.getWindow().getDecorView();rootAlpha=originalRoot.getAlpha();activityAlpha=activityRoot.getAlpha();
@@ -109,5 +112,5 @@ final class MediaCarousel extends LinearLayout implements AutoCloseable {
     private static void windowAlpha(Window window,float value){WindowManager.LayoutParams lp=window.getAttributes();lp.alpha=value;window.setAttributes(lp);}
     void collapse(){mediaHovered=false;stopNavigation();Dialog dialog=enlarged;if(dialog==null)return;enlarged=null;ViewGroup parent=(ViewGroup)frame.getParent();if(parent!=null)parent.removeView(frame);image.setLayoutParams(new FrameLayout.LayoutParams(-1,Cards.dp(activity,360)));video.setExpanded(false);if(originalParent!=null)originalParent.addView(frame,Math.min(originalIndex,originalParent.getChildCount()),originalParams);if(originalRoot!=null)originalRoot.setAlpha(rootAlpha);if(activityRoot!=null)activityRoot.setAlpha(activityAlpha);if(hostDialog!=null){Window host=hostDialog.getWindow();host.setFlags(hostFlags,WindowManager.LayoutParams.FLAG_DIM_BEHIND);host.setDimAmount(hostDim);windowAlpha(host,hostWindowAlpha);}windowAlpha(activity.getWindow(),activityWindowAlpha);dialog.dismiss();originalParent=null;originalRoot=null;activityRoot=null;frame.post(()->video.setExpanded(false));}
     void pause(){mediaHovered=false;stopNavigation();video.pause();}
-    @Override public void close(){closed=true;loading.close();collapse();removeCallbacks(hideArrows);video.close();image.setImageDrawable(null);bitmap=null;images.close();urls.clear();}
+    @Override public void close(){closed=true;coverReady=null;loading.close();collapse();removeCallbacks(hideArrows);video.close();image.setImageDrawable(null);bitmap=null;images.close();urls.clear();}
 }

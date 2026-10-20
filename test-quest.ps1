@@ -35,7 +35,7 @@ Assert-Exit 'QA install'
 try {
     $extra=@();if($SpecialReleaseId){if($SpecialReleaseId -notmatch '^[a-f0-9]{64}$'){throw 'Invalid release identifier'};$extra=@('-e','specialReleaseId',$SpecialReleaseId)}
     if($LiveMedia){$extra+=@('-e','liveMedia','true')}
-    if($MeasureMedia){if($MeasureMedia -notmatch '^((sources|card):)?[A-Za-z0-9_.]+$'){throw 'Use a package identifier for media measurements'};$extra+=@('-e','measureMedia',$MeasureMedia)}
+    if($MeasureMedia){if($MeasureMedia -notmatch '^((sources|card|inventory):)?[A-Za-z0-9_.]+$'){throw 'Use a package identifier for media measurements'};$extra+=@('-e','measureMedia',$MeasureMedia)}
     & $adb -s $Serial shell am instrument -w @extra ru.local.qcatalog.tests/ru.local.qcatalog.QuestChecks | Tee-Object -Variable lines | ForEach-Object { Write-Host $_ }
     $result = $lines -join "`n"
     if ($result -notmatch 'result=PASS ') { throw 'On-device checks failed.' }
