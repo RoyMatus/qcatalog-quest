@@ -2,29 +2,13 @@
 
 Каталог QLoader прямо на шлеме: поиск, скачивание, установка APK и проверка обновлений.
 
-**[Скачать APK / Download APK](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.5.0-preview)** · [Issues](https://github.com/RoyMatus/qcatalog-quest/issues) · [Русский](#русский) · [English](#english)
+**[Скачать APK / Download APK](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.5.1-preview)** · [Issues](https://github.com/RoyMatus/qcatalog-quest/issues) · [Русский](#русский) · [English](#english)
 
-Версия / Version: **0.5.0-preview**. Проверено / Tested: **Quest 3S, ARM64, Android API 34**, 20 October 2026.
+Версия / Version: **0.5.1-preview**. Проверено / Tested: **Quest 3S, ARM64, Android API 34**, 20 October 2026.
 
-
-### Интерфейс и сортировка / Interface and sorting
-
-Используется утверждённый [набор Cards v1](design/cards-v1/README.md), импортированный в `res/` без подмены цветов и иконок. В узком окне разделы открываются кнопкой «Разделы»; в широком видны боковое меню и сетка. С версии 0.4.1 окно сразу открывается развёрнутым в горизонтальном формате 1920 × 1080 dp; ручное растягивание не требуется. Фоновый цвет, кнопки и диалоги автоматически следуют системной светлой/тёмной теме. Ряд действий имеет одинаковые границы кнопок и при необходимости переносится в колонку. Настройки подключения доступны через «Разделы → Настройки» либо нижнюю кнопку бокового меню.
-
-Сортировка рядом с поиском: А–Я или популярность скачиваний за сутки / 7 / 30 дней. Источник — [публичная статистика QLoader](https://qloader.5698452.xyz/api/v1/popularity), а не рейтинг магазина Meta или точное число всех скачиваний. Выбранный режим сохраняется; сами данные статистики — только в RAM. Никакая личная история скачиваний этому сервису не передаётся. Повторный выбор сортировки позволяет повторить запрос после ошибки. Обложки видимых карточек используют ограниченный кеш RAM 16 МиБ, описания по-прежнему загружаются только по запросу; изображения/описания не сохраняются на диск.
-
-Approved [Cards v1 resources](design/cards-v1/README.md) are imported into `res/`. Narrow windows use the labelled Sections menu; wider windows show the sidebar and a compact grid of up to five columns. From 0.4.1 the panel opens fully expanded at 1920 × 1080 dp in fixed landscape format, without manual stretching. System light/dark mode controls surfaces, text, buttons and dialogs. Action buttons share equal bounds and stack when large text cannot fit. Connection settings are under Sections → Settings or the sidebar Settings button.
-
-Sorting beside search supports A–Z and QLoader download popularity for 1/7/30 days, using its public API. This is not Meta store star ratings or an exact global download total. Missing statistics sort last; service failures explicitly fall back to alphabetical order. Only the selected sort setting persists; the data stays in RAM. No personal download reports are sent. Visible covers use a bounded 16 MiB RAM cache, with no disk media/description cache.
-
-Progress is phase-specific: downloading, APK preparation, Android installation (indeterminate when its exact percentage is unavailable), copying data and SHA-256 verification. After a newly successful install/update, only that task's downloaded staging files are removed. Installed OBB files, saved games, mods and other tasks are preserved. Cleanup failures expose a cleanup-only retry; installation/data failures keep the sources. Old completed entries remain available for manual cleanup and are hidden from active downloads.
-
-Validation for 0.4: 14 host copy/progress/corruption checks; 24 isolated Android checks for progress, version confirmation, cleanup boundaries, retry, sorting and a live popularity request from Quest; 10 isolated UI checks with synthetic data and no Internet permission, including narrow/wide render snapshots. Existing host parser/signing/resume tests also pass. Device UI render checks do not establish subjective comfort or controller-ray usability: the owner should verify those in the headset.
+[История изменений / Changelog](CHANGELOG.md)
 
 ## Русский
-
-С версии 0.4.2 карточки компактнее: обложка 100 dp вместо 152 dp, меньше отступы; 5 колонок при 1920 dp и 4 при 1280 dp. В библиотеке зелёная галочка «✓ Есть обновление» появляется только для более новой версии из каталога.
-
 
 ### Что это
 
@@ -36,16 +20,24 @@ QCatalog — отдельное Android-приложение с обычным �
 
 ### Возможности
 
-- Поиск по названию, релизу и идентификатору приложения.
-- Загрузка на сам шлем, очередь, пауза и повторная попытка.
-- Восстановление очереди после запуска приложения или шлема и продолжение частично скачанного файла с сохранённой позиции.
-- Установка поддерживаемых APK с подтверждением в системном окне Android.
-- Светлый интерфейс «Карточки»: каталог, библиотека, загрузки и обновления. Крупные цели нажатия и сетка 3/2/1 колонки по ширине окна.
-- Сортировка А–Я и по популярности скачиваний QLoader за сутки, 7 и 30 дней. Нет статистики — игра в конце; при ошибке сервиса явно показывается А–Я.
-- Прогресс скачивания, подготовки APK, копирования и проверки данных. Системная установка Android без точного процента показана неопределённым индикатором.
-- Сравнение установленного `versionCode` с числовым кодом версии в каталоге; кнопка «Обновить» для более нового релиза.
-- Удаление скачанных файлов отдельно от истории; очистка одной записи или всей истории.
-- Краткое описание на русском и обложка при открытии карточки. Описания, переводы и изображения не записываются в файлы на шлеме.
+- Каталог, библиотека установленных игр, загрузки и обновления; поиск по названию, релизу и пакету.
+- Версия конкретного релиза и её числовой код на карточке: например `v1.40.8_7379 · код 1716`. Если в имени релиза нет версии, показывается только код.
+- Сортировка А–Я или по популярности скачиваний QLoader за сутки / 7 / 30 дней. Это статистика скачиваний, не звёзды магазина Meta; отсутствующие значения сортируются последними.
+- Скачивание прямо на шлем, очередь, пауза и продолжение с сохранённой позиции после закрытия приложения или перезапуска шлема.
+- Установка APK через системное подтверждение Android; проверка пакета, версии и доступных сведений о подписи.
+- Сравнение установленных версий с каталогом. В библиотеке зелёное **«✓ Есть обновление»** отмечает более новую версию каталога.
+- Прогресс скачивания, подготовки APK, копирования и проверки данных. Когда Android не сообщает точный процент установки, показывается неопределённый индикатор.
+- После успешной установки/обновления и проверки данных задача убирается из активных загрузок, а её установочные файлы удаляются. При ошибке файлы сохраняются для повторной попытки.
+- Поддержка известных инструкций `install.txt` и распаковка 7z на шлеме; отдельная очистка скачанных файлов и истории.
+- Русское описание и крупная карусель обложки, доступных скриншотов и видео. Медиа загружается по запросу и не сохраняется в файлы.
+
+### Интерфейс
+
+Используется [набор Cards v1](design/cards-v1/README.md). Основной каталог открывается развёрнутым в горизонтальном формате 1920 × 1080 dp; в сетке 5 колонок при ширине 1920 dp и 4 при 1280 dp. В узкой области боковое меню заменяется кнопкой «Разделы». Фон, текст, кнопки и диалоги следуют системной светлой/тёмной теме. Минимальная цель нажатия — 64 dp; кнопки действий выровнены и при нехватке места переходят в колонку.
+
+Окно сведений об игре в 0.5.1 снова узкое: максимум 720 dp, с уменьшением под доступную область. Карусель показывает один крупный кадр. Стрелки «назад» и «вперёд» находятся по бокам изображения, занимают всю его высоту и появляются при наведении указателя; после ухода указателя скрываются. Они также доступны при навигации с фокусом. Можно листать горизонтальным жестом по изображению; под кадром виден счётчик. «Увеличить» открывает изображение почти на всю панель. Видео запускается по кнопке, поддерживает паузу и перемотку; смена кадра или сворачивание приложения приостанавливает воспроизведение.
+
+Настройки подключения доступны через «Разделы → Настройки» или кнопку внизу бокового меню. Выбранная сортировка сохраняется; её статистика остаётся только в оперативной памяти. При недоступности рейтинга приложение явно переключается на А–Я; повторный выбор режима повторяет запрос. Личная история скачиваний в статистику не отправляется.
 
 ### 1. Получить свой конфиг через материалы в Telegram
 
@@ -74,7 +66,7 @@ QCatalog — отдельное Android-приложение с обычным �
 - В Meta Horizon на телефоне выбери значок шлема → свой Quest → Headset Settings → Developer Mode и включи режим разработчика.
 - Для Windows установи [Oculus ADB Drivers](https://developers.meta.com/vr/downloads/package/oculus-adb-drivers/), если нужный драйвер ещё не установлен. Подробности и актуальные требования смотри в инструкции Meta.
 
-1. Скачай `QCatalog-0.5.0-preview.apk` из [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.5.0-preview).
+1. Скачай `QCatalog-0.5.1-preview.apk` из [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.5.1-preview).
 2. Подключи Quest по USB и разреши USB-отладку **внутри шлема**. Отображение «Внутреннего общего накопителя» в Проводнике означает доступ к файлам, но ещё не подтверждает разрешение отладки.
 3. В PowerShell, открытом в папке Platform Tools, проверь устройства:
 
@@ -85,7 +77,7 @@ QCatalog — отдельное Android-приложение с обычным �
 4. Найди именно свой Quest со статусом `device`. Если указано `unauthorized`, подтверди запрос в шлеме. В следующих командах замени `QUEST_SERIAL` на серийный номер своего Quest, а путь к APK — на путь скачанного файла:
 
    ```powershell
-   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.5.0-preview.apk'
+   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.5.1-preview.apk'
    ```
 
 5. Открой библиотеку приложений Quest → «Неизвестные источники» → **QCatalog**. Расположение фильтра зависит от версии интерфейса Quest.
@@ -124,11 +116,11 @@ QCatalog — отдельное Android-приложение с обычным �
 
 ### 4. Скачать, установить и обновить игру
 
-1. Найди приложение и открой карточку → «Скачать».
+1. Открой карточку игры и нажми «Установить». Для уже установленной игры доступны «Обновить» или «Скачать APK». На этом шаге релиз ставится в очередь скачивания.
 2. Дождись статуса «Готово к установке» во вкладке «Загрузки».
 3. Выбери запись → «Установить». При первом запуске разреши QCatalog устанавливать приложения через предложенный системный экран, затем вернись и повтори установку.
 4. Подтверди установку в системном диалоге Android.
-5. После статуса «Установлено» нажми «Открыть» либо запусти приложение из библиотеки Quest.
+5. После успешной установки и проверки данных задача и её установочные файлы удаляются автоматически. Открой игру из раздела «Библиотека» QCatalog или библиотеки Quest.
 
 Если идентификатор пакета APK отличается от каталога, QCatalog покажет оба значения и запросит отдельное подтверждение. Оно действует только для конкретного файла с проверенным SHA-256. Несовпадение числового кода версии блокирует установку.
 
@@ -139,6 +131,12 @@ QCatalog — отдельное Android-приложение с обычным �
 Приложение не удаляет установленную игру автоматически. Для замены на сборку с другой подписью потребуется отдельно удалить старую версию; это может стереть сохранения и моды. Простое повторение установки или скачивания конфликт подписи не устраняет.
 
 Проверка версий работает и для игр, установленных другими способами, если совпадает идентификатор пакета. Название игры и дата релиза не используются для определения новизны. Если Android-пакет отличается, автоматическое сопоставление возможно только для ранее подтверждённого расхождения. Удаление истории это сопоставление не сбрасывает.
+
+### Релизы с install.txt и архивами 7z
+
+Порты вроде Half-Life / XASH могут содержать APK, `Install.txt` и архив `.7z`. QCatalog распаковывает архив внутри скачанного релиза с проверкой CRC и путей, затем переводит известные `adb install` и `adb push` в системную установку APK и проверенное копирование данных. Для общей папки игры, например `/sdcard/XASH`, нужен «Доступ ко всем файлам». На распаковку и копирование требуется дополнительное свободное место.
+
+Завершённая распаковка используется повторно; прерванная начинается заново из уже сохранённого архива, без его повторного скачивания. Старую ошибку о неподдерживаемом `install.txt` приложение при запуске переводит в готовую к установке задачу. Команды удаления старого APK и папок не запускаются: заменяются только поставляемые файлы, остальные остаются. Неизвестные инструкции показывают конкретную ошибку и сохраняют загрузку. Несколько APK и split APK пока не поддерживаются.
 
 ### 5. Освободить место и очистить историю
 
@@ -151,15 +149,17 @@ QCatalog — отдельное Android-приложение с обычным �
 
 Для одной загрузки: запись → «Ещё» → нужное действие. Перед удалением появляется подтверждение. Общая очистка находит и файлы релизов, записи которых уже удалены из истории. Во время активных загрузок и установок очистка блокируется. После новой успешной установки/обновления установочные файлы автоматически удаляются, а задача исчезает из активных загрузок. Ошибка установки сохраняет файлы; ошибка очистки допускает отдельный повтор. Старые завершённые записи автоматически не очищаются.
 
-### Описания, русский язык и изображения
+### Описания, перевод и медиа
 
-Описания загружаются **только при открытии карточки**, обложки — только для видимых карточек, без предварительного обхода каталога. Оригинальное описание приходит из API источника QLoader. Если оно уже русское, показывается короткий фрагмент. Если источник отдаёт английский текст, короткий фрагмент переводится через [MyMemory](https://mymemory.translated.net/doc/spec.php) в момент открытия. Это машинный перевод, его точность не гарантируется. Полный исходный текст доступен по кнопке «Оригинал описания».
+Описание и ссылки карусели запрашиваются только при открытии игры. Короткое русское описание показывается напрямую; английский фрагмент переводится через [MyMemory](https://mymemory.translated.net/doc/spec.php). Полный исходный текст доступен по кнопке «Оригинал описания». Перевод может содержать ошибки; если сервис недоступен, остаётся оригинал.
 
-У анонимного доступа MyMemory есть [лимит 5 000 символов в день на IP](https://mymemory.translated.net/doc/usagelimits.php). Число доступных переводов зависит от длины текста, повторных открытий и использования того же внешнего IP другими людьми. При исчерпании лимита или недоступности сервиса приложение сообщает об этом и оставляет оригинал. В MyMemory отправляется только публичный фрагмент описания, без ссылки доступа или конфига QLoader.
+MyMemory выбран как вариант без регистрации пользователя и ключа API. У анонимного доступа есть [лимит 5 000 символов в день на IP](https://mymemory.translated.net/doc/usagelimits.php). Официальный Google Cloud Translation — отдельный от бесплатного сайта Google Translate сервис: нужны проект, авторизация и включённый биллинг; для стандартного NMT-перевода первые 500 000 символов в месяц бесплатны, затем действует оплата. [Настройка Google](https://docs.cloud.google.com/translate/docs/setup), [тарифы](https://cloud.google.com/products/translate/pricing). Переключатель на Google в приложении не реализован.
 
-Обложка читается из метаданных каталога в оперативную память. Описания, переводы и картинки не имеют файлового кэша: при закрытии карточки запросы отменяются, ссылки на содержимое освобождаются; при повторном открытии данные запрашиваются заново. Сам список каталога, история и скачанные установочные файлы сохраняются — это отдельные данные.
+Источники карусели: API QLoader, публичная страница Meta по идентификатору игры из QLoader, изображения в папке релиза и `.meta/videos/PACKAGE.mp4` на зеркале QLoader. Страница Meta позволяет получить свежие ссылки, когда ссылки из API устарели. Изображения и видео привязываются к выбранной игре, а не к рекомендациям магазина. У части игр медиа отсутствует, удалено или временно недоступно — приложение сообщает об этом.
 
-В версии 0.5.0 есть крупная карусель обложки, скриншотов и видео. Доступность зависит от источника: у некоторых игр медиа отсутствует или удалено. Скриншоты берутся из публичной страницы Meta по ID QLoader, трейлер также доступен с зеркала QLoader. Подробнее — в разделе о карусели ниже.
+Загружается только выбранное изображение; все скриншоты заранее не скачиваются. Видео читается после нажатия кнопки в ограниченный буфер RAM до 64 МиБ. Слишком большой или неподдерживаемый ролик выдаёт сообщение и не мешает установке игры. При закрытии окна запросы отменяются, плеер и буферы освобождаются.
+
+Описания, переводы, скриншоты и видео не имеют дискового кэша. Для обложек видимых карточек есть ограниченный кеш RAM 16 МиБ. При повторном открытии игры её сведения запрашиваются заново. Каталог, настройки, очередь/история и скачанные установочные файлы сохраняются отдельно. Конфиг и персональная ссылка QLoader не отправляются в Meta или переводчику.
 
 ### Ограничения и проверка
 
@@ -170,11 +170,11 @@ QCatalog — отдельное Android-приложение с обычным �
 - Автозапуск после включения зависит от системного события загрузки и доступности сети/разблокировки. После «Принудительно остановить» в настройках Android нужно снова открыть QCatalog. Сам шлем в ходе проверки не перезагружался, чтобы не прерывать пользовательскую очередь; обработчик события проверяется в отдельном тесте.
 - Это ARM64 preview-сборка с `debuggable=true`, не магазинный production-релиз. Отладочный доступ нужен, в частности, для помощника переноса настроек. Не предоставляй доступ ADB постороннему компьютеру.
 - Форматы и доступность серверов поставщика могут измениться. Все релизы каталога и другие модели Quest не проверены.
-- Форматирование описаний проверено на синтетических данных. Массовая загрузка описаний, переводов и изображений для подготовки релиза не выполнялась; показ живой карточки на шлеме отдельно не подтверждён.
+- Форматирование описаний проверено на синтетических данных; реальные скриншот и видео одной игры проверены на Quest 3S, включая паузу и перемотку. Массовая загрузка медиа и переводов не выполнялась. Проверки вёрстки не заменяют оценку удобства взаимодействия лучом в VR.
 
 ### Приватность
 
-Персональная ссылка хранится с шифрованием Android Keystore в закрытой папке приложения. Конфиг хранится там же в формате поставщика: зашифрованный файл остаётся зашифрованным, но для импортированного открытого конфига дополнительное шифрование не добавляется. Резервное копирование Android отключено. Полные сетевые адреса скрываются в сообщениях об ошибках приложения. Шлем обращается к серверам поставщика и, при необходимости перевода, MyMemory; собственного сервера QCatalog нет.
+Персональная ссылка хранится с шифрованием Android Keystore в закрытой папке приложения. Конфиг хранится там же в формате поставщика: зашифрованный файл остаётся зашифрованным, но для импортированного открытого конфига дополнительное шифрование не добавляется. Резервное копирование Android отключено. Полные сетевые адреса скрываются в сообщениях об ошибках приложения. Шлем обращается к серверам поставщика, публичным страницам/CDN Meta для медиа и, при необходимости перевода, MyMemory; собственного сервера QCatalog нет.
 
 ### Сборка из исходников
 
@@ -191,7 +191,7 @@ QCatalog — отдельное Android-приложение с обычным �
 
 Если проверенный архив уже есть, используй `fetch-engine.ps1 -ArchivePath 'C:\Path\To\linux-arm64.tar'`. Если поставщик изменит архив, проверка хэша остановит извлечение. Не отключай её без проверки нового файла.
 
-Результат: `build/QCatalog-0.5.0-preview.apk`. Сборка проверяет подпись APK и запускает тесты каталога, безопасного удаления файлов и форматирования описаний. Исходники модифицированного бинарного движка поставщика в репозиторий не входят; этот движок не пересобирается из исходников.
+Результат: `build/QCatalog-0.5.1-preview.apk`. Сборка проверяет подпись APK и запускает тесты каталога, безопасного удаления файлов и форматирования описаний. Исходники модифицированного бинарного движка поставщика в репозиторий не входят; этот движок не пересобирается из исходников.
 
 Для обновления поверх установленного APK нужен тот же ключ подписи. `build.ps1` создаёт локальный `build/debug.keystore`, если его ещё нет. Сохрани свой ключ отдельно; он исключён из Git. Самостоятельная сборка с новым ключом не установится как обновление готового APK из Releases.
 
@@ -206,6 +206,18 @@ QCatalog — отдельное Android-приложение с обычным �
 
 `test-storage.ps1` принимает те же параметры и проверяет шифрование ссылки и пустую ссылку при импорте файла в отдельном тестовом приложении. Он не останавливает основной QCatalog и не обращается к его данным. Дополнительные параметры `-PreviousApk` и `-IncomingApk` позволяют проверить подписи двух локальных APK относительно установленного приложения: ожидается, что первый конфликтует, а второй имеет совместимую подпись. Тест не устанавливает эти APK и удаляет временные копии вместе со своим тестовым пакетом.
 
+Сборка запускает `fetch-dependencies.ps1`: при первом запуске нужны Maven Central и сеть для библиотек 7z. Версии и SHA-256 закреплены в `dependencies.json`; библиотеки включаются в APK, поэтому на шлеме отдельно скачивать их не требуется. Лицензии включены в `assets/licenses/`.
+
+### Проверки текущей версии
+
+- 45 UI-проверок в 0.5.1: версии карточек, кадры карусели и жест листания, темы и выравнивание действий, узкое окно, высота и положение боковых стрелок, наведение и скрытие.
+- 72 изолированные проверки хранения/очереди/медиа и 36 проверок установленного приложения в 0.5.0 подтвердили настоящий скриншот, видео именно с настроенного зеркала QLoader, воспроизведение, паузу, перемотку, отсутствие новых файлов медиа и сохранность очереди.
+- Проверка скачанного Half-Life / XASH: 13 112 распакованных файлов, 4 368 536 271 байт, совпадение версии APK с каталогом. Эта проверка не устанавливала игру и не меняла её существующие данные.
+
+`test-storage.ps1 -Ui` запускает изолированные проверки интерфейса. `test-storage.ps1 -LiveMedia` проверяет медиа одной игры в отдельном приложении; `test-quest.ps1 -LiveMedia` использует установленное приложение и его зеркало. Эти скрипты принимают те же `-Serial`, `-JavaHome`, `-SdkPath`, что в примере выше. Сетевые проверки медиа включаются явно; без них описания, переводы и изображения не запрашиваются. Проверку установленного приложения запускай только при завершённых загрузках и установках.
+
+Опция `test-quest.ps1 -SpecialReleaseId RELEASE_ID` распаковывает существующую загрузку и проверяет план установки внутри её папки. Распакованные файлы остаются для последующей установки; очередь и установленная игра не меняются. Это отличается от изолированных временных тестовых данных.
+
 ### Участие и доступ к репозиторию
 
 Код и готовые релизы доступны для чтения и скачивания, issues открыты для сообщений об ошибках. Запись в этот репозиторий и выпуск релизов доступны владельцу. GitHub также позволяет форки и предложения через pull request; они сами по себе не дают права менять исходный репозиторий. Не публикуй персональные конфиги в обсуждениях.
@@ -213,9 +225,6 @@ QCatalog — отдельное Android-приложение с обычным �
 ---
 
 ## English
-
-From 0.4.2 game cards are more compact: 100 dp covers instead of 152 dp, reduced spacing, five columns at 1920 dp and four at 1280 dp. Library cards show a green check labelled «Есть обновление» only when the catalogue version is newer than the installed version.
-
 
 ### What it does
 
@@ -225,7 +234,26 @@ Anyone can install the same APK and supply **their own** compatible QLoader conf
 
 This is an independent experimental client, not an official Meta, QLoader or dipVR product. Compatibility has been checked with the dipVR / VR Games RUS distribution of QLoader 1.2.0. Other providers have not been verified. The current app interface is in Russian; the instructions below include the corresponding button labels.
 
-Features include catalogue search, download queue and pause, durable byte-offset resume with automatic app/headset startup recovery, Android-confirmed APK installation, installed/update filters, comparison of actual installed version codes, separate download-file and history cleanup, and Russian summaries with covers loaded when a card is opened.
+### Features
+
+- Catalogue, installed library, downloads and updates; search by title, release or package.
+- Each card shows its own release version and numeric code, for example `v1.40.8_7379 · код 1716`. Missing marketing versions are not invented.
+- A–Z or QLoader download popularity over 1/7/30 days. This is download popularity, not Meta star ratings; missing values sort last.
+- On-headset downloads, queue, pause and durable byte-offset resume after reopening the app or booting the headset.
+- Android-confirmed APK installation with package, version and signing checks.
+- Actual installed-version comparison; a green **«✓ Есть обновление»** marks newer catalogue versions in the library.
+- Phase-specific download/APK/data-copy/verification progress, with an indeterminate indicator when Android provides no exact installation percentage.
+- After successful installation/update and data verification, the task leaves active downloads and its installation files are removed. Failures retain files for retry.
+- Known `install.txt` instructions and on-device 7z extraction; separate download-file and history cleanup.
+- Russian summaries and a large cover/screenshot/video carousel. Media loads on demand without media files or disk cache.
+
+### Interface
+
+The app uses [Cards v1 resources](design/cards-v1/README.md). The main catalogue opens expanded at 1920 × 1080 dp in landscape, with five columns at 1920 dp or four at 1280 dp. Narrow layouts use the labelled Sections menu. System light/dark settings control surfaces, text, buttons and dialogs. Targets are at least 64 dp; action buttons align and stack when space is insufficient.
+
+In 0.5.1 the game-details dialog is narrow again: up to 720 dp, constrained by the available panel. The carousel displays one large frame. Previous/next arrows overlay opposite image edges at the full image height, appear on pointer hover and hide after it leaves; keyboard-focus navigation also reveals them. Images support horizontal swipes, a frame counter and near-panel-size enlargement. Video starts only after a button press, supports pause/seeking, and pauses when changing frames or backgrounding the app.
+
+Connection settings are under Sections → Settings or the sidebar Settings button. Only the selected sorting mode persists; statistics stay in RAM. Service failures explicitly fall back to A–Z, and reselecting a mode retries the request. No personal download reports are sent.
 
 ### 1. Obtain your configuration using the Telegram instructions
 
@@ -254,7 +282,7 @@ You need a Quest with Developer Mode enabled, a USB data cable, and Android SDK 
 - In the phone's Meta Horizon app, select the headset icon → your Quest → Headset Settings → Developer Mode, and enable it.
 - On Windows, install [Oculus ADB Drivers](https://developers.meta.com/vr/downloads/package/oculus-adb-drivers/) if not already installed. Refer to Meta's guide for the current requirements and details.
 
-1. Download `QCatalog-0.5.0-preview.apk` from [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.5.0-preview).
+1. Download `QCatalog-0.5.1-preview.apk` from [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.5.1-preview).
 2. Connect the Quest over USB and allow USB debugging **inside the headset**. Seeing the headset's shared storage in Windows Explorer does not mean USB debugging has been authorized.
 3. Open PowerShell in the Platform Tools directory and run:
 
@@ -265,7 +293,7 @@ You need a Quest with Developer Mode enabled, a USB data cable, and Android SDK 
 4. Identify your Quest with the `device` status. For `unauthorized`, accept the debugging prompt inside the headset. Replace `QUEST_SERIAL` below with your Quest's serial, and adjust the APK path:
 
    ```powershell
-   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.5.0-preview.apk'
+   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.5.1-preview.apk'
    ```
 
 5. Open the Quest app library → **Unknown Sources** → **QCatalog**. The filter's location depends on the Quest software version.
@@ -298,21 +326,27 @@ Copy your `FFA_config` to the headset's shared `Download` folder via USB. Open *
 
 ### 4. Download, install and update apps
 
-1. Find an app, open its card and press **«Скачать» (Download)**.
+1. Open a game and press **«Установить» (Install)**. Installed games offer **«Обновить» (Update)** or **«Скачать APK» (Download APK)**. This step queues the download.
 2. Under **«Загрузки» (Downloads)**, wait for **«Готово к установке» (Ready to install)**.
 3. Select the item and press **«Установить» (Install)**. On first use, allow QCatalog to install apps through the offered Android settings screen, return and try Install again.
 4. Confirm the Android installation dialog.
-5. After **«Установлено» (Installed)**, use **«Открыть» (Open)** or launch the app from the Quest library.
+5. After successful installation and data verification, the task and its installation files are removed automatically. Open the game from QCatalog Library or the Quest library.
 
 If the APK's package identifier differs from the catalogue, QCatalog shows both and requires explicit confirmation tied to the SHA-256 of that exact APK. A different version code blocks installation.
 
-For updates, press the top **«Обновить» (Refresh)** button to retrieve the latest catalogue, then select **«Обновления» (Updates)**. The card shows installed and catalogue versions. Its **«Обновить» (Update)** button downloads the new release; installing it still requires Android confirmation.
+For updates, press the top **«Обновить каталог» (Refresh catalogue)** button to retrieve the latest catalogue, then select **«Обновления» (Updates)**. The card shows installed and catalogue versions. Its **«Обновить» (Update)** button downloads the new release; installing it still requires Android confirmation.
 
 Before installation QCatalog checks available signing information. Clearly unrelated signing keys produce an explanation before opening the installer. Certificate rotation histories are considered; Android remains the final authority. Installer failures appear as **«Ошибка установки» (Installation error)** with the reason, instead of a misleading ready-to-install status and code 5. A retry reuses the downloaded APK.
 
 QCatalog does not automatically uninstall existing apps. Replacing an app with a differently signed build requires separately removing the old version, which may delete saves and mods. Simply retrying or downloading again does not resolve a signature mismatch.
 
 Installed versions come from Android, including games installed by other tools, when package identifiers match. Updates compare numeric `versionCode`, not release dates or marketing version strings. Previously confirmed package aliases survive history cleanup.
+
+### Releases with install.txt and 7z archives
+
+Ports such as Half-Life / XASH may contain an APK, `Install.txt` and `.7z` data. QCatalog expands the archive within the downloaded release with CRC/path checks, then translates known `adb install` / `adb push` instructions into Android installation and verified data copying. Shared game folders such as `/sdcard/XASH` require All files access. Extraction and copying need additional free space.
+
+Completed extraction is reused; interrupted extraction restarts from the saved archive without redownloading it. Old unsupported-install.txt errors become ready-to-install tasks on launch. Legacy uninstall/delete commands are not executed: only supplied files are replaced, and other files remain. Unknown instructions produce an explicit error and preserve downloads. Multiple APKs and split APK remain unsupported.
 
 ### 5. Delete downloads and clear history
 
@@ -325,15 +359,17 @@ Under **«Загрузки» → «Очистка файлов и истории
 
 For one item, open it → **«Ещё» (More)** → select the action. Cleanup asks for confirmation and is blocked during active downloads/installations. Bulk file cleanup also finds downloads whose history entries have already been removed. New successful installs/updates automatically delete their staging files and leave the active download list. Failed installs retain source files; failed cleanup has a separate retry. Legacy completed tasks are not automatically migrated into deletion.
 
-### Descriptions, Russian translation and images
+### Descriptions, translation and media
 
-Only opening a card triggers its metadata requests; there is no catalogue-wide prefetch. Original descriptions come from the current QLoader provider's API. Russian text is shortened directly. English text is reduced to a short fragment and translated on demand with [MyMemory](https://mymemory.translated.net/doc/spec.php). Machine translation can be inaccurate. **«Оригинал описания» (Original description)** shows the full source text.
+Descriptions and carousel references load only when opening a game. Russian source text is shortened directly; English fragments are translated on demand using [MyMemory](https://mymemory.translated.net/doc/spec.php). **«Оригинал описания» (Original description)** retains the full source. Machine translation can be inaccurate; the original remains available on service failure.
 
-Anonymous MyMemory access has a [5,000-character daily limit per IP](https://mymemory.translated.net/doc/usagelimits.php). The number of translations depends on text length, repeated openings and other people sharing that external IP. If translation is unavailable or exhausted, the app explains this and retains access to the original. Only the public description fragment is sent to MyMemory, never the QLoader configuration or access URL.
+MyMemory is the keyless option, with an anonymous [5,000-character daily allowance per IP](https://mymemory.translated.net/doc/usagelimits.php). Google Cloud Translation is separate from the free consumer Translate website: it requires a project, authentication and billing; standard NMT has a 500,000-character monthly free allowance followed by usage charges. [Google setup](https://docs.cloud.google.com/translate/docs/setup), [pricing](https://cloud.google.com/products/translate/pricing). The app does not currently offer a Google provider switch.
 
-Visible covers are streamed from catalogue metadata into a bounded 16 MiB RAM cache. Descriptions, translations and images are not written to a disk cache; closing the card cancels requests and releases content references. Reopening a card requests the content again. The catalogue list, queue/history and downloaded installation files are persisted separately.
+Carousel sources are the QLoader API, the public Meta page identified by QLoader, images in the release directory and the mirror's `.meta/videos/PACKAGE.mp4`. The Meta page supplies fresh links when API links expire. Structured references are scoped to the chosen game, excluding store recommendations. Missing, delisted or unavailable media is reported explicitly.
 
-Version 0.5.0 includes a large cover/screenshot/video carousel. Availability depends on the source: some games have no accessible media. Screenshots use the public Meta page identified by QLoader; trailers can also come from the QLoader mirror. See the carousel section below.
+Only the selected image loads; screenshots are not prefetched as a set. Video loads after a button press into a bounded RAM buffer of up to 64 MiB. Unsupported/oversized videos do not block game installation. Closing details cancels requests and releases player and buffers.
+
+Descriptions, translations, screenshots and video have no disk cache. Visible grid covers use a bounded 16 MiB RAM cache. Reopening a game requests its details again. The catalogue, settings, queue/history and downloaded installation files persist separately. QLoader credentials and access URLs are never sent to Meta or translation services.
 
 ### Limitations, validation and privacy
 
@@ -344,9 +380,9 @@ Version 0.5.0 includes a large cover/screenshot/video carousel. Availability dep
 - Boot restart depends on Android delivering the boot event and network/unlock availability. After Android's Force stop action, reopen QCatalog first. The headset was not rebooted during validation to preserve the user's active queue; boot handling is tested in isolation.
 - This is an ARM64 preview with `debuggable=true`, not a production store build. Debug access is used by the provisioning helper. Do not authorize ADB access for an untrusted computer.
 - Provider formats and server availability can change. Compatibility with every catalogue release or other Quest models has not been established.
-- Description formatting was tested with synthetic content. No catalogue-wide translations or image downloads were performed for release preparation; live card rendering on the headset has not been separately verified.
+- Description formatting uses synthetic tests; a real screenshot and video were checked on Quest 3S, including pause and seeking. No catalogue-wide media or translation prefetch was performed. Layout checks do not establish subjective comfort with VR pointer interaction.
 
-The access URL is encrypted with Android Keystore in the app's private directory. The configuration is kept there in the provider's format: encrypted input remains encrypted, but an imported plaintext configuration does not gain extra encryption. Android backup is disabled. App error messages hide full network URLs. The headset contacts the provider and, when translation is needed, MyMemory; QCatalog has no separate backend.
+The access URL is encrypted with Android Keystore in the app's private directory. The configuration is kept there in the provider's format: encrypted input remains encrypted, but an imported plaintext configuration does not gain extra encryption. Android backup is disabled. App error messages hide full network URLs. The headset contacts the provider, public Meta pages/CDNs for media and, when translation is needed, MyMemory; QCatalog has no separate backend.
 
 ### Build and test
 
@@ -363,7 +399,7 @@ Requirements: **Windows, PowerShell 7, JDK 21, Android SDK Build Tools 36.1.0, S
 
 Use `fetch-engine.ps1 -ArchivePath 'C:\Path\To\linux-arm64.tar'` for an existing archive. A changed provider archive fails the pinned hash check; review it before changing the expected hash.
 
-Output: `build/QCatalog-0.5.0-preview.apk`. The build verifies the APK signature and runs catalogue, download-containment/deletion and description-formatting tests. The provider's modified native engine source is not included or rebuilt here.
+Output: `build/QCatalog-0.5.1-preview.apk`. The build verifies the APK signature and runs catalogue, download-containment/deletion and description-formatting tests. The provider's modified native engine source is not included or rebuilt here.
 
 The build creates a local `build/debug.keystore` when absent. Keep your signing key privately: it is excluded from Git, and updates require the same key. Your own rebuild with a new key cannot update the APK distributed in Releases.
 
@@ -378,69 +414,18 @@ This temporarily installs a test package with the same signing key and removes i
 
 `test-storage.ps1` takes the same parameters and checks URL encryption and the empty URL used by file imports in a separate test app. It neither stops the real QCatalog app nor accesses its data. Optional `-PreviousApk` and `-IncomingApk` parameters check two local APKs against the installed app: the first is expected to conflict, and the second to have a compatible certificate. These APKs are not installed; the test package and its temporary copies are removed afterwards.
 
+The build runs `fetch-dependencies.ps1`; its first run requires network/Maven Central access for the 7z libraries. Versions and SHA-256 values are pinned in `dependencies.json`. Libraries are embedded in the APK, with licenses under `assets/licenses/`, so headset extraction needs no separate library download.
+
+### Current validation
+
+- 45 isolated UI checks in 0.5.1 cover version labels, carousel frames/swipe, themes, action alignment, narrow-dialog width, side-arrow geometry and hover/hide behavior.
+- 72 isolated storage/queue/media checks and 36 installed-app checks in 0.5.0 verified a real screenshot and configured-mirror video, playback, pause, seeking, no added media files and unchanged queue.
+- An existing Half-Life / XASH release expanded into 13,112 files (4,368,536,271 bytes), with a matching APK catalogue version. Validation did not install the game or change existing game data.
+
+`test-storage.ps1 -Ui` runs isolated UI checks. `test-storage.ps1 -LiveMedia` checks one game's media in a separate app; `test-quest.ps1 -LiveMedia` uses the installed app and configured mirror. Supply the same `-Serial`, `-JavaHome`, `-SdkPath` arguments as above. Network media checks are opt-in; without them, descriptions, translations and images are not requested. Run installed-app checks only while downloads and installations are idle.
+
+Optional `test-quest.ps1 -SpecialReleaseId RELEASE_ID` expands an existing download inside its staging folder and validates its installation plan. Expanded files remain for later installation; the queue and installed game stay unchanged. This opt-in check is distinct from temporary isolated fixtures.
+
 ### Repository access and issues
 
 Source and releases are public to read and download; issues are open for bug reports. Repository writes and releases are controlled by the owner. GitHub also permits forks and pull-request proposals, which do not grant write access to this repository. Include the app version, headset model, reproduction steps and sanitized error text in reports; never attach personal configuration files.
-
-
-### Проверки 0.4.1 / 0.4.1 validation
-
-22 изолированные UI-проверки: совпадение верхних/нижних границ «Пауза»/«Установить» с соседней кнопкой, обе системные темы, шрифт 160%, перенос в узкой области и фактический запуск панели 1920 × 1080 dp на Quest 3S. Глобальная тема шлема в тестах не менялась.
-
-22 isolated UI checks cover button bounds, both resource night modes, 160% font scale, narrow fallback and actual 1920 × 1080 dp launch on Quest 3S. Tests did not change the headset's global theme. Horizon OS still controls the panel's placement and physical/angular size in VR; the application fills its assigned panel. Sources: [Meta panel sizing](https://developers.meta.com/vr/essentials/horizon-os-panel-sizing/), [Android activity layout](https://developer.android.com/guide/topics/manifest/layout-element).
-
-### Проверки 0.4.2 / 0.4.2 validation
-
-29 изолированных UI-проверок на Quest 3S: компактная сетка 5/4 колонки, зелёная отметка только новой версии, отсутствие ложной отметки при повторном использовании карточки, цели VR от 64 dp; сохранены проверки действий и тем.
-
-29 isolated UI checks on Quest 3S cover compact 5/4-column grids, green checks only for newer releases, recycled-card reset and 64 dp minimum VR targets, alongside action alignment and theme checks.
-
-### Дополнительная установка / Special installation (0.4.3)
-
-Релизы портов вроде Half-Life / XASH могут содержать `Install.txt`, APK и большой архив `.7z`. QCatalog распаковывает архив во временную папку внутри скачанного релиза, проверяет CRC, затем переводит `adb install` и `adb push` в системную установку APK и проверенное копирование файлов. Регистр имён источников учитывается без неоднозначных совпадений (`xash` / `XASH`). Полная распаковка повторно используется; после прерывания незавершённая распаковка перезапускается из уже скачанного архива. Сам архив повторно скачивать не требуется. Для распаковки и копирования нужно дополнительное свободное место.
-
-Команды `uninstall` и `rm -rf` не выполняются: QCatalog сохраняет существующие файлы вне поставки, включая сохранения, и заменяет только поставляемые файлы. Поэтому это поддержка известных инструкций размещения, а не произвольного командного сценария. Для данных в `/sdcard/XASH` нужен «Доступ ко всем файлам». После успешной установки и проверки удаляется только скачанный релиз QCatalog, не установленная папка XASH.
-
-Старая ошибка о неподдерживаемом install.txt при запуске меняется на «Файлы сохранены. Нажми “Установить”». Перед установкой файлы проверяются повторно. Удалять игру или запускать загрузку заново не нужно.
-
-Port releases such as Half-Life / XASH may contain `Install.txt`, an APK and a large `.7z` archive. QCatalog extracts locally inside the downloaded release with CRC/path checks, then translates `adb install` and `adb push` into Android package installation and verified data copying. Source lookup handles case without ambiguous matches. Completed extraction is reused; interrupted extraction retries from the saved archive without downloading it again. Additional free space is required for extraction and copying.
-
-Legacy `uninstall` / `rm -rf` commands are not executed. Existing files outside the supplied set, including saves, remain; supplied files are replaced. This supports known placement instructions, not arbitrary scripts. Shared game folders such as `/sdcard/XASH` require All files access. Successful cleanup removes only QCatalog's downloaded release, not installed XASH files.
-
-The old unsupported-install.txt error becomes a ready-to-install task on launch. Files are rechecked before installation. Do not delete or redownload the game merely to clear this old error.
-
-Build dependencies are pinned by SHA-256 in `dependencies.json`. `build.ps1` and `test-storage.ps1` run `fetch-dependencies.ps1`; the first build requires Maven Central access. Libraries are embedded in the APK, so headset extraction needs neither a PC nor a library download. Original licenses are bundled under `assets/licenses/`.
-
-Проверка 0.4.3 на Quest 3S: 53 изолированных проверки хранения/очереди/распаковки и 29 host-проверок дополнительных инструкций/архивов. Реальный скачанный релиз Half-Life / XASH успешно распакован: 13 112 файлов, 4 368 536 271 байт; версия APK совпала с каталогом. Проверка не устанавливала игру и не меняла её существующие данные.
-
-0.4.3 validation on Quest 3S: 53 isolated storage/queue/archive checks and 29 host special-install/archive checks. An existing Half-Life / XASH download was successfully expanded into 13,112 files (4,368,536,271 bytes); its APK version matched the catalogue. This validation neither installed the game nor changed its existing data.
-
-Optional `test-quest.ps1 -SpecialReleaseId RELEASE_ID` expands an existing downloaded release inside QCatalog's staging folder and validates its installation plan, preserving the queue and installed games. Run only while idle. Unlike the default isolated fixtures, this opt-in check retains the expanded release for subsequent installation.
-
-### Версии и карусель / Versions and media carousel (0.5.0)
-
-На каждой карточке каталога, библиотеки и обновлений показаны версия из имени конкретного релиза и числовой код: например `v1.40.8_7379 · код 1716`. Если в имени релиза нет версии, отображается только известный код. Это не «последняя версия магазина»: разные выпуски одного пакета не подменяются одним номером.
-
-Окно игры занимает 90% панели. Вместо маленькой обложки — карусель с крупным кадром 360 dp: обложка, скриншоты, затем видео. Переключение стрелками или горизонтальным жестом по изображению; счётчик показывает текущий кадр. «Увеличить» открывает изображение почти на всю панель. Видео запускается только кнопкой, поддерживает паузу и перемотку. При переходе на другой кадр и сворачивании приложения воспроизведение приостанавливается; закрытие карточки освобождает плеер и память.
-
-Источники проверяются динамически: API QLoader, публичная страница Meta по идентификатору из QLoader (для свежих ссылок на скриншоты/видео), изображения в папке релиза, `.meta/videos/PACKAGE.mp4` зеркала QLoader. Галерея Meta может отсутствовать у удалённых из магазина игр; медиа недоступных источников не выдумывается. Связь изображений и видео с идентификатором приложения проверяется, похожие и рекомендуемые игры не смешиваются с выбранной.
-
-Метаданные, выбранное изображение и видеобуфер находятся только в оперативной памяти. Скриншоты не загружаются все сразу; видео читается только после нажатия кнопки. Дисковых файлов и кэша медиа приложение не создаёт. Лимит видеобуфера — 64 МиБ; слишком большой или неподдерживаемый ролик выдаёт сообщение, но не мешает установке игры. Личные данные QLoader не отправляются на Meta или переводчику.
-
-Each catalogue/library/update card shows its own release version and numeric code, for example `v1.40.8_7379 · код 1716`. Missing marketing versions are not invented, and store-latest metadata never replaces per-release version labels.
-
-Game details occupy 90% of the panel. A single-frame carousel shows a large 360 dp cover, screenshots and a video item. Use arrows or a horizontal image swipe; the counter tracks the selected item. Image enlargement uses almost the entire panel. Video starts only on demand and supports pause/seeking. Selecting a different frame or backgrounding the app pauses playback; closing the details frees player and buffers.
-
-Sources are queried dynamically: QLoader API, the public Meta page identified by QLoader (fresh screenshot/video links), images in the release folder, and the QLoader mirror's `.meta/videos/PACKAGE.mp4`. Missing or delisted media stays unavailable rather than being fabricated. Structured media references are scoped to the chosen application, excluding recommendations for other games.
-
-Metadata, the selected image and a bounded video buffer stay in RAM only. Screenshots are not prefetched as a set; videos load only after a button press. The app creates no media files or disk cache. Video buffering is limited to 64 MiB; unsupported/oversized videos show an error without blocking installation. QLoader credentials are never sent to Meta or translation services.
-
-MyMemory остаётся переводчиком без ключа API. Это не оценка качества Google: официальный Google Cloud Translation требует отдельный проект, авторизацию и включённый биллинг; бесплатный объём для стандартного NMT-перевода — 500 000 символов в месяц, затем оплата. Бесплатный сайт Google Translate не является безлимитным API для приложения. [Настройка](https://docs.cloud.google.com/translate/docs/setup), [тарифы](https://cloud.google.com/products/translate/pricing).
-
-MyMemory remains the keyless translation option. Google Cloud Translation requires a project, authenticated access and billing; standard NMT translation has a 500,000-character monthly free allowance followed by usage charges. The consumer Google Translate website is not an unlimited app API. See the official setup/pricing links above.
-
-`test-storage.ps1 -LiveMedia` checks one actual game's screenshot and native video prepare/play/pause/seek inside an isolated test app, and verifies that app files/cache gain no files. `test-quest.ps1 -LiveMedia` repeats this using the installed app and its configured mirror, while preserving queue/configuration. Both options are opt-in network checks; use the installed-app check only while idle.
-
-Проверки 0.5.0: 38 изолированных UI-проверок, 72 проверки хранения/очереди/медиа в отдельном приложении с реальным скриншотом и видео, 36 проверок установленного приложения с подтверждённым чтением трейлера с настроенного зеркала QLoader. Воспроизведение, пауза, перемотка и отсутствие новых файлов в files/cache проверены; очередь не изменилась.
-
-0.5.0 validation: 38 isolated UI checks, 72 isolated storage/queue/media checks with a real screenshot/video, and 36 installed-app checks that assert use of the configured QLoader mirror trailer. Playback, pause, seeking, no added files/cache entries and unchanged queue were verified.

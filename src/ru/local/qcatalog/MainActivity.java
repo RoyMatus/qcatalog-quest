@@ -209,7 +209,7 @@ public final class MainActivity extends Activity {
         AlertDialog dialog = builder.create(); Cards.dialog(dialog);
         GameDetails session = new GameDetails(this); openDetails.add(session);
         dialog.setOnDismissListener(d -> { session.close(); openDetails.remove(session); gallery.close();openCarousels.remove(gallery); description.setText(""); original.setOnClickListener(null); }); dialog.show();
-        dialog.getWindow().setLayout((int)(getResources().getDisplayMetrics().widthPixels*.90),(int)(getResources().getDisplayMetrics().heightPixels*.90));
+        Cards.sizeGameDialog(this,dialog);
         detailIo.execute(() -> {
             try {
                 GameDetails.Info info = session.description(pkg);

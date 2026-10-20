@@ -79,17 +79,28 @@ public final class UiChecks extends Instrumentation {
         final MediaCarousel[] carousel={null};final AlertDialog[] mediaDialog={null};
         runOnMainSync(()->{
             carousel[0]=new MediaCarousel(activity,"org.qcatalog.fixture0");MediaInfo carouselInfo=new MediaInfo();carouselInfo.images.add("https://example.invalid/screen.png");carouselInfo.trailer="https://example.invalid/video.mp4";carousel[0].configure(carouselInfo);
-            mediaDialog[0]=new AlertDialog.Builder(activity).setTitle("Карусель игры · тест").setView(carousel[0]).setNegativeButton("Закрыть",null).create();mediaDialog[0].show();mediaDialog[0].getWindow().setLayout((int)(activity.getResources().getDisplayMetrics().widthPixels*.90),(int)(activity.getResources().getDisplayMetrics().heightPixels*.90));
+            require(carousel[0].next.getAlpha()==0f,"Side arrows start hidden before hover or keyboard focus");
+            mediaDialog[0]=new AlertDialog.Builder(activity).setTitle("Карусель игры · тест").setView(carousel[0]).setNegativeButton("Закрыть",null).create();mediaDialog[0].show();Cards.sizeGameDialog(activity,mediaDialog[0]);
             require(!carousel[0].previous.isEnabled()&&carousel[0].next.isEnabled(),"Carousel navigation starts on cover");
             require(carousel[0].image.getLayoutParams().height==Cards.dp(activity,360),"Details image is substantially larger than the old 160 dp cover");
             carousel[0].select(1);require(carousel[0].image.getVisibility()==View.VISIBLE&&carousel[0].video.getVisibility()==View.GONE,"Image is the single visible carousel frame");
             carousel[0].select(2);require(carousel[0].image.getVisibility()==View.GONE&&carousel[0].video.getVisibility()==View.VISIBLE,"Video is another frame of the same carousel");
             require(!carousel[0].next.isEnabled()&&!carousel[0].zoom.isEnabled(),"Last video frame disables next and image zoom");
+            require(carousel[0].previous.getLayoutParams().height==Cards.dp(activity,64),"Video navigation avoids covering playback and seek controls");
             require(carousel[0].video.play.isEnabled()&&carousel[0].video.play.getText().toString().equals("Смотреть видео"),"Video never autoplays when selecting its frame");
             carousel[0].select(0);require(carousel[0].video.getVisibility()==View.GONE,"Returning to cover hides the video frame");
             android.view.MotionEvent down=android.view.MotionEvent.obtain(1,1,android.view.MotionEvent.ACTION_DOWN,Cards.dp(activity,200),Cards.dp(activity,100),0),up=android.view.MotionEvent.obtain(1,2,android.view.MotionEvent.ACTION_UP,Cards.dp(activity,20),Cards.dp(activity,100),0);
             carousel[0].image.dispatchTouchEvent(down);carousel[0].image.dispatchTouchEvent(up);down.recycle();up.recycle();require(carousel[0].label.getText().toString().startsWith("Скриншот 1"),"Horizontal swipe advances the carousel");carousel[0].select(0);
-        });settle();runOnMainSync(()->{try{View view=mediaDialog[0].getWindow().getDecorView();Bitmap b=Bitmap.createBitmap(view.getWidth(),view.getHeight(),Bitmap.Config.ARGB_8888);view.draw(new Canvas(b));try(FileOutputStream out=new FileOutputStream(new File(c.getFilesDir(),"carousel.png"))){b.compress(Bitmap.CompressFormat.PNG,100,out);}b.recycle();}catch(Exception e){throw new RuntimeException(e);}});
+        });settle();runOnMainSync(()->{try{
+            require(mediaDialog[0].getWindow().getDecorView().getWidth()<=Cards.dp(activity,720),"Game details return to a narrow 720 dp maximum width");
+            require(carousel[0].next.getHeight()==carousel[0].image.getHeight()&&carousel[0].previous.getHeight()==carousel[0].image.getHeight(),"Side arrows match the full image height");
+            require(carousel[0].previous.getLeft()==0&&carousel[0].next.getRight()==carousel[0].frame.getWidth(),"Previous and next occupy opposite image edges");
+            android.view.MotionEvent hover=android.view.MotionEvent.obtain(3,3,android.view.MotionEvent.ACTION_HOVER_ENTER,Cards.dp(activity,100),Cards.dp(activity,100),0);hover.setSource(android.view.InputDevice.SOURCE_MOUSE);carousel[0].image.dispatchGenericMotionEvent(hover);hover.recycle();
+            require(carousel[0].next.getAlpha()==1f,"Hover over the image reveals navigation");
+            View view=mediaDialog[0].getWindow().getDecorView();Bitmap b=Bitmap.createBitmap(view.getWidth(),view.getHeight(),Bitmap.Config.ARGB_8888);view.draw(new Canvas(b));try(FileOutputStream out=new FileOutputStream(new File(c.getFilesDir(),"carousel.png"))){b.compress(Bitmap.CompressFormat.PNG,100,out);}b.recycle();
+            android.view.MotionEvent exit=android.view.MotionEvent.obtain(4,4,android.view.MotionEvent.ACTION_HOVER_EXIT,0,0,0);exit.setSource(android.view.InputDevice.SOURCE_MOUSE);carousel[0].image.dispatchGenericMotionEvent(exit);exit.recycle();
+        }catch(Exception e){throw new RuntimeException(e);}});
+        Thread.sleep(300);waitForIdleSync();runOnMainSync(()->require(carousel[0].next.getAlpha()==0f,"Leaving the image hides side navigation"));
         runOnMainSync(()->{carousel[0].close();mediaDialog[0].dismiss();});
         result.putString("result","PASS "+checks+" isolated UI checks; synthetic data only, no network permission");
     }catch(Throwable e){result.putString("result","FAIL "+e.getClass().getSimpleName()+": "+e.getMessage());outcome=Activity.RESULT_CANCELED;}finally{if(activity!=null)runOnMainSync(()->activity.finish());DownloadService.RUNNING.set(false);}finish(outcome,result);}

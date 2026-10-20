@@ -9,6 +9,10 @@ import android.widget.*;
 
 /** Uses the exact resources supplied in design/cards-v1/android/res. */
 final class Cards {
+    static void sizeGameDialog(android.app.Activity activity,android.app.AlertDialog dialog) {
+        android.util.DisplayMetrics metrics=activity.getResources().getDisplayMetrics();
+        dialog.getWindow().setLayout(Math.min(dp(activity,720),(int)(metrics.widthPixels*.92)),(int)(metrics.heightPixels*.90));
+    }
     static int dp(Context c,int v) { return Math.round(v*c.getResources().getDisplayMetrics().density); }
     static int color(Context c,int id) { return c.getColor(id); }
     static TextView text(Context c,String value,int size,int color) { TextView t=new TextView(c); t.setText(value); t.setTextSize(size); t.setTextColor(color); return t; }

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.1-preview — 2026-10-20
+
+- Узкое окно игры: максимум 720 dp вместо 90% ширины панели.
+- Стрелки карусели по бокам кадра, на всю его высоту; появляются при наведении и скрываются после ухода указателя. Доступен также клавиатурный фокус.
+- README на русском и английском приведён к текущему интерфейсу и кнопкам, новые возможности перенесены из разрозненных дополнений в основные разделы.
+- Narrow game-details dialog, full-height edge arrows revealed on hover/focus, and a reorganized current Russian/English README.
+- Validation: 45 isolated UI checks on Quest 3S, including pointer enter/exit and arrow geometry.
+
 ## 0.5.0-preview — 2026-10-20
 
 - Версия конкретного релиза и код на карточках каталога, библиотеки и обновлений.
