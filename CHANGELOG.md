@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.3-preview — 2026-10-20
+
+- Под надписью «Загрузка» показано число успешно закэшированных в RAM фотографий из общего количества, включая обложку; до получения списка итоговое количество неизвестно. Ошибки не считаются успешной загрузкой.
+- Loading overlay counts successfully decoded RAM-cached photos, including the cover. The total is unknown until discovery completes; failed photos are not counted as cached.
+- Видео остаётся MP4 в исходном качестве. Проверенный источник не предоставляет набор разрешений; автоматический выбор качества по пропускной способности не реализован. / Video remains original-quality MP4; the inspected source exposes no quality ladder, and bandwidth-based quality selection is not implemented.
+- Проверки не запускались по просьбе пользователя. / Tests not run at the user's request.
+
+
 ## 0.6.2-preview — 2026-10-20
 
 - Полупрозрачная надпись «Загрузка» и три переливающиеся точки по центру изображения при открытии карточки. Индикатор ждёт завершения получения списка и всех попыток предзагрузки фотографий в RAM, включая ошибки, но не видео.

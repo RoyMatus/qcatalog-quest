@@ -72,7 +72,7 @@ final class MediaCarousel extends LinearLayout implements AutoCloseable {
         urls.add("");select(0);
     }
     void configure(MediaInfo info){if(closed)return;for(String url:info.images)if(!urls.contains(url)&&urls.size()<CardImages.MAX_IMAGES)urls.add(url);images.prefetch(urls);if(!info.trailer.isEmpty())urls.add("video:"+info.trailer);video.configure(info.trailer,info.trailerSize);video.setVisibility(position==urls.size()-1&&!info.trailer.isEmpty()?VISIBLE:GONE);configured=true;updateControls();updateLoading();}
-    private void updateLoading(){if(closed)return;loading.showLoading(!urls.isEmpty()&&!urls.get(position).startsWith("video:")&&(!configured||images.pending()>0));}
+    private void updateLoading(){if(closed)return;loading.progress(images.size(),images.total(),configured);loading.showLoading(!urls.isEmpty()&&!urls.get(position).startsWith("video:")&&(!configured||images.pending()>0));}
     private void showArrows(boolean visible){navigationVisible=visible;previous.setAlpha(visible&&previous.isEnabled()?1f:0f);next.setAlpha(visible&&next.isEnabled()?1f:0f);}
     private void alignArrowHeight(){if(closed||urls.isEmpty())return;boolean movie=urls.get(position).startsWith("video:");int height=movie?Math.max(Cards.dp(activity,64),video.getHeight()-Cards.dp(activity,128)):-1;for(Button button:Arrays.asList(previous,next)){FrameLayout.LayoutParams lp=(FrameLayout.LayoutParams)button.getLayoutParams();if(lp.height!=height){lp.height=height;button.setLayoutParams(lp);}}}
     private void updateControls(){previous.setEnabled(position>0);next.setEnabled(position<urls.size()-1);showArrows(navigationVisible);updateLoading();}
