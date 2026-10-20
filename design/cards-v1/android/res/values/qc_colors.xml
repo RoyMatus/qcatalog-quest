@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?><resources>
+  <color name="qc_background">#F5F3EF</color>
+  <color name="qc_surface">#FFFEFC</color>
+  <color name="qc_surface_alt">#ECEAE6</color>
+  <color name="qc_text">#172234</color>
+  <color name="qc_text_secondary">#485568</color>
+  <color name="qc_primary">#075FC7</color>
+  <color name="qc_on_primary">#FFFFFF</color>
+  <color name="qc_selected">#D9EBFA</color>
+  <color name="qc_border">#BAC2CB</color>
+  <color name="qc_success">#207044</color>
+  <color name="qc_success_surface">#E7F4EB</color>
+  <color name="qc_error">#B42332</color>
+  <color name="qc_error_surface">#FCEBED</color>
+  <color name="qc_focus">#075FC7</color>
+</resources>

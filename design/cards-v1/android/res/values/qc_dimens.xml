@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?><resources>
+  <dimen name="qc_window_width">1280dp</dimen>
+  <dimen name="qc_window_height">800dp</dimen>
+  <dimen name="qc_rail_width">248dp</dimen>
+  <dimen name="qc_page_padding">32dp</dimen>
+  <dimen name="qc_gap">24dp</dimen>
+  <dimen name="qc_touch_min">64dp</dimen>
+  <dimen name="qc_button_height">64dp</dimen>
+  <dimen name="qc_card_radius">20dp</dimen>
+  <dimen name="qc_button_radius">16dp</dimen>
+  <dimen name="qc_focus_ring">3dp</dimen>
+  <dimen name="qc_progress_height">12dp</dimen>
+  <dimen name="qc_title">32sp</dimen>
+  <dimen name="qc_heading">26sp</dimen>
+  <dimen name="qc_body">22sp</dimen>
+  <dimen name="qc_label">20sp</dimen>
+  <dimen name="qc_secondary">20sp</dimen>
+</resources>
