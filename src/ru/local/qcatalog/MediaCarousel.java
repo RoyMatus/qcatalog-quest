@@ -9,12 +9,12 @@ import android.widget.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-/** Only the selected image is loaded. Session and bitmaps die with the details dialog. */
+/** Images preload into a card-scoped RAM cache and are released when details close. */
 final class MediaCarousel extends LinearLayout implements AutoCloseable {
     final ImageView image;final FrameLayout frame;final Button previous,next;final VideoPane video;
-    private final Activity activity;private final ExecutorService io=Executors.newSingleThreadExecutor();
-    private final List<String> urls=new ArrayList<>();private GameDetails request;private Bitmap bitmap;
-    private String pkg;private int position,generation;private boolean closed,navigationVisible;private Dialog enlarged;private float touchX,touchY;
+    private final Activity activity;final CardImages images;
+    private final List<String> urls=new ArrayList<>();private Bitmap bitmap;
+    private String pkg;private int position;private boolean closed,navigationVisible;private Dialog enlarged;private float touchX,touchY;
     private ViewGroup originalParent;private ViewGroup.LayoutParams originalParams;private int originalIndex;private View originalRoot,activityRoot;private float rootAlpha,activityAlpha;
     private Dialog hostDialog;private int hostFlags;private float hostDim,hostWindowAlpha,activityWindowAlpha;
     private boolean mediaHovered;private int scrollDirection;private long scrollStepAt;
@@ -66,14 +66,14 @@ final class MediaCarousel extends LinearLayout implements AutoCloseable {
         for(View target:Arrays.asList(frame,image,previous,next))target.setOnHoverListener(hover);video.setNavigationHover(hover);
         View.OnFocusChangeListener focus=(v,hasFocus)->{removeCallbacks(hideArrows);if(hasFocus)showArrows(true);else postDelayed(hideArrows,180);};previous.setOnFocusChangeListener(focus);next.setOnFocusChangeListener(focus);
         previous.setOnClickListener(v->select(position-1));next.setOnClickListener(v->select(position+1));image.setOnClickListener(v->enlarge());image.setFocusable(true);video.setContentClick(this::enlarge);
+        images=new CardImages(c,pkg,(key,loaded)->{if(!closed&&!urls.isEmpty()&&urls.get(position).equals(key)){bitmap=loaded;if(loaded!=null)image.setImageBitmap(loaded);}});
         urls.add("");select(0);
     }
-    void configure(MediaInfo info){if(closed)return;for(String url:info.images)if(!urls.contains(url))urls.add(url);if(!info.trailer.isEmpty())urls.add("video:"+info.trailer);video.configure(info.trailer,info.trailerSize);video.setVisibility(position==urls.size()-1&&!info.trailer.isEmpty()?VISIBLE:GONE);updateControls();}
+    void configure(MediaInfo info){if(closed)return;for(String url:info.images)if(!urls.contains(url)&&urls.size()<CardImages.MAX_IMAGES)urls.add(url);images.prefetch(urls);if(!info.trailer.isEmpty())urls.add("video:"+info.trailer);video.configure(info.trailer,info.trailerSize);video.setVisibility(position==urls.size()-1&&!info.trailer.isEmpty()?VISIBLE:GONE);updateControls();}
     private void showArrows(boolean visible){navigationVisible=visible;previous.setAlpha(visible&&previous.isEnabled()?1f:0f);next.setAlpha(visible&&next.isEnabled()?1f:0f);}
     private void alignArrowHeight(){if(closed||urls.isEmpty())return;boolean movie=urls.get(position).startsWith("video:");int height=movie?Math.max(Cards.dp(activity,64),video.getHeight()-Cards.dp(activity,128)):-1;for(Button button:Arrays.asList(previous,next)){FrameLayout.LayoutParams lp=(FrameLayout.LayoutParams)button.getLayoutParams();if(lp.height!=height){lp.height=height;button.setLayoutParams(lp);}}}
     private void updateControls(){previous.setEnabled(position>0);next.setEnabled(position<urls.size()-1);showArrows(navigationVisible);}
-    void select(int value){if(closed||value<0||value>=urls.size())return;position=value;int token=++generation;video.pause();if(request!=null)request.close();GameDetails session=new GameDetails(activity);request=session;bitmap=null;image.setImageResource(R.drawable.qc_cover_placeholder);updateControls();String url=urls.get(value);boolean movie=url.startsWith("video:");image.setVisibility(movie?GONE:VISIBLE);video.setVisibility(movie?VISIBLE:GONE);alignArrowHeight();if(movie){updateControls();return;}image.setContentDescription(value==0?"Обложка игры":"Скриншот игры "+value);
-        io.execute(()->{try{Bitmap loaded=url.isEmpty()?session.cover(pkg):session.image(url);post(()->{if(!closed&&generation==token){bitmap=loaded;if(loaded!=null)image.setImageBitmap(loaded);updateControls();}});}catch(Exception e){post(()->{if(!closed&&generation==token){updateControls();}});}finally{session.close();}});
+    void select(int value){if(closed||value<0||value>=urls.size())return;position=value;video.pause();updateControls();String url=urls.get(value);boolean movie=url.startsWith("video:");image.setVisibility(movie?GONE:VISIBLE);video.setVisibility(movie?VISIBLE:GONE);alignArrowHeight();if(movie)return;bitmap=images.get(url);if(bitmap!=null)image.setImageBitmap(bitmap);else{image.setImageResource(R.drawable.qc_cover_placeholder);images.request(url);}image.setContentDescription(value==0?"Обложка игры":"Скриншот игры "+value);
     }
     boolean isExpanded(){return enlarged!=null;}
     void setHostDialog(Dialog dialog){hostDialog=dialog;}
@@ -89,5 +89,5 @@ final class MediaCarousel extends LinearLayout implements AutoCloseable {
     private static void windowAlpha(Window window,float value){WindowManager.LayoutParams lp=window.getAttributes();lp.alpha=value;window.setAttributes(lp);}
     void collapse(){mediaHovered=false;stopNavigation();Dialog dialog=enlarged;if(dialog==null)return;enlarged=null;ViewGroup parent=(ViewGroup)frame.getParent();if(parent!=null)parent.removeView(frame);image.setLayoutParams(new FrameLayout.LayoutParams(-1,Cards.dp(activity,360)));video.setExpanded(false);if(originalParent!=null)originalParent.addView(frame,Math.min(originalIndex,originalParent.getChildCount()),originalParams);if(originalRoot!=null)originalRoot.setAlpha(rootAlpha);if(activityRoot!=null)activityRoot.setAlpha(activityAlpha);if(hostDialog!=null){Window host=hostDialog.getWindow();host.setFlags(hostFlags,WindowManager.LayoutParams.FLAG_DIM_BEHIND);host.setDimAmount(hostDim);windowAlpha(host,hostWindowAlpha);}windowAlpha(activity.getWindow(),activityWindowAlpha);dialog.dismiss();originalParent=null;originalRoot=null;activityRoot=null;frame.post(()->video.setExpanded(false));}
     void pause(){mediaHovered=false;stopNavigation();video.pause();}
-    @Override public void close(){closed=true;collapse();removeCallbacks(hideArrows);generation++;if(request!=null)request.close();video.close();io.shutdownNow();image.setImageDrawable(null);bitmap=null;urls.clear();}
+    @Override public void close(){closed=true;collapse();removeCallbacks(hideArrows);video.close();image.setImageDrawable(null);bitmap=null;images.close();urls.clear();}
 }

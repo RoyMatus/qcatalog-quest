@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.6-preview — 2026-10-20
+
+- При открытии карточки её изображения заранее загружаются и декодируются в RAM. Листание готовых кадров использует те же объекты без повторных сетевых запросов.
+- Кэш принадлежит только открытой карточке: до 17 изображений, два фоновых запроса, максимум 64 МиБ или четверть Java-кучи. Размер изображений ограничивается бюджетом памяти.
+- При закрытии отменяются запросы и освобождаются изображения, плеер и RAM-буфер видео. Поздние результаты сразу освобождаются; медиафайлы на диск не записываются. Видео запускается пользователем.
+- Game-card images preload/decode into a bounded, card-scoped RAM cache. Ready-frame navigation reuses decoded bitmaps; close cancels sources, frees pixels/video buffers and discards late results. No disk media cache.
+- Validation: 151 isolated UI/cache checks on Quest 3S, including full prefetch, reuse, memory bounds, file-list comparison and close/cancellation; existing build suites passed. 76 storage/queue/media checks additionally verified a real gallery prefetch, video and no new media files.
+
 ## 0.5.5-preview — 2026-10-20
 
 - Исправлена причина отсутствия реакции Touch-стиков: Horizon OS передаёт горизонтальный стик в 2D-окно как ACTION_SCROLL / AXIS_HSCROLL, а не как обычный геймпад. Добавлена обработка этих событий.

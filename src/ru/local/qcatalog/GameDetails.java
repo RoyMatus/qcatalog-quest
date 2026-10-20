@@ -104,15 +104,21 @@ final class GameDetails implements AutoCloseable {
         if(closed)throw new InterruptedIOException();return info;
     }
     Bitmap image(String address)throws Exception {
+        return image(address,1600*1600);
+    }
+    Bitmap image(String address,int maxPixels)throws Exception {
         byte[] data;
         if(address.startsWith("ffa:")){Engine engine=new Engine(context);imageEngine=engine;if(closed)throw new InterruptedIOException();data=engine.runBytes(Arrays.asList("cat",address.substring(4)),null,8*1024*1024);}
         else {if(MediaInfo.https(address).isEmpty())throw new IOException("Недопустимая ссылка изображения.");data=get(address,8*1024*1024);}
         BitmapFactory.Options options=new BitmapFactory.Options();options.inJustDecodeBounds=true;BitmapFactory.decodeByteArray(data,0,data.length,options);
         if(options.outWidth<1||options.outHeight<1)throw new IOException("Изображение недоступно.");options.inJustDecodeBounds=false;options.inSampleSize=1;
         while(options.outWidth/options.inSampleSize>1600||options.outHeight/options.inSampleSize>1600)options.inSampleSize*=2;
-        Bitmap bitmap=BitmapFactory.decodeByteArray(data,0,data.length,options);if(bitmap==null)throw new IOException("Не удалось прочитать изображение.");return bitmap;
+        Bitmap bitmap=BitmapFactory.decodeByteArray(data,0,data.length,options);if(bitmap==null)throw new IOException("Не удалось прочитать изображение.");return limitImage(bitmap,maxPixels);
     }
     Bitmap cover(String pkg) throws Exception {
+        return cover(pkg,1000*1000);
+    }
+    Bitmap cover(String pkg,int maxPixels) throws Exception {
         pkg = originalPackage(pkg); if (!Catalog.safePackage(pkg)) throw new IOException("Некорректное имя приложения.");
         Engine engine = new Engine(context); imageEngine = engine;
         if (closed) { engine.cancel(); throw new InterruptedIOException(); }
@@ -128,10 +134,15 @@ final class GameDetails implements AutoCloseable {
                 options.inJustDecodeBounds = false; options.inSampleSize = 1;
                 while (options.outWidth / options.inSampleSize > 1000 || options.outHeight / options.inSampleSize > 1000) options.inSampleSize *= 2;
                 Bitmap bitmap = BitmapFactory.decodeByteArray(data,0,data.length,options);
-                if (bitmap != null) return bitmap;
+                if (bitmap != null) return limitImage(bitmap,maxPixels);
             } catch (Exception e) { if (closed) throw new InterruptedIOException(); }
         }
         return null;
+    }
+    static Bitmap limitImage(Bitmap bitmap,int maxPixels){
+        if(bitmap==null||(long)bitmap.getWidth()*bitmap.getHeight()<=maxPixels)return bitmap;
+        double scale=Math.sqrt((double)Math.max(1,maxPixels)/((long)bitmap.getWidth()*bitmap.getHeight()));
+        Bitmap scaled=Bitmap.createScaledBitmap(bitmap,Math.max(1,(int)(bitmap.getWidth()*scale)),Math.max(1,(int)(bitmap.getHeight()*scale)),true);if(scaled!=bitmap)bitmap.recycle();return scaled;
     }
     @Override public void close() { closed = true; synchronized(requests){for(HttpURLConnection http:requests)http.disconnect();requests.clear();} Engine engine = imageEngine; if (engine != null) engine.cancel();metadata=null; }
 }

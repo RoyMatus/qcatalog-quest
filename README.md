@@ -2,9 +2,9 @@
 
 Каталог QLoader прямо на шлеме: поиск, скачивание, установка APK и проверка обновлений.
 
-**[Скачать APK / Download APK](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.5.5-preview)** · [Issues](https://github.com/RoyMatus/qcatalog-quest/issues) · [Русский](#русский) · [English](#english)
+**[Скачать APK / Download APK](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.5.6-preview)** · [Issues](https://github.com/RoyMatus/qcatalog-quest/issues) · [Русский](#русский) · [English](#english)
 
-Версия / Version: **0.5.5-preview**. Проверено / Tested: **Quest 3S, ARM64, Android API 34**, 20 October 2026.
+Версия / Version: **0.5.6-preview**. Проверено / Tested: **Quest 3S, ARM64, Android API 34**, 20 October 2026.
 
 [История изменений / Changelog](CHANGELOG.md)
 
@@ -66,7 +66,7 @@ QCatalog — отдельное Android-приложение с обычным �
 - В Meta Horizon на телефоне выбери значок шлема → свой Quest → Headset Settings → Developer Mode и включи режим разработчика.
 - Для Windows установи [Oculus ADB Drivers](https://developers.meta.com/vr/downloads/package/oculus-adb-drivers/), если нужный драйвер ещё не установлен. Подробности и актуальные требования смотри в инструкции Meta.
 
-1. Скачай `QCatalog-0.5.5-preview.apk` из [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.5.5-preview).
+1. Скачай `QCatalog-0.5.6-preview.apk` из [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.5.6-preview).
 2. Подключи Quest по USB и разреши USB-отладку **внутри шлема**. Отображение «Внутреннего общего накопителя» в Проводнике означает доступ к файлам, но ещё не подтверждает разрешение отладки.
 3. В PowerShell, открытом в папке Platform Tools, проверь устройства:
 
@@ -77,7 +77,7 @@ QCatalog — отдельное Android-приложение с обычным �
 4. Найди именно свой Quest со статусом `device`. Если указано `unauthorized`, подтверди запрос в шлеме. В следующих командах замени `QUEST_SERIAL` на серийный номер своего Quest, а путь к APK — на путь скачанного файла:
 
    ```powershell
-   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.5.5-preview.apk'
+   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.5.6-preview.apk'
    ```
 
 5. Открой библиотеку приложений Quest → «Неизвестные источники» → **QCatalog**. Расположение фильтра зависит от версии интерфейса Quest.
@@ -161,7 +161,7 @@ MyMemory выбран как вариант без регистрации пол
 
 Источники карусели: API QLoader, публичная страница Meta по идентификатору игры из QLoader, изображения в папке релиза и `.meta/videos/PACKAGE.mp4` на зеркале QLoader. Страница Meta позволяет получить свежие ссылки, когда ссылки из API устарели. Изображения и видео привязываются к выбранной игре, а не к рекомендациям магазина. У части игр медиа отсутствует, удалено или временно недоступно.
 
-Загружается только выбранное изображение; все скриншоты заранее не скачиваются. Видео читается после нажатия кнопки в ограниченный буфер RAM до 64 МиБ. Слишком большой или неподдерживаемый ролик выдаёт сообщение и не мешает установке игры. При закрытии окна запросы отменяются, плеер и буферы освобождаются.
+При открытии карточки запускается предзагрузка её изображений в RAM: обложка и до 16 изображений из источника. Два фоновых запроса работают параллельно; готовые кадры переключаются сразу из памяти, без повторной загрузки и декодирования. Пока начальная предзагрузка не завершилась, кадр ещё может загружаться. Кэш изображений одной карточки ограничен 64 МиБ или четвертью доступной Java-кучи, если она меньше; размер декодированных изображений подбирается под этот бюджет. Видео читается после запуска в отдельный RAM-буфер до 64 МиБ. При закрытии карточки сетевые запросы отменяются, изображения освобождаются, плеер и буфер видео закрываются; поздние результаты не восстанавливают кэш.
 
 Описания, переводы, скриншоты и видео не имеют дискового кэша. Для обложек видимых карточек есть ограниченный кеш RAM 16 МиБ. При повторном открытии игры её сведения запрашиваются заново. Каталог, настройки, очередь/история и скачанные установочные файлы сохраняются отдельно. Конфиг и персональная ссылка QLoader не отправляются в Meta или переводчику.
 
@@ -195,7 +195,7 @@ MyMemory выбран как вариант без регистрации пол
 
 Если проверенный архив уже есть, используй `fetch-engine.ps1 -ArchivePath 'C:\Path\To\linux-arm64.tar'`. Если поставщик изменит архив, проверка хэша остановит извлечение. Не отключай её без проверки нового файла.
 
-Результат: `build/QCatalog-0.5.5-preview.apk`. Сборка проверяет подпись APK и запускает тесты каталога, безопасного удаления файлов и форматирования описаний. Исходники модифицированного бинарного движка поставщика в репозиторий не входят; этот движок не пересобирается из исходников.
+Результат: `build/QCatalog-0.5.6-preview.apk`. Сборка проверяет подпись APK и запускает тесты каталога, безопасного удаления файлов и форматирования описаний. Исходники модифицированного бинарного движка поставщика в репозиторий не входят; этот движок не пересобирается из исходников.
 
 Для обновления поверх установленного APK нужен тот же ключ подписи. `build.ps1` создаёт локальный `build/debug.keystore`, если его ещё нет. Сохрани свой ключ отдельно; он исключён из Git. Самостоятельная сборка с новым ключом не установится как обновление готового APK из Releases.
 
@@ -214,6 +214,8 @@ MyMemory выбран как вариант без регистрации пол
 
 ### Проверки текущей версии
 
+- 76 проверок хранения/очереди/медиа в 0.5.6, включая предзагрузку настоящей галереи до выбора кадра, повторное использование битмапа и видео; новые медиафайлы в приватном хранилище и дисковом кэше не появились.
+- 151 изолированная UI-проверка в 0.5.6, включая предзагрузку всех кадров до выбора, повторное использование тех же изображений, бюджет RAM, отсутствие новых файлов и освобождение памяти/отмену поздних результатов при закрытии.
 - 88 изолированных UI-проверок в 0.5.5: прокрутка Horizon OS в обоих размерах карусели, попадание указателя в медиа, секундный повтор и отсутствие самопроизвольного листания после отпускания, кликабельные ссылки и точные адреса запуска браузера. 11 проверок текста без сети. Источник схемы ввода: [Meta input adaptation](https://github.com/meta-quest/agentic-tools/blob/main/skills/hz-android-2d-porting/references/input-adaptation.md).
 - 72 изолированные UI-проверки в 0.5.4, включая искусственно поданные события стиков/D-pad, секундный повтор и его отмену. Доставка событий от физического Touch-контроллера в 2D-окно требует проверки владельцем шлема.
 - 58 изолированных UI-проверок в 0.5.3: карусель без подписей и счётчика, сохранённые жесты, увеличение и управление. 9 проверок форматирования и выбора русского/английского описания без сети.
@@ -289,7 +291,7 @@ You need a Quest with Developer Mode enabled, a USB data cable, and Android SDK 
 - In the phone's Meta Horizon app, select the headset icon → your Quest → Headset Settings → Developer Mode, and enable it.
 - On Windows, install [Oculus ADB Drivers](https://developers.meta.com/vr/downloads/package/oculus-adb-drivers/) if not already installed. Refer to Meta's guide for the current requirements and details.
 
-1. Download `QCatalog-0.5.5-preview.apk` from [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.5.5-preview).
+1. Download `QCatalog-0.5.6-preview.apk` from [Releases](https://github.com/RoyMatus/qcatalog-quest/releases/tag/v0.5.6-preview).
 2. Connect the Quest over USB and allow USB debugging **inside the headset**. Seeing the headset's shared storage in Windows Explorer does not mean USB debugging has been authorized.
 3. Open PowerShell in the Platform Tools directory and run:
 
@@ -300,7 +302,7 @@ You need a Quest with Developer Mode enabled, a USB data cable, and Android SDK 
 4. Identify your Quest with the `device` status. For `unauthorized`, accept the debugging prompt inside the headset. Replace `QUEST_SERIAL` below with your Quest's serial, and adjust the APK path:
 
    ```powershell
-   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.5.5-preview.apk'
+   .\adb.exe -s QUEST_SERIAL install -r 'C:\Downloads\QCatalog-0.5.6-preview.apk'
    ```
 
 5. Open the Quest app library → **Unknown Sources** → **QCatalog**. The filter's location depends on the Quest software version.
@@ -378,7 +380,7 @@ The Quest 3S owner confirmed physical Touch-stick navigation in both layouts wit
 
 Carousel sources are the QLoader API, the public Meta page identified by QLoader, images in the release directory and the mirror's `.meta/videos/PACKAGE.mp4`. The Meta page supplies fresh links when API links expire. Structured references are scoped to the chosen game, excluding store recommendations. Media can be missing, delisted or temporarily unavailable.
 
-Only the selected image loads; screenshots are not prefetched as a set. Video loads after a button press into a bounded RAM buffer of up to 64 MiB. Unsupported/oversized videos do not block game installation. Closing details cancels requests and releases player and buffers.
+Opening game details preloads its cover and up to 16 source images into RAM with two background workers. Ready frames switch directly from decoded memory without repeat downloads or decoding; frames can still be loading during the initial prefetch. Each card image cache is bounded by 64 MiB or one quarter of the Java heap, whichever is smaller; decoded image size fits that budget. Video loads after playback starts into a separate RAM buffer of up to 64 MiB. Closing details cancels requests, releases decoded images, closes the player/video buffer and discards late results.
 
 Descriptions, translations, screenshots and video have no disk cache. Visible grid covers use a bounded 16 MiB RAM cache. Reopening a game requests its details again. The catalogue, settings, queue/history and downloaded installation files persist separately. QLoader credentials and access URLs are never sent to Meta or translation services.
 
@@ -410,7 +412,7 @@ Requirements: **Windows, PowerShell 7, JDK 21, Android SDK Build Tools 36.1.0, S
 
 Use `fetch-engine.ps1 -ArchivePath 'C:\Path\To\linux-arm64.tar'` for an existing archive. A changed provider archive fails the pinned hash check; review it before changing the expected hash.
 
-Output: `build/QCatalog-0.5.5-preview.apk`. The build verifies the APK signature and runs catalogue, download-containment/deletion and description-formatting tests. The provider's modified native engine source is not included or rebuilt here.
+Output: `build/QCatalog-0.5.6-preview.apk`. The build verifies the APK signature and runs catalogue, download-containment/deletion and description-formatting tests. The provider's modified native engine source is not included or rebuilt here.
 
 The build creates a local `build/debug.keystore` when absent. Keep your signing key privately: it is excluded from Git, and updates require the same key. Your own rebuild with a new key cannot update the APK distributed in Releases.
 
@@ -429,6 +431,8 @@ The build runs `fetch-dependencies.ps1`; its first run requires network/Maven Ce
 
 ### Current validation
 
+- 76 storage/queue/media checks in 0.5.6 include real-gallery prefetch before selection, bitmap reuse and video; no new media files appeared in private storage or disk cache.
+- 151 isolated UI checks in 0.5.6 include all-frame prefetch before selection, identical bitmap reuse, RAM bounds, no new files, close-time memory release and discarded late results.
 - 88 isolated UI checks in 0.5.5 cover Horizon OS scroll routing in both carousel sizes, pointer hit testing, one-second repeat with no runaway after release, clickable links and exact browser targets. Eleven offline text checks passed. Input mapping reference: [Meta input adaptation](https://github.com/meta-quest/agentic-tools/blob/main/skills/hz-android-2d-porting/references/input-adaptation.md).
 - 72 isolated UI checks in 0.5.4 include injected stick/D-pad input, timed repetition and cancellation. Physical Touch-controller event delivery into the 2D window still requires confirmation by the headset owner.
 - 58 isolated UI checks in 0.5.3 verify the caption/counter-free carousel, retained gestures, expansion and controls. Nine offline description checks cover formatting and Russian/English selection.

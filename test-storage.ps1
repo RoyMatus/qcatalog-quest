@@ -34,6 +34,7 @@ Assert-Exit 'Storage QA manifest'
 $sources=@(Get-ChildItem -LiteralPath "$PSScriptRoot\src" -Recurse -Filter '*.java' | ForEach-Object FullName)
 $sources+="$PSScriptRoot\tests\SpecialInstallTest.java"
 $sources+="$PSScriptRoot\tests\MediaChecks.java"
+$sources+="$PSScriptRoot\tests\ImageCacheChecks.java"
 $sources+=if($Ui){"$PSScriptRoot\tests\ui\UiChecks.java"}else{"$PSScriptRoot\tests\storage\StorageChecks.java"}
 $sources+=@(Get-ChildItem -LiteralPath "$qaDir\generated" -Recurse -Filter '*.java' | ForEach-Object FullName)
 & "$JavaHome\bin\javac.exe" --release 8 -encoding UTF-8 -cp $compileClasspath -d "$qaDir\classes" @sources

@@ -151,6 +151,7 @@ public final class UiChecks extends Instrumentation {
             runOnMainSync(()->{android.media.MediaPlayer p=(android.media.MediaPlayer)field(carousel[0].video,"player");require(!carousel[0].isExpanded()&&p.isPlaying(),"Collapsing live video preserves playback");require(carousel[0].video.getHeight()<=smallHeight[0]+Cards.dp(activity,4),"Video returns to compact dimensions");carousel[0].video.play.performClick();require(!p.isPlaying(),"Bottom play button pauses video");carousel[0].video.play.performClick();require(p.isPlaying(),"Bottom play button resumes video");require(carousel[0].video.controls.getBottom()==carousel[0].video.getHeight(),"Playback controls sit at the bottom");carousel[0].select(0);require(!p.isPlaying(),"Switching away pauses the active video");});
         }
         runOnMainSync(()->{carousel[0].close();mediaDialog[0].dismiss();});
+        checks+=ImageCacheChecks.run(c,this);
         result.putString("result","PASS "+checks+" isolated UI checks; "+(arguments!=null&&"true".equals(arguments.getString("liveMedia"))?"one public game video checked; no personal configuration":"synthetic data only, no network permission"));
     }catch(Throwable e){result.putString("result","FAIL "+e.getClass().getSimpleName()+": "+e.getMessage());outcome=Activity.RESULT_CANCELED;}finally{if(activity!=null)runOnMainSync(()->{if(testCarousel!=null)testCarousel.close();if(testDialog!=null)testDialog.dismiss();activity.finish();});DownloadService.RUNNING.set(false);}finish(outcome,result);}
 }
